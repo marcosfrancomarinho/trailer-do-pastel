@@ -1,5 +1,7 @@
 # Trailer do Pastel
 
+[![CI](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml)
+
 API para cadastrar usuários, produtos, adicionais e pedidos de uma pastelaria.
 
 O cliente pode fazer um pedido sem criar uma conta. Os itens registram o nome e o preço informados no pedido, e a API consulta os produtos e adicionais para verificar se existem e estão disponíveis.
@@ -180,6 +182,12 @@ Para executar o build:
 yarn build
 yarn start
 ```
+
+## Integração contínua
+
+O workflow [CI](.github/workflows/ci.yml) executa os testes, a verificação de tipos e o build em Linux, Windows e macOS, usando Node.js 22 e Yarn 1.22.22. Ele roda a cada push, em pull requests e também pode ser iniciado manualmente na aba Actions.
+
+O Prisma Client é gerado em cada ambiente. A CI usa uma configuração local de SQLite e não precisa de credenciais ou de acesso ao banco de desenvolvimento.
 
 ## Organização
 
