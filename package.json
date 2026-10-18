@@ -1,0 +1,36 @@
+{
+  "name": "trailer_do_pastel",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "source": "src/main.ts",
+  "scripts": {
+    "start": "node --enable-source-maps dist/bundle.cjs",
+    "dev": "node kit-dev/build/dev.cjs",
+    "build": "node kit-dev/build/esbuild.config.cjs",
+    "type": "node kit-dev/build/type.cjs",
+    "test": "node kit-dev/test/test.cjs",
+    "write": "node kit-dev/write/write.cjs",
+    "w": "node kit-dev/write/write.cjs"
+  },
+  "dependencies": {
+    "@prisma/client": "6",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "decimal.js": "^10.6.0",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "22",
+    "esbuild": "0.28.2",
+    "prisma": "6",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,37 @@
+import express from 'express';
+import cors from 'cors';
+import type { Server as HttpServer } from 'node:http';
+import { CreateUserController } from './controllers/create-user-controller.js';
+import { CreateProductController } from './controllers/create-product-controller.js';
+import { CreateAdditionController } from './controllers/create-addition-controller.js';
+import { CreateOrderController } from './controllers/create-order-controller.js';
+import { ErrorHandler } from './middlewares/error-handler.js';
+
+export class Server {
+  private readonly app = express();
+
+  public constructor(
+    private readonly createUserController: CreateUserController,
+    private readonly createProductController: CreateProductController,
+    private readonly createAdditionController: CreateAdditionController,
+    private readonly createOrderController: CreateOrderController,
+    private readonly errorHandler: ErrorHandler,
+  ) {
+    this.app.use(express.json(), cors());
+    this.routes();
+    this.app.use(this.errorHandler.execute.bind(this.errorHandler));
+  }
+
+  public run(port: number = Number(process.env.PORT ?? 3000)): HttpServer {
+    return this.app.listen(port, () => {
+      console.log(`Servidor rodando em http://localhost:${port}`);
+    });
+  }
+
+  private routes(): void {
+    this.app.post('/users', this.createUserController.execute.bind(this.createUserController));
+    this.app.post('/products', this.createProductController.execute.bind(this.createProductController));
+    this.app.post('/additions', this.createAdditionController.execute.bind(this.createAdditionController));
+    this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
+  }
+}

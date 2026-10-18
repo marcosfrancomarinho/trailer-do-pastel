@@ -1,0 +1,25 @@
+import type { NextFunction, Request, Response } from 'express';
+import type { CreateProductInput, CreateProductOutput } from '../../../application/dtos/create-product-dto.js';
+import { CreateProduct } from '../../../application/use-cases/create-product.js';
+
+export class CreateProductController {
+  public constructor(private readonly createProduct: CreateProduct) {}
+
+  public async execute(request: Request, response: Response<CreateProductOutput>, next: NextFunction): Promise<void> {
+    try {
+      const input: CreateProductInput = {
+        name: request.body?.name,
+        description: request.body?.description,
+        price: request.body?.price,
+        available: request.body?.available,
+      };
+
+      const output = await this.createProduct.create(input);
+
+      response.status(201);
+      response.json(output);
+    } catch (error) {
+      next(error);
+    }
+  }
+}

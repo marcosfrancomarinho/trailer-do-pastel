@@ -1,0 +1,117 @@
+# Inicie a API com npm run dev e execute as requisições pelo REST Client.
+# Altere testId para cadastrar novos registros sem repetir os nomes.
+# Execute criarProduto e criarAdicional antes dos exemplos de pedido.
+
+@baseUrl = http://localhost:3000
+@testId = 002
+@productName = Pastel de queijo {{testId}}
+@productPrice = 12.50
+@additionPrice = 2.50
+
+### Cadastrar usuário — 201
+# @name criarUsuario
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "marcos{{testId}}",
+  "password": "Pastel123!"
+}
+
+### Cadastrar produto — 201
+# @name criarProduto
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "{{productName}}",
+  "description": "Pastel recheado com queijo e orégano",
+  "price": "{{productPrice}}",
+  "available": true
+}
+
+### Cadastrar adicional — 201
+# @name criarAdicional
+POST {{baseUrl}}/additions
+Content-Type: application/json
+
+{
+  "name": "Queijo extra {{testId}}",
+  "price": "{{additionPrice}}",
+  "available": true
+}
+
+### Cadastrar pedido com adicional — 201; total esperado: "30"
+# Os IDs abaixo são obtidos das respostas de criarProduto e criarAdicional.
+# A quantidade do adicional é aplicada a cada unidade do produto.
+# @name criarPedido
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Maria Silva",
+  "customerPhone": "(11) 99999-9999",
+  "items": [
+    {
+      "productId": "{{criarProduto.response.body.$.id}}",
+      "productName": "{{productName}}",
+      "unitPrice": "{{productPrice}}",
+      "quantity": 2,
+      "additions": [
+        {
+          "additionId": "{{criarAdicional.response.body.$.id}}",
+          "unitPrice": "{{additionPrice}}",
+          "quantity": 1
+        }
+      ]
+    }
+  ]
+}
+
+### Cadastrar pedido sem adicionais — 201; total esperado: "12.5"
+# O controller usa [] quando additions não é informado.
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "João Santos",
+  "customerPhone": "11988887777",
+  "items": [
+    {
+      "productId": "{{criarProduto.response.body.$.id}}",
+      "productName": "{{productName}}",
+      "unitPrice": "{{productPrice}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Senha inválida — 400, TOO_SHORT
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "usuario-invalido{{testId}}",
+  "password": "abc123"
+}
+
+### Pedido sem itens — 400, EMPTY
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerName": "Maria Silva",
+  "customerPhone": "11999999999"
+}
+
+### Produto duplicado — 409, ALREADY_EXISTS
+# Execute criarProduto antes desta requisição.
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "{{productName}}",
+  "description": "Mesmo nome do produto já cadastrado",
+  "price": "{{productPrice}}",
+  "available": true
+}

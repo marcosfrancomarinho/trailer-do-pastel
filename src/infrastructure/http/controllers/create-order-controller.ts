@@ -1,0 +1,50 @@
+import type { NextFunction, Request, Response } from 'express';
+import type {
+  CreateOrderAdditionInput,
+  CreateOrderInput,
+  CreateOrderItemInput,
+  CreateOrderOutput,
+} from '../../../application/dtos/create-order-dto.js';
+import { CreateOrder } from '../../../application/use-cases/create-order.js';
+
+export class CreateOrderController {
+  public constructor(private readonly createOrder: CreateOrder) {}
+
+  public async execute(request: Request, response: Response<CreateOrderOutput>, next: NextFunction): Promise<void> {
+    try {
+      const requestedItems = request.body?.items ?? [];
+
+      const items: CreateOrderItemInput[] = requestedItems.map((item: CreateOrderItemInput) => {
+        const requestedAdditions = item.additions ?? [];
+
+        const additions: CreateOrderAdditionInput[] = requestedAdditions.map((addition) => ({
+          additionId: addition.additionId,
+          unitPrice: addition.unitPrice,
+          quantity: addition.quantity,
+        }));
+
+        return {
+          productId: item.productId,
+          productName: item.productName,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          additions,
+        };
+      });
+
+      const input: CreateOrderInput = {
+        customerName: request.body?.customerName,
+        customerPhone: request.body?.customerPhone,
+        items,
+      };
+
+      const output = await this.createOrder.create(input);
+
+      response.status(201);
+      response.json(output);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+}
