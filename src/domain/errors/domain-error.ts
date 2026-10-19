@@ -7,6 +7,7 @@ export type DomainErrorCode =
   | 'MISSING_NUMBER'
   | 'INVALID_TYPE'
   | 'INVALID_FORMAT'
+  | 'INVALID_HASH'
   | 'INVALID_INTEGER'
   | 'TOO_LARGE'
   | 'DUPLICATE'
