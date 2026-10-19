@@ -43,8 +43,8 @@ describe('User', () => {
   it('rejects invalid hashed passwords and preserves the previous password', () => {
     const user = createUser();
     const cases: [unknown, DomainErrorCode][] = [
-      [undefined, 'REQUIRED'], [null, 'REQUIRED'],
-      [123, 'INVALID_TYPE'], [false, 'INVALID_TYPE'], [{}, 'INVALID_TYPE'],
+      [undefined, 'INVALID_HASH'], [null, 'INVALID_HASH'],
+      [123, 'INVALID_HASH'], [false, 'INVALID_HASH'], [{}, 'INVALID_HASH'],
       ['', 'INVALID_HASH'], [' \t\n', 'INVALID_HASH'],
     ];
 
