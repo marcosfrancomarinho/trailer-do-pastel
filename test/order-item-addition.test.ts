@@ -11,7 +11,7 @@ describe('OrderItemAddition', () => {
     assert.equal(addition.getAdditionId(), 'cheese');
     assert.equal(addition.getQuantity(), 3);
     assert.equal(unitPrice, '1.25');
-    assert.equal(total.getValue(), '3.75');
+    assert.equal(total, '3.75');
   });
 
   it('multiplies fractional and large prices without losing precision', () => {
@@ -25,7 +25,7 @@ describe('OrderItemAddition', () => {
       const total = addition.getTotal();
       const unitPrice = addition.getUnitPrice();
 
-      assert.equal(total.getValue(), expected);
+      assert.equal(total, expected);
       assert.equal(unitPrice, price);
       assert.equal(addition.getQuantity(), quantity);
     }

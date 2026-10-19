@@ -12,7 +12,7 @@ describe('OrderItem', () => {
     assert.equal(addition.getAdditionId(), 'addition-1');
     assert.equal(addition.getQuantity(), 2);
     assert.equal(addition.getUnitPrice(), '1.25');
-    assert.equal(addition.getTotal().getValue(), '2.5');
+    assert.equal(addition.getTotal(), '2.5');
     assert.equal(item.getProductId(), 'product-1');
     assert.equal(item.getProductName(), 'Pastel de queijo');
     assert.equal(item.getQuantity(), 3);

@@ -50,7 +50,7 @@ export class OrderItem {
     const unitPrice = DecimalValue.create(this.getUnitPrice());
 
     const additionsTotal = this.additions.reduce((total, addition) => {
-      const additionTotal = addition.getTotal();
+      const additionTotal = DecimalValue.create(addition.getTotal());
       return total.add(additionTotal);
     }, DecimalValue.create('0'));
 

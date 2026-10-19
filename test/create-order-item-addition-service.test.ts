@@ -20,7 +20,7 @@ describe('CreateOrderItemAdditionService', () => {
     assert.equal(addition.getAdditionId(), input.additionId);
     assert.equal(addition.getQuantity(), 2);
     assert.equal(unitPrice, '0.75');
-    assert.equal(total.getValue(), '1.5');
+    assert.equal(total, '1.5');
     assert.deepEqual(lookup.mock.calls[0].arguments, ['addition-1']);
   });
 

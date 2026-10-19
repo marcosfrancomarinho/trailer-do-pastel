@@ -26,9 +26,10 @@ export class OrderItemAddition {
     return this.unitPrice.getValue();
   }
 
-  public getTotal(): DecimalValue {
+  public getTotal(): string {
     const unitPrice = DecimalValue.create(this.getUnitPrice());
     const quantity = DecimalValue.create(String(this.getQuantity()));
-    return unitPrice.multiply(quantity);
+    const total = unitPrice.multiply(quantity);
+    return total.getValue();
   }
 }

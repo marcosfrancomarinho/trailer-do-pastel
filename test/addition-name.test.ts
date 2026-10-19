@@ -11,9 +11,13 @@ describe('AdditionName', () => {
 
   it('rejects missing values, invalid types and empty names with specific errors', () => {
     const cases: [unknown, DomainErrorCode][] = [
-      [undefined, 'REQUIRED'], [null, 'REQUIRED'],
-      [123, 'INVALID_TYPE'], [false, 'INVALID_TYPE'], [{}, 'INVALID_TYPE'],
-      ['', 'EMPTY'], [' \t\n', 'EMPTY'],
+      [undefined, 'REQUIRED'],
+      [null, 'REQUIRED'],
+      [123, 'INVALID_TYPE'],
+      [false, 'INVALID_TYPE'],
+      [{}, 'INVALID_TYPE'],
+      ['', 'EMPTY'],
+      [' \t\n', 'EMPTY'],
     ];
 
     for (const [value, code] of cases) {
