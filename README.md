@@ -4,7 +4,7 @@
 
 API para cadastrar usuários, categorias, produtos, adicionais e pedidos de uma pastelaria.
 
-O cliente pode fazer um pedido sem criar uma conta. Os itens registram o nome e o preço informados no pedido, e a API consulta os produtos e adicionais para verificar se existem e estão disponíveis.
+O cliente pode fazer um pedido sem criar uma conta. A API consulta os produtos e adicionais para verificar disponibilidade e registra no pedido o nome e os preços do catálogo naquele momento.
 
 ## Tecnologias
 
@@ -134,13 +134,10 @@ Crie o produto e o adicional primeiro e use os IDs retornados:
   "items": [
     {
       "productId": "ID_DO_PRODUTO",
-      "productName": "Pastel de queijo",
-      "unitPrice": "12.50",
       "quantity": 2,
       "additions": [
         {
           "additionId": "ID_DO_ADICIONAL",
-          "unitPrice": "2.50",
           "quantity": 1
         }
       ]
@@ -149,7 +146,7 @@ Crie o produto e o adicional primeiro e use os IDs retornados:
 }
 ```
 
-O nome do produto e os preços unitários vêm do payload. O pedido precisa ter pelo menos um item, e as quantidades devem ser inteiros positivos. Os adicionais são opcionais; quando omitidos, o controller envia um array vazio. Um mesmo adicional não pode se repetir no item: informe sua quantidade em `quantity`.
+O pedido recebe apenas IDs e quantidades dos produtos e adicionais. A API busca o nome e os preços cadastrados e os salva no pedido, preservando os valores usados no cálculo mesmo que o catálogo mude depois. O pedido precisa ter pelo menos um item, e as quantidades devem ser inteiros positivos. Os adicionais são opcionais; quando omitidos, o controller envia um array vazio. Um mesmo adicional não pode se repetir no item: informe sua quantidade em `quantity`.
 
 A quantidade do adicional é aplicada a cada unidade do produto:
 

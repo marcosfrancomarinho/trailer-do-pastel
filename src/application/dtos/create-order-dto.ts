@@ -1,13 +1,10 @@
 export interface CreateOrderAdditionInput {
   additionId: string;
-  unitPrice: string;
   quantity: number;
 }
 
 export interface CreateOrderItemInput {
   productId: string;
-  productName: string;
-  unitPrice: string;
   quantity: number;
   additions: CreateOrderAdditionInput[];
 }

@@ -14,19 +14,21 @@ import {
 
 describe('CreateOrderItemService', () => {
   const input: CreateOrderItemInput = {
-    productId: 'product-1', productName: ' Pastel especial ', unitPrice: '9.75', quantity: 2,
+    productId: 'product-1', quantity: 2,
     additions: [
-      { additionId: 'cheese', quantity: 2, unitPrice: '0.50' },
-      { additionId: 'olives', quantity: 1, unitPrice: '0.25' },
+      { additionId: 'cheese', quantity: 2 },
+      { additionId: 'olives', quantity: 1 },
     ],
   };
 
-  it('uses the input name and price and delegates each addition to the injected service', async (context) => {
-    const repository = createProductRepository();
+  it('uses the catalog name and price and delegates each addition to the injected service', async (context) => {
+    const repository = createProductRepository({
+      findProductById: async () => buildCatalogProduct('product-1', '9.75', true, 'Pastel especial'),
+    });
     const lookup = context.mock.method(repository, 'findProductById');
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
     const createAddition = context.mock.method(additionService, 'create', async (addition) => (
-      buildOrderAddition(addition.quantity, addition.unitPrice, addition.additionId)
+      buildOrderAddition(addition.quantity, addition.additionId === 'cheese' ? '0.50' : '0.25', addition.additionId)
     ));
     const service = new CreateOrderItemService(repository, additionService);
 
@@ -65,7 +67,7 @@ describe('CreateOrderItemService', () => {
     }
   });
 
-  it('validates item values before looking up the product or creating additions', async (context) => {
+  it('validates IDs and quantities before looking up the product or creating additions', async (context) => {
     const repository = createProductRepository();
     const lookup = context.mock.method(repository, 'findProductById');
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
@@ -73,8 +75,6 @@ describe('CreateOrderItemService', () => {
     const service = new CreateOrderItemService(repository, additionService);
     const payloads = [
       { ...input, productId: '' },
-      { ...input, productName: ' ' },
-      { ...input, unitPrice: '0' },
       { ...input, quantity: 0 },
     ];
 
@@ -98,7 +98,7 @@ describe('CreateOrderItemService', () => {
   it('keeps the entity validation against repeated additions', async () => {
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
     const service = new CreateOrderItemService(createProductRepository(), additionService);
-    const addition = { additionId: 'addition-1', quantity: 1, unitPrice: '2.50' };
+    const addition = { additionId: 'addition-1', quantity: 1 };
 
     await assert.rejects(
       service.create({ ...input, additions: [addition, { ...addition, quantity: 2 }] }),

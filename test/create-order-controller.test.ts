@@ -17,21 +17,21 @@ function createUseCase(): CreateOrder {
 }
 
 describe('CreateOrderController', () => {
-  const item = { productId: 'product-1', productName: 'Pastel especial', unitPrice: '10', quantity: 2 };
+  const item = { productId: 'product-1', quantity: 2 };
   const customer = { customerName: 'Marcos', customerPhone: '11999999999' };
 
   it('maps nested input fields, defaults missing additions to an empty list and responds with 201', async (context) => {
     const useCase = createUseCase();
     const create = context.mock.method(useCase, 'create');
     const controller = new CreateOrderController(useCase);
-    const addition = { additionId: 'addition-1', quantity: 1, unitPrice: '2.50' };
+    const addition = { additionId: 'addition-1', quantity: 1 };
     const request = {
       body: {
         ...customer,
         total: '0.01', status: 'COMPLETED', userId: 'ignored-user',
         items: [
-          { ...item, id: 'ignored-item', additions: [{ ...addition, id: 'ignored-addition' }] },
-          { ...item, unitPrice: '4', quantity: 1 },
+          { ...item, id: 'ignored-item', productName: 'Nome falso', unitPrice: '0.01', additions: [{ ...addition, id: 'ignored-addition', unitPrice: '0.01' }] },
+          { ...item, unitPrice: '0.01', quantity: 1 },
         ],
       },
     } as Request;
@@ -44,12 +44,12 @@ describe('CreateOrderController', () => {
       ...customer,
       items: [
         { ...item, additions: [addition] },
-        { ...item, unitPrice: '4', quantity: 1, additions: [] },
+        { ...item, quantity: 1, additions: [] },
       ],
     }]);
     assert.deepEqual(status.mock.calls[0].arguments, [201]);
     assert.deepEqual(json.mock.calls[0].arguments, [{
-      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '29',
+      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '35',
     }]);
     assert.equal(next.mock.callCount(), 0);
   });

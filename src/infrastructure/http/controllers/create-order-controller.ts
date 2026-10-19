@@ -19,14 +19,11 @@ export class CreateOrderController {
 
         const additions: CreateOrderAdditionInput[] = requestedAdditions.map((addition) => ({
           additionId: addition.additionId,
-          unitPrice: addition.unitPrice,
           quantity: addition.quantity,
         }));
 
         return {
           productId: item.productId,
-          productName: item.productName,
-          unitPrice: item.unitPrice,
           quantity: item.quantity,
           additions,
         };
@@ -46,5 +43,4 @@ export class CreateOrderController {
       next(error);
     }
   }
-
 }

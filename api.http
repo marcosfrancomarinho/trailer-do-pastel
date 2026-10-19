@@ -84,13 +84,10 @@ Content-Type: application/json
   "items": [
     {
       "productId": "{{criarProduto.response.body.$.id}}",
-      "productName": "{{productName}}",
-      "unitPrice": "{{productPrice}}",
       "quantity": 2,
       "additions": [
         {
           "additionId": "{{criarAdicional.response.body.$.id}}",
-          "unitPrice": "{{additionPrice}}",
           "quantity": 1
         }
       ]
@@ -109,8 +106,6 @@ Content-Type: application/json
   "items": [
     {
       "productId": "{{criarProduto.response.body.$.id}}",
-      "productName": "{{productName}}",
-      "unitPrice": "{{productPrice}}",
       "quantity": 1
     }
   ]

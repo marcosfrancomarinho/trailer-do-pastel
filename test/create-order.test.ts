@@ -30,10 +30,10 @@ describe('CreateOrder', () => {
   const input: CreateOrderInput = {
     customerName: ' Marcos ',
     customerPhone: '(11) 99999-9999',
-    items: [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 2, additions: [] }],
+    items: [{ productId: 'product-1', quantity: 2, additions: [] }],
   };
 
-  it('uses the input product name and unit price, applies additions per unit, and returns the saved ID and tracking token', async (context) => {
+  it('uses catalog names and prices, applies additions per unit, and returns the saved ID and tracking token', async (context) => {
     const save = context.mock.fn(async (order: Order) => {
       assert.equal(order.getCustomerName(), 'Marcos');
       assert.equal(order.getCustomerPhone(), '11999999999');
@@ -49,20 +49,28 @@ describe('CreateOrder', () => {
       return { id: 'order-id', trackingToken: 'tracking-token' };
     });
     const repository = createOrderRepository({ save });
-    const useCase = createUseCase(repository);
+    const productRepository = createProductRepository({
+      findProductById: async (id) => id === 'product-1'
+        ? buildCatalogProduct(id, '9.75', true, 'Pastel especial')
+        : buildCatalogProduct(id, '12.50', true, 'Pastel de carne'),
+    });
+    const additionRepository = createAdditionRepository({
+      findAdditionById: async (id) => buildCatalogAddition(id, id === 'addition-1' ? '3' : '1'),
+    });
+    const useCase = createUseCase(repository, productRepository, additionRepository);
     const payload = {
       ...input,
       total: '0.01',
       status: 'COMPLETED',
       items: [
         {
-          productId: 'product-1', productName: ' Pastel especial ', quantity: 2, unitPrice: '9.75',
+          productId: 'product-1', productName: 'Nome falso', unitPrice: '0.01', quantity: 2,
           additions: [
-            { additionId: 'addition-1', quantity: 1, unitPrice: '3' },
-            { additionId: 'addition-2', quantity: 2, unitPrice: '1' },
+            { additionId: 'addition-1', quantity: 1, unitPrice: '0.01' },
+            { additionId: 'addition-2', quantity: 2 },
           ],
         },
-        { productId: 'product-2', productName: 'Pastel de carne', unitPrice: '12.50', quantity: 3, additions: [] },
+        { productId: 'product-2', quantity: 3, additions: [] },
       ],
     };
 
@@ -88,8 +96,8 @@ describe('CreateOrder', () => {
     const output = await useCase.create({
       ...input,
       items: [
-        { productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: '2.50' }] },
-        { productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 2, additions: [{ additionId: 'addition-1', quantity: 2, unitPrice: '2.50' }] },
+        { productId: 'product-1', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 1 }] },
+        { productId: 'product-1', quantity: 2, additions: [{ additionId: 'addition-1', quantity: 2 }] },
       ],
     });
 
@@ -104,7 +112,7 @@ describe('CreateOrder', () => {
       ...input,
       items: [{
         ...input.items[0],
-        additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: '2.50' }],
+        additions: [{ additionId: 'addition-1', quantity: 1 }],
       }],
     };
 
@@ -117,7 +125,7 @@ describe('CreateOrder', () => {
 
   it('does not save when a product or addition is missing or unavailable', async (context) => {
     const withAddition: CreateOrderInput = {
-      ...input, items: [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: '2.50' }] }],
+      ...input, items: [{ productId: 'product-1', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 1 }] }],
     };
     const cases: {
       payload: CreateOrderInput;
@@ -156,12 +164,12 @@ describe('CreateOrder', () => {
   it('rejects empty orders, invalid item values and duplicated additions without saving', async (context) => {
     const invalidItems: unknown[] = [
       [],
-      [{ productId: '', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [] }],
-      ...[undefined, 0, -1, 1.5, '1', NaN, Infinity, 2147483648].map((quantity) => [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity, additions: [] }]),
-      [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [{ additionId: '', quantity: 1, unitPrice: '2.50' }] }],
-      [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 0, unitPrice: '2.50' }] }],
-      [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '10', quantity: 1, additions: [
-        { additionId: 'addition-1', quantity: 1, unitPrice: '2.50' }, { additionId: 'addition-1', quantity: 2, unitPrice: '2.50' },
+      [{ productId: '', quantity: 1, additions: [] }],
+      ...[undefined, 0, -1, 1.5, '1', NaN, Infinity, 2147483648].map((quantity) => [{ productId: 'product-1', quantity, additions: [] }]),
+      [{ productId: 'product-1', quantity: 1, additions: [{ additionId: '', quantity: 1 }] }],
+      [{ productId: 'product-1', quantity: 1, additions: [{ additionId: 'addition-1', quantity: 0 }] }],
+      [{ productId: 'product-1', quantity: 1, additions: [
+        { additionId: 'addition-1', quantity: 1 }, { additionId: 'addition-1', quantity: 2 },
       ] }],
     ];
     const repository = createOrderRepository();
@@ -176,71 +184,6 @@ describe('CreateOrder', () => {
     assert.equal(save.mock.callCount(), 0);
   });
 
-  it('rejects missing, invalid and empty input product names without saving', async (context) => {
-    const repository = createOrderRepository();
-    const save = context.mock.method(repository, 'save');
-    const useCase = createUseCase(repository);
-    const invalidNames: { value: unknown; code: string }[] = [
-      { value: undefined, code: 'REQUIRED' },
-      { value: null, code: 'REQUIRED' },
-      { value: 123, code: 'INVALID_TYPE' },
-      { value: '', code: 'EMPTY' },
-      { value: '   ', code: 'EMPTY' },
-    ];
-
-    for (const { value, code } of invalidNames) {
-      const payload = {
-        ...input,
-        items: [{ ...input.items[0], productName: value as string }],
-      };
-      await assert.rejects(
-        useCase.create(payload),
-        (error: unknown) => error instanceof DomainError && error.field === 'name' && error.code === code,
-      );
-    }
-    assert.equal(save.mock.callCount(), 0);
-  });
-
-  it('rejects missing, malformed and nonpositive item and addition input prices without saving', async (context) => {
-    const repository = createOrderRepository();
-    const save = context.mock.method(repository, 'save');
-    const useCase = createUseCase(repository);
-    const invalidPrices: { value: unknown; code: string }[] = [
-      { value: undefined, code: 'REQUIRED' },
-      { value: null, code: 'REQUIRED' },
-      { value: 10, code: 'INVALID_TYPE' },
-      { value: '', code: 'EMPTY' },
-      { value: 'invalid', code: 'INVALID_TYPE' },
-      { value: 'NaN', code: 'INVALID_TYPE' },
-      { value: 'Infinity', code: 'NOT_FINITE' },
-      { value: '0', code: 'NON_POSITIVE' },
-      { value: '-1', code: 'NON_POSITIVE' },
-    ];
-
-    for (const { value, code } of invalidPrices) {
-      const payloads: CreateOrderInput[] = [
-        {
-          ...input,
-          items: [{ ...input.items[0], unitPrice: value as string }],
-        },
-        {
-          ...input,
-          items: [{
-            ...input.items[0],
-            additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: value as string }],
-          }],
-        },
-      ];
-      for (const payload of payloads) {
-        await assert.rejects(
-          useCase.create(payload),
-          (error: unknown) => error instanceof DomainError && error.code === code,
-        );
-      }
-    }
-    assert.equal(save.mock.callCount(), 0);
-  });
-
   it('keeps decimal calculations exact', async () => {
     const repository = createOrderRepository();
     const productRepository = createProductRepository({
@@ -250,7 +193,7 @@ describe('CreateOrder', () => {
       findAdditionById: async (id) => buildCatalogAddition(id, '0.20'),
     });
     const output = await createUseCase(repository, productRepository, additionRepository).create({
-      ...input, items: [{ productId: 'product-1', productName: 'Pastel de queijo', unitPrice: '0.10', quantity: 3, additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: '0.20' }] }],
+      ...input, items: [{ productId: 'product-1', quantity: 3, additions: [{ additionId: 'addition-1', quantity: 1 }] }],
     });
 
     assert.equal(output.total, '0.9');
@@ -297,7 +240,7 @@ describe('CreateOrder', () => {
       ...input,
       items: [{
         ...input.items[0],
-        additions: [{ additionId: 'addition-1', quantity: 1, unitPrice: '2.50' }],
+        additions: [{ additionId: 'addition-1', quantity: 1 }],
       }],
     };
 

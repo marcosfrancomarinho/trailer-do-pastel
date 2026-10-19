@@ -6,9 +6,9 @@ import { DomainError } from '../src/domain/errors/domain-error.js';
 import { buildCatalogAddition, createAdditionRepository } from './helpers/order-fixtures.js';
 
 describe('CreateOrderItemAdditionService', () => {
-  const input = { additionId: 'addition-1', quantity: 2, unitPrice: '0.75' };
+  const input = { additionId: 'addition-1', quantity: 2 };
 
-  it('looks up the addition and uses the input quantity and price', async (context) => {
+  it('looks up the addition and uses its catalog price with the requested quantity', async (context) => {
     const repository = createAdditionRepository();
     const lookup = context.mock.method(repository, 'findAdditionById');
     const service = new CreateOrderItemAdditionService(repository);
@@ -19,8 +19,8 @@ describe('CreateOrderItemAdditionService', () => {
 
     assert.equal(addition.getAdditionId(), input.additionId);
     assert.equal(addition.getQuantity(), 2);
-    assert.equal(unitPrice, '0.75');
-    assert.equal(total, '1.5');
+    assert.equal(unitPrice, '2.5');
+    assert.equal(total, '5');
     assert.deepEqual(lookup.mock.calls[0].arguments, ['addition-1']);
   });
 
