@@ -51,14 +51,11 @@ O arquivo `.env.example` contém a configuração local de SQLite e a chave usad
 ```dotenv
 DATABASE_URL="file:./database.sqlite"
 JWT_SECRET=
-ADMIN_USER_IDS=
 ```
 
 Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
 
 Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar e os tokens de login expiram em uma hora.
-
-Para consultar pedidos pendentes, cadastre um usuário e informe o `id` retornado em `ADMIN_USER_IDS` no `.env`. Para mais de um administrador, separe os IDs por vírgula. Sem IDs configurados, nenhum usuário pode acessar a consulta de pedidos pendentes. Reinicie a API após alterar o `.env`.
 
 ## Rotas
 
@@ -73,11 +70,11 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | GET | `/categories/:categoryId/products` | Listar produtos da categoria | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | GET | `/products` | Listar todos os produtos | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
-| POST | `/additions` | Cadastrar adicional (Bearer JWT) | `{ "id": "..." }` |
+| POST | `/additions` | Cadastrar adicional | `{ "id": "..." }` |
 | GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
-| GET | `/orders/pending` | Listar pedidos pendentes (Bearer JWT de administrador) | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
+| GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
 
 ### Usuários
 
@@ -137,7 +134,7 @@ O nome e a descrição do produto são obrigatórios; a descrição não pode se
 
 `GET /products/:productId/additions` lista os adicionais vinculados ao produto pela relação `product_additions`, também em ordem alfabética e incluindo os indisponíveis. Se não houver vínculos para o ID informado, retorna `[]`.
 
-Para cadastrar um adicional, envie `POST /additions` com `Authorization: Bearer <accessToken>` obtido em `POST /login` e o nome, preço e disponibilidade no corpo JSON.
+Para cadastrar um adicional, envie `POST /additions` com o nome, preço e disponibilidade no corpo JSON.
 
 Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido. As datas `createdAt` são preenchidas pelo banco e não fazem parte dos payloads.
 
@@ -175,7 +172,7 @@ total do pedido = soma dos totais dos itens
 
 No exemplo, dois pastéis de `12.50`, cada um com um adicional de `2.50`, totalizam `30`. A API calcula o total e cria o pedido com status `PENDING` e um token de acompanhamento.
 
-`GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. Envie `Authorization: Bearer <accessToken>` de um usuário cujo ID esteja em `ADMIN_USER_IDS`. Token ausente ou inválido retorna `401`; usuário sem permissão retorna `403`. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto. Ainda não há rota para alterar o status do pedido, portanto pedidos criados permanecem pendentes.
+`GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto. Ainda não há rota para alterar o status do pedido, portanto pedidos criados permanecem pendentes. Nenhuma rota exige autenticação neste momento; configure a proteção antes de disponibilizar a API publicamente.
 
 ## Testar as requisições
 
@@ -190,8 +187,7 @@ Os controllers encaminham os erros para o middleware `ErrorHandler`.
 | Status | Situação |
 | --- | --- |
 | 400 | Erro de validação do domínio |
-| 401 | Nome ou senha incorretos no login, ou token ausente/inválido na rota autenticada |
-| 403 | Usuário autenticado sem permissão para consultar pedidos pendentes |
+| 401 | Nome ou senha incorretos no login |
 | 404 | Produto ou adicional não encontrado |
 | 409 | Nome já cadastrado ou item indisponível |
 | 500 | Erro interno inesperado |

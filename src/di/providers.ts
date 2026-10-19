@@ -40,8 +40,6 @@ import { ListProductsByCategoryController } from '../infrastructure/http/control
 import { ListProductsController } from '../infrastructure/http/controllers/products/list-products-controller.js';
 import { LoginUserController } from '../infrastructure/http/controllers/users/login-user-controller.js';
 import { ErrorHandler } from '../infrastructure/http/middlewares/error-handler.js';
-import { RequireAuthentication } from '../infrastructure/http/middlewares/require-authentication.js';
-import { RequireAdmin } from '../infrastructure/http/middlewares/require-admin.js';
 import { Server } from '../infrastructure/http/server.js';
 import { PrismaCategoryQueries } from '../infrastructure/queries/prisma-category-queries.js';
 import { PrismaAdditionQueries } from '../infrastructure/queries/prisma-addition-queries.js';
@@ -52,12 +50,11 @@ import { PrismaCategoryRepository } from '../infrastructure/repositories/prisma-
 import { PrismaOrderRepository } from '../infrastructure/repositories/prisma-order-repository.js';
 import { PrismaProductRepository } from '../infrastructure/repositories/prisma-product-repository.js';
 import { PrismaUserRepository } from '../infrastructure/repositories/prisma-user-repository.js';
-import { ADMIN_USER_IDS_TOKEN, JWT_SECRET_TOKEN } from './tokens.js';
+import { JWT_SECRET_TOKEN } from './tokens.js';
 
 const providers = new AppConfig()
   .useFactory(PrismaClient, () => new PrismaClient())
   .useValue(JWT_SECRET_TOKEN, process.env.JWT_SECRET)
-  .useValue(ADMIN_USER_IDS_TOKEN, process.env.ADMIN_USER_IDS)
   .useClass<OrderRepository>(PrismaOrderRepository)
   .useClass<PasswordHasher>(BcryptPasswordHasher)
   .useClass<AuthTokenGateway>(JwtAuthTokenGateway, [JWT_SECRET_TOKEN])
@@ -78,8 +75,6 @@ const providers = new AppConfig()
   .useClass(LoginUser)
   .useClass(LoginUserController)
   .useClass(ErrorHandler)
-  .useClass(RequireAuthentication)
-  .useClass(RequireAdmin, [ADMIN_USER_IDS_TOKEN])
   .useClass(CreateAddition)
   .useClass(CreateAdditionController)
   .useClass(ListAdditions)

@@ -14,8 +14,6 @@ import { ListProductsController } from './controllers/products/list-products-con
 import { CreateOrderController } from './controllers/orders/create-order-controller.js';
 import { ListPendingOrdersController } from './controllers/orders/list-pending-orders-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
-import { RequireAuthentication } from './middlewares/require-authentication.js';
-import { RequireAdmin } from './middlewares/require-admin.js';
 
 export class Server {
   private readonly app = express();
@@ -34,8 +32,6 @@ export class Server {
     private readonly createOrderController: CreateOrderController,
     private readonly listPendingOrdersController: ListPendingOrdersController,
     private readonly errorHandler: ErrorHandler,
-    private readonly requireAuthentication: RequireAuthentication,
-    private readonly requireAdmin: RequireAdmin,
   ) {
     this.app.use(express.json(), cors());
     this.routes();
@@ -57,11 +53,7 @@ export class Server {
       '/products/:productId/additions',
       this.listAdditionsByProductController.execute.bind(this.listAdditionsByProductController),
     );
-    this.app.post(
-      '/additions',
-      this.requireAuthentication.execute.bind(this.requireAuthentication),
-      this.createAdditionController.execute.bind(this.createAdditionController),
-    );
+    this.app.post('/additions', this.createAdditionController.execute.bind(this.createAdditionController));
     this.app.get('/additions', this.listAdditionsController.execute.bind(this.listAdditionsController));
     this.app.post('/categories', this.createCategoryController.execute.bind(this.createCategoryController));
     this.app.get('/categories', this.listCategoriesController.execute.bind(this.listCategoriesController));
@@ -70,11 +62,6 @@ export class Server {
       this.listProductsByCategoryController.execute.bind(this.listProductsByCategoryController),
     );
     this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
-    this.app.get(
-      '/orders/pending',
-      this.requireAuthentication.execute.bind(this.requireAuthentication),
-      this.requireAdmin.execute.bind(this.requireAdmin),
-      this.listPendingOrdersController.execute.bind(this.listPendingOrdersController),
-    );
+    this.app.get('/orders/pending', this.listPendingOrdersController.execute.bind(this.listPendingOrdersController));
   }
 }

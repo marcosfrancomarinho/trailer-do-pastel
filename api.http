@@ -2,7 +2,7 @@
 # Altere testId para cadastrar novos registros sem repetir os nomes.
 # Antes dos cadastros, aplique as migrations do projeto.
 # Execute criarCategoria antes de criarProduto.
-# Execute loginUsuario antes de criarAdicional e crie produto e adicional antes dos pedidos.
+# Crie produto e adicional antes dos pedidos.
 
 @baseUrl = http://localhost:3000
 @testId = 003
@@ -64,10 +64,9 @@ GET {{baseUrl}}/products
 # @name listarProdutosDaCategoria
 GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products
 
-### Cadastrar adicional — 201; requer login
+### Cadastrar adicional — 201
 # @name criarAdicional
 POST {{baseUrl}}/additions
-Authorization: Bearer {{loginUsuario.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -138,11 +137,9 @@ Content-Type: application/json
   ]
 }
 
-### Listar pedidos pendentes — 200; requer ID do usuário em ADMIN_USER_IDS
-# Execute criarUsuario, configure o ID retornado em ADMIN_USER_IDS e reinicie a API.
+### Listar pedidos pendentes — 200
 # @name listarPedidosPendentes
 GET {{baseUrl}}/orders/pending
-Authorization: Bearer {{loginUsuario.response.body.$.accessToken}}
 
 ### Senha inválida — 400, TOO_SHORT
 POST {{baseUrl}}/users
