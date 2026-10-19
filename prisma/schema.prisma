@@ -52,8 +52,9 @@ model Product {
   available   Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
 
-  category Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  items    OrderItem[]
+  category  Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  items     OrderItem[]
+  additions ProductAddition[]
 
   @@index([categoryId])
   @@map("products")
@@ -116,8 +117,21 @@ model Addition {
   createdAt DateTime @default(now()) @map("created_at")
 
   orderItemAdditions OrderItemAddition[]
+  products           ProductAddition[]
 
   @@map("additions")
+}
+
+model ProductAddition {
+  productId  String @map("product_id")
+  additionId String @map("addition_id")
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  addition Addition @relation(fields: [additionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, additionId])
+  @@index([additionId])
+  @@map("product_additions")
 }
 
 model OrderItemAddition {
