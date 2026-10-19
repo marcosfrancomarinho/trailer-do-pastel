@@ -12,6 +12,7 @@ O cliente pode fazer um pedido sem criar uma conta. Os itens registram o nome e 
 - Express 5 e CORS.
 - Prisma 6 com SQLite e migrations versionadas.
 - bcrypt para hash de senhas e comparação de credenciais.
+- JSON Web Token (JWT) para o login de usuários.
 - Decimal.js, encapsulado no VO `DecimalValue`, para cálculos monetários.
 - Kit Dev para desenvolvimento, build, testes e injeção de dependências.
 
@@ -23,6 +24,7 @@ O cliente pode fazer um pedido sem criar uma conta. Os itens registram o nome e 
 git clone https://github.com/marcosfrancomarinho/trailer-do-pastel.git
 cd trailer-do-pastel
 cp .env.example .env
+# Preencha JWT_SECRET no arquivo .env com uma chave aleatória; por exemplo, gere uma com: openssl rand -hex 32
 yarn install --frozen-lockfile
 yarn prisma generate
 touch prisma/database.sqlite
@@ -44,22 +46,28 @@ yarn dev --watch
 
 ## Configuração do banco
 
-O arquivo `.env.example` contém uma configuração local de SQLite:
+O arquivo `.env.example` contém a configuração local de SQLite e a chave usada para assinar os tokens de login:
 
 ```dotenv
 DATABASE_URL="file:./database.sqlite"
+JWT_SECRET=
 ```
 
-Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. As migrations existentes criam as tabelas já versionadas nesse arquivo. A tabela de categorias e a relação obrigatória com produtos ainda não têm migration; as rotas `POST /categories` e `POST /products` dependem dessa etapa para funcionar com o banco. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
+Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
+
+Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar e os tokens de login expiram em uma hora.
 
 ## Rotas
 
-Todas as rotas recebem JSON e retornam `201 Created` em caso de sucesso.
+As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de sucesso. Login e listagens retornam `200 OK`.
 
-| Método | Rota | Cadastro | Resposta |
+| Método | Rota | Operação | Resposta |
 | --- | --- | --- | --- |
 | POST | `/users` | Usuário | `{ "id": "..." }` |
+| POST | `/login` | Login de usuário | `{ "name": "marcos", "accessToken": "..." }` |
 | POST | `/categories` | Categoria | `{ "id": "..." }` |
+| GET | `/categories` | Listar categorias | `[{ "id": "...", "name": "Pastéis" }]` |
+| GET | `/categories/:categoryId/products` | Listar produtos da categoria | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
 | POST | `/additions` | Adicional | `{ "id": "..." }` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
@@ -75,6 +83,8 @@ Todas as rotas recebem JSON e retornam `201 Created` em caso de sucesso.
 
 O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e números, respeitando o limite de 72 bytes do bcrypt. Somente o hash é persistido, e a resposta não inclui a senha.
 
+Para entrar, envie o mesmo `name` e `password` no JSON de `POST /login`. A resposta contém o nome cadastrado e um token JWT com o ID do usuário em `sub`. Se o usuário não existir ou a senha não conferir, a API retorna `401 INVALID_CREDENTIALS`; campos inválidos retornam `400`.
+
 ### Categorias
 
 ```json
@@ -83,7 +93,7 @@ O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e n�
 }
 ```
 
-O nome da categoria é obrigatório e único. Crie a categoria antes de cadastrar produtos e use o ID retornado em `categoryId`.
+O nome da categoria é obrigatório e único. Crie a categoria antes de cadastrar produtos e use o ID retornado em `categoryId`. `GET /categories` lista todas as categorias em ordem alfabética; quando não há nenhuma, retorna `[]`.
 
 ### Produtos
 
@@ -107,7 +117,9 @@ O nome da categoria é obrigatório e único. Crie a categoria antes de cadastra
 }
 ```
 
-O nome e a descrição do produto são obrigatórios; a descrição não pode ser nula nem vazia. `categoryId` também é obrigatório e deve apontar para uma categoria existente. Uma categoria pode ter vários produtos. A criação de categorias e produtos requer a migration de categorias, ainda não versionada.
+O nome e a descrição do produto são obrigatórios; a descrição não pode ser nula nem vazia. `categoryId` também é obrigatório e deve apontar para uma categoria existente. Uma categoria pode ter vários produtos.
+
+`GET /categories/:categoryId/products` lista os produtos da categoria em ordem alfabética, incluindo os indisponíveis. O preço é retornado como string decimal. Se não houver produtos para o ID informado, a resposta é `[]`.
 
 Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido. As datas `createdAt` são preenchidas pelo banco e não fazem parte dos payloads.
 
@@ -150,7 +162,7 @@ No exemplo, dois pastéis de `12.50`, cada um com um adicional de `2.50`, totali
 
 ## Testar as requisições
 
-O arquivo [api.http](api.http) contém exemplos das rotas de cadastro disponíveis, pedidos com e sem adicionais e respostas de erro.
+O arquivo [api.http](api.http) contém exemplos das rotas de cadastro e consulta, pedidos com e sem adicionais e respostas de erro.
 
 Com a API rodando e a migration de categorias aplicada, abra o arquivo em um cliente compatível com REST Client. Execute `criarCategoria`, `criarProduto` e `criarAdicional` antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
 
@@ -161,6 +173,7 @@ Os controllers encaminham os erros para o middleware `ErrorHandler`.
 | Status | Situação |
 | --- | --- |
 | 400 | Erro de validação do domínio |
+| 401 | Nome ou senha incorretos no login |
 | 404 | Produto ou adicional não encontrado |
 | 409 | Nome já cadastrado ou item indisponível |
 | 500 | Erro interno inesperado |
@@ -218,4 +231,4 @@ kit-dev/           # Ferramentas de desenvolvimento, testes e DI
 api.http           # Exemplos de requisições
 ```
 
-Os casos de uso expõem o método `create()`. A montagem dos itens e adicionais do pedido fica nos services de aplicação, e as regras de negócio são validadas nas entidades e nos VOs.
+Os casos de uso expõem métodos curtos conforme a operação, como `create()`, `list()` e `login()`. A montagem dos itens e adicionais do pedido fica nos services de aplicação, e as regras de negócio são validadas nas entidades e nos VOs.

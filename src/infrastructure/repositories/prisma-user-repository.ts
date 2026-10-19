@@ -1,10 +1,23 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
-import type { User } from '../../domain/entities/user.js';
+import { User } from '../../domain/entities/user.js';
 import type { UserRepository } from '../../domain/repositories/user-repository.js';
+import { UserName } from '../../domain/value-objects/user/user-name.js';
+import { UserPassword } from '../../domain/value-objects/user/user-password.js';
 
 export class PrismaUserRepository implements UserRepository {
   public constructor(private readonly prisma: PrismaClient) {}
+
+  public async findByName(name: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { name },
+      select: { id: true, name: true, password: true },
+    });
+
+    if (!user) return null;
+
+    return User.create(UserName.create(user.name), UserPassword.fromHash(user.password), user.id);
+  }
 
   public async existsByName(name: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({

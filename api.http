@@ -1,11 +1,11 @@
 # Inicie a API com yarn dev e execute as requisições pelo REST Client.
 # Altere testId para cadastrar novos registros sem repetir os nomes.
-# Antes dos cadastros de categoria e produto, aplique a migration de categorias (ainda não versionada).
+# Antes dos cadastros, aplique as migrations do projeto.
 # Execute criarCategoria antes de criarProduto.
 # Execute criarProduto e criarAdicional antes dos exemplos de pedido.
 
 @baseUrl = http://localhost:3000
-@testId = 002
+@testId = 003
 @productName = Pastel de queijo {{testId}}
 @productPrice = 12.50
 @additionPrice = 2.50
@@ -13,6 +13,16 @@
 ### Cadastrar usuário — 201
 # @name criarUsuario
 POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "marcosfranco{{testId}}",
+  "password": "Pastel123!"
+}
+
+### Login de usuário — 200; retorna name e accessToken
+# @name loginUsuario
+POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
@@ -29,6 +39,10 @@ Content-Type: application/json
   "name": "Pastéis {{testId}}"
 }
 
+### Listar categorias — 200
+# @name listarCategorias
+GET {{baseUrl}}/categories
+
 ### Cadastrar produto — 201
 # @name criarProduto
 POST {{baseUrl}}/products
@@ -37,10 +51,14 @@ Content-Type: application/json
 {
   "name": "{{productName}}",
   "description": "Pastel recheado com queijo e orégano",
-  "categoryId": "{{criarCategoria.response.body.$.id}}",
+  "categoryId": "47ba76d2-1205-4f88-a025-b18ce14afb40",
   "price": "{{productPrice}}",
   "available": true
 }
+
+### Listar produtos da categoria — 200
+# @name listarProdutosDaCategoria
+GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products
 
 ### Cadastrar adicional — 201
 # @name criarAdicional

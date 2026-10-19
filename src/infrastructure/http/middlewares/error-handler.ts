@@ -7,6 +7,7 @@ export class ErrorHandler {
     ALREADY_EXISTS: 409,
     NOT_FOUND: 404,
     UNAVAILABLE: 409,
+    INVALID_CREDENTIALS: 401,
   };
 
   public execute(error: unknown, request: Request, response: Response, next: NextFunction): void {

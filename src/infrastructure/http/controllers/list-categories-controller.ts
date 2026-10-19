@@ -1,0 +1,18 @@
+import type { NextFunction, Request, Response } from 'express';
+import type { ListCategoriesOutput } from '../../../application/dtos/list-categories-dto.js';
+import { ListCategories } from '../../../application/use-cases/list-categories.js';
+
+export class ListCategoriesController {
+  public constructor(private readonly listCategories: ListCategories) {}
+
+  public async execute(_request: Request, response: Response<ListCategoriesOutput>, next: NextFunction): Promise<void> {
+    try {
+      const output = await this.listCategories.list();
+
+      response.status(200);
+      response.json(output);
+    } catch (error) {
+      next(error);
+    }
+  }
+}

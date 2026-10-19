@@ -1,4 +1,4 @@
-export type ApplicationErrorCode = 'ALREADY_EXISTS' | 'NOT_FOUND' | 'UNAVAILABLE';
+export type ApplicationErrorCode = 'ALREADY_EXISTS' | 'NOT_FOUND' | 'UNAVAILABLE' | 'INVALID_CREDENTIALS';
 
 export class ApplicationError extends Error {
   public constructor(

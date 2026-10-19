@@ -1,0 +1,21 @@
+import jwt from 'jsonwebtoken';
+import type { AuthTokenGateway } from '../../application/gateways/auth-token-gateway.js';
+
+export class JwtAuthTokenGateway implements AuthTokenGateway {
+  private readonly secret: string;
+
+  public constructor(secret: string | undefined) {
+    if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
+      throw new Error('JWT_SECRET deve conter pelo menos 32 bytes.');
+    }
+    this.secret = secret;
+  }
+
+  public async issue(userId: string): Promise<string> {
+    return jwt.sign({}, this.secret, {
+      algorithm: 'HS256',
+      subject: userId,
+      expiresIn: '1h',
+    });
+  }
+}

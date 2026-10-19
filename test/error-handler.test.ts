@@ -14,6 +14,7 @@ describe('ErrorHandler', () => {
       { error: new ApplicationError('name', 'ALREADY_EXISTS', 'Usuário já cadastrado.'), expectedStatus: 409 },
       { error: new ApplicationError('productId', 'NOT_FOUND', 'Produto não encontrado.'), expectedStatus: 404 },
       { error: new ApplicationError('productId', 'UNAVAILABLE', 'Produto indisponível.'), expectedStatus: 409 },
+      { error: new ApplicationError('credentials', 'INVALID_CREDENTIALS', 'Nome ou senha inválidos.'), expectedStatus: 401 },
     ];
 
     for (const { error, expectedStatus } of cases) {

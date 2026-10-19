@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { container } from './di/providers.js';
 import { Server } from './infrastructure/http/server.js';
 
