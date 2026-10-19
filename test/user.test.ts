@@ -32,9 +32,9 @@ describe('User', () => {
     const user = createUser('database-id');
     const createdAt = user.getCreatedAt().getTime();
 
-    user.defineEncryptedPassword('gateway-test-hash');
+    user.defineEncryptedPassword('$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
-    assert.equal(user.getPassword(), 'gateway-test-hash');
+    assert.equal(user.getPassword(), '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
     assert.equal(user.getId(), 'database-id');
     assert.equal(user.getName(), 'Marcos');
     assert.equal(user.getCreatedAt().getTime(), createdAt);
@@ -45,7 +45,7 @@ describe('User', () => {
     const cases: [unknown, DomainErrorCode][] = [
       [undefined, 'REQUIRED'], [null, 'REQUIRED'],
       [123, 'INVALID_TYPE'], [false, 'INVALID_TYPE'], [{}, 'INVALID_TYPE'],
-      ['', 'EMPTY'], [' \t\n', 'EMPTY'],
+      ['', 'INVALID_HASH'], [' \t\n', 'INVALID_HASH'],
     ];
 
     for (const [value, code] of cases) {
