@@ -12,8 +12,10 @@ import { ListCategoriesController } from './controllers/categories/list-categori
 import { ListProductsByCategoryController } from './controllers/products/list-products-by-category-controller.js';
 import { ListProductsController } from './controllers/products/list-products-controller.js';
 import { CreateOrderController } from './controllers/orders/create-order-controller.js';
+import { ListPendingOrdersController } from './controllers/orders/list-pending-orders-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
 import { RequireAuthentication } from './middlewares/require-authentication.js';
+import { RequireAdmin } from './middlewares/require-admin.js';
 
 export class Server {
   private readonly app = express();
@@ -30,8 +32,10 @@ export class Server {
     private readonly listProductsByCategoryController: ListProductsByCategoryController,
     private readonly listProductsController: ListProductsController,
     private readonly createOrderController: CreateOrderController,
+    private readonly listPendingOrdersController: ListPendingOrdersController,
     private readonly errorHandler: ErrorHandler,
     private readonly requireAuthentication: RequireAuthentication,
+    private readonly requireAdmin: RequireAdmin,
   ) {
     this.app.use(express.json(), cors());
     this.routes();
@@ -66,5 +70,11 @@ export class Server {
       this.listProductsByCategoryController.execute.bind(this.listProductsByCategoryController),
     );
     this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
+    this.app.get(
+      '/orders/pending',
+      this.requireAuthentication.execute.bind(this.requireAuthentication),
+      this.requireAdmin.execute.bind(this.requireAdmin),
+      this.listPendingOrdersController.execute.bind(this.listPendingOrdersController),
+    );
   }
 }

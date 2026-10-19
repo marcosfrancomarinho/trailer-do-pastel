@@ -9,6 +9,7 @@ export class ErrorHandler {
     UNAVAILABLE: 409,
     INVALID_CREDENTIALS: 401,
     UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
   };
 
   public execute(error: unknown, request: Request, response: Response, next: NextFunction): void {

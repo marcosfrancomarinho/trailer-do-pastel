@@ -138,6 +138,12 @@ Content-Type: application/json
   ]
 }
 
+### Listar pedidos pendentes — 200; requer ID do usuário em ADMIN_USER_IDS
+# Execute criarUsuario, configure o ID retornado em ADMIN_USER_IDS e reinicie a API.
+# @name listarPedidosPendentes
+GET {{baseUrl}}/orders/pending
+Authorization: Bearer {{loginUsuario.response.body.$.accessToken}}
+
 ### Senha inválida — 400, TOO_SHORT
 POST {{baseUrl}}/users
 Content-Type: application/json

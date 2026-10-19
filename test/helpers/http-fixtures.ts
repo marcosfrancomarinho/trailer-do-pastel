@@ -8,6 +8,7 @@ export function createResponse(context: TestContext, headersSent: boolean = fals
 
   response.status = status;
   response.json = json;
+  response.locals = {};
   Object.defineProperty(response, 'headersSent', { value: headersSent });
 
   return { response, status, json };

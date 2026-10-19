@@ -19,6 +19,7 @@ describe('RequireAuthentication', () => {
 
     await middleware.execute(request, response, next);
 
+    assert.equal(response.locals.userId, 'user-1');
     assert.deepEqual(next.mock.calls[0].arguments, []);
   });
 
@@ -37,6 +38,7 @@ describe('RequireAuthentication', () => {
       assert.ok(error instanceof ApplicationError);
       assert.equal(error.code, 'UNAUTHORIZED');
       assert.equal(error.field, 'authorization');
+      assert.equal(response.locals.userId, undefined);
     }
   });
 });
