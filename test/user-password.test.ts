@@ -5,6 +5,20 @@ import { DomainError } from '../src/domain/errors/domain-error.js';
 import type { DomainErrorCode } from '../src/domain/errors/domain-error.js';
 
 describe('UserPassword', () => {
+  it('reconstitutes a bcrypt hash without applying plaintext-password rules', () => {
+    const hash = '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+    assert.equal(UserPassword.fromHash(hash).getValue(), hash);
+  });
+
+  it('rejects invalid bcrypt hashes', () => {
+    for (const hash of [undefined, null, 123, '', ' ', 'gateway-test-hash', '$2b$12$short']) {
+      assert.throws(
+        () => UserPassword.fromHash(hash as string),
+        (error: unknown) => error instanceof DomainError && error.field === 'password' && error.code === 'INVALID_HASH',
+      );
+    }
+  });
+
   it('preserves the exact password, including surrounding spaces', () => {
     const password = '  Senha de teste1!  ';
     assert.equal(UserPassword.create(password).getValue(), password);
