@@ -25,7 +25,7 @@ describe('CreateUser', () => {
       async save(user) {
         calls.push('save');
         assert.equal(user.getName(), 'Marcos');
-        assert.equal(user.getPassword(), 'gateway-test-hash');
+        assert.equal(user.getPassword(), '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         assert.notEqual(user.getPassword(), input.password);
         assert.equal(user.getCreatedAt().getTime(), createdAt);
         assert.equal(defineEncryptedPassword.mock.callCount(), 1);
@@ -39,7 +39,7 @@ describe('CreateUser', () => {
         assert.equal(create.mock.callCount(), 1);
         assert.equal(defineEncryptedPassword.mock.callCount(), 0);
         now += 1000;
-        return 'gateway-test-hash';
+        return '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
       },
     });
 
@@ -123,7 +123,7 @@ describe('CreateUser', () => {
 
     await assert.rejects(
       useCase.create(input),
-      (error: unknown) => error instanceof DomainError && error.field === 'password' && error.code === 'EMPTY',
+      (error: unknown) => error instanceof DomainError && error.field === 'password' && error.code === 'INVALID_HASH',
     );
     assert.equal(save.mock.callCount(), 0);
   });
@@ -138,7 +138,7 @@ describe('CreateUser', () => {
       const useCase = new CreateUser({
         existsByName: async () => false,
         save: async () => { throw failure; },
-      }, { hash: async () => 'gateway-test-hash', match });
+      }, { hash: async () => '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', match });
 
       await assert.rejects(useCase.create(input), (error: unknown) => error === failure);
     }
