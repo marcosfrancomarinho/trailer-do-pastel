@@ -18,4 +18,20 @@ export class JwtAuthTokenGateway implements AuthTokenGateway {
       expiresIn: '1h',
     });
   }
+
+  public async verify(token: string): Promise<string | null> {
+    try {
+      const payload = jwt.verify(token, this.secret, { algorithms: ['HS256'] });
+
+      if (typeof payload === 'string') return null;
+
+      const userId = payload.sub;
+      if (typeof userId !== 'string' || userId.trim() === '') return null;
+
+      return userId;
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) return null;
+      throw error;
+    }
+  }
 }

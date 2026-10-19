@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { CreateUserInput, CreateUserOutput } from '../../../application/dtos/create-user-dto.js';
-import { CreateUser } from '../../../application/use-cases/create-user.js';
+import type { CreateUserInput, CreateUserOutput } from '../../../../application/dtos/create-user-dto.js';
+import { CreateUser } from '../../../../application/use-cases/users/create-user.js';
 
 export class CreateUserController {
   public constructor(private readonly createUser: CreateUser) {}

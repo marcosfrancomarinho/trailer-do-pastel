@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { ListCategories } from '../src/application/use-cases/list-categories.js';
-import { ListCategoriesController } from '../src/infrastructure/http/controllers/list-categories-controller.js';
+import { ListCategories } from '../src/application/use-cases/categories/list-categories.js';
+import { ListCategoriesController } from '../src/infrastructure/http/controllers/categories/list-categories-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
 
 describe('ListCategoriesController', () => {

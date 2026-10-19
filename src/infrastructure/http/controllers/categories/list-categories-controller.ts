@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListCategoriesOutput } from '../../../application/dtos/list-categories-dto.js';
-import { ListCategories } from '../../../application/use-cases/list-categories.js';
+import type { ListCategoriesOutput } from '../../../../application/dtos/list-categories-dto.js';
+import { ListCategories } from '../../../../application/use-cases/categories/list-categories.js';
 
 export class ListCategoriesController {
   public constructor(private readonly listCategories: ListCategories) {}

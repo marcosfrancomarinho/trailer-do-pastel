@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { CreateOrder } from '../src/application/use-cases/create-order.js';
+import { CreateOrder } from '../src/application/use-cases/orders/create-order.js';
 import { CreateOrderItemService } from '../src/application/services/create-order-item-service.js';
 import { CreateOrderItemAdditionService } from '../src/application/services/create-order-item-addition-service.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
-import { CreateOrderController } from '../src/infrastructure/http/controllers/create-order-controller.js';
+import { CreateOrderController } from '../src/infrastructure/http/controllers/orders/create-order-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
 import { createOrderRepository, createProductRepository, createAdditionRepository } from './helpers/order-fixtures.js';
 

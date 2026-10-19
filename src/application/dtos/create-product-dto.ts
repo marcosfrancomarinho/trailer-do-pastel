@@ -4,6 +4,7 @@ export interface CreateProductInput {
   categoryId: string;
   price: string;
   available?: boolean;
+  additionIds?: string[];
 }
 
 export interface CreateProductOutput {

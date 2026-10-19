@@ -10,6 +10,7 @@ import { AdditionPrice } from '../../src/domain/value-objects/addition/addition-
 import type { OrderRepository } from '../../src/domain/repositories/order-repository.js';
 import type { ProductRepository } from '../../src/domain/repositories/product-repository.js';
 import type { AdditionRepository } from '../../src/domain/repositories/addition-repository.js';
+import type { CategoryRepository } from '../../src/domain/repositories/category-repository.js';
 import { CustomerName } from '../../src/domain/value-objects/customer/customer-name.js';
 import { CustomerPhone } from '../../src/domain/value-objects/customer/customer-phone.js';
 import { DecimalValue } from '../../src/domain/value-objects/shared/decimal-value.js';
@@ -87,6 +88,21 @@ export function createAdditionRepository(overrides: Partial<AdditionRepository> 
     },
     async save() {
       return 'addition-id';
+    },
+    ...overrides,
+  };
+}
+
+export function createCategoryRepository(overrides: Partial<CategoryRepository> = {}): CategoryRepository {
+  return {
+    async existsById(id) {
+      return id === 'category-1';
+    },
+    async existsByName() {
+      return false;
+    },
+    async save() {
+      return 'category-id';
     },
     ...overrides,
   };

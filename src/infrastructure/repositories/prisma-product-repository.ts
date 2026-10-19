@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
 import { Product } from '../../domain/entities/product.js';
+import type { Addition } from '../../domain/entities/addition.js';
 import type { ProductRepository } from '../../domain/repositories/product-repository.js';
 import { ProductName } from '../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../domain/value-objects/product/product-price.js';
@@ -32,25 +33,31 @@ export class PrismaProductRepository implements ProductRepository {
     return product !== null;
   }
 
-  public async save(product: Product): Promise<string> {
+  public async save(product: Product, additions: Addition[]): Promise<string> {
     try {
-      const savedProduct = await this.prisma.product.create({
-        data: {
-          name: product.getName(),
-          description: product.getDescription(),
-          categoryId: product.getCategoryId(),
-          price: product.getPrice().getValue(),
-          available: product.isAvailable(),
-        },
+      const data: Prisma.ProductUncheckedCreateInput = {
+        name: product.getName(),
+        description: product.getDescription(),
+        categoryId: product.getCategoryId(),
+        price: product.getPrice().getValue(),
+        available: product.isAvailable(),
+      };
+
+      if (additions.length > 0) {
+        const additionLinks = additions.map((addition) => ({ additionId: addition.getId() }));
+        data.additions = { create: additionLinks };
+      }
+
+      const { id } = await this.prisma.product.create({
+        data,
         select: { id: true },
       });
 
-      return savedProduct.id;
+      return id;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
       }
-
       throw error;
     }
   }

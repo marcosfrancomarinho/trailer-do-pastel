@@ -2,7 +2,7 @@
 # Altere testId para cadastrar novos registros sem repetir os nomes.
 # Antes dos cadastros, aplique as migrations do projeto.
 # Execute criarCategoria antes de criarProduto.
-# Execute criarProduto e criarAdicional antes dos exemplos de pedido.
+# Execute loginUsuario antes de criarAdicional e crie produto e adicional antes dos pedidos.
 
 @baseUrl = http://localhost:3000
 @testId = 003
@@ -43,7 +43,7 @@ Content-Type: application/json
 # @name listarCategorias
 GET {{baseUrl}}/categories
 
-### Cadastrar produto — 201
+### Cadastrar produto sem adicionais — 201
 # @name criarProduto
 POST {{baseUrl}}/products
 Content-Type: application/json
@@ -51,18 +51,23 @@ Content-Type: application/json
 {
   "name": "{{productName}}",
   "description": "Pastel recheado com queijo e orégano",
-  "categoryId": "47ba76d2-1205-4f88-a025-b18ce14afb40",
+  "categoryId": "{{criarCategoria.response.body.$.id}}",
   "price": "{{productPrice}}",
   "available": true
 }
+
+### Listar todos os produtos — 200
+
+GET {{baseUrl}}/products
 
 ### Listar produtos da categoria — 200
 # @name listarProdutosDaCategoria
 GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products
 
-### Cadastrar adicional — 201
+### Cadastrar adicional — 201; requer login
 # @name criarAdicional
 POST {{baseUrl}}/additions
+Authorization: Bearer {{loginUsuario.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -70,6 +75,28 @@ Content-Type: application/json
   "price": "{{additionPrice}}",
   "available": true
 }
+
+### Listar todos os adicionais — 200
+
+GET {{baseUrl}}/additions
+
+### Cadastrar produto com adicional — 201
+# @name criarProdutoComAdicional
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Pastel com queijo extra {{testId}}",
+  "description": "Pastel recheado com queijo e orégano",
+  "categoryId": "{{criarCategoria.response.body.$.id}}",
+  "price": "{{productPrice}}",
+  "available": true,
+  "additionIds": ["{{criarAdicional.response.body.$.id}}"]
+}
+
+### Listar adicionais do produto — 200
+
+GET {{baseUrl}}/products/{{criarProduto.response.body.$.id}}/additions
 
 ### Cadastrar pedido com adicional — 201; total esperado: "30"
 # Os IDs abaixo são obtidos das respostas de criarProduto e criarAdicional.

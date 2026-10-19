@@ -4,8 +4,8 @@ import type {
   CreateOrderInput,
   CreateOrderItemInput,
   CreateOrderOutput,
-} from '../../../application/dtos/create-order-dto.js';
-import { CreateOrder } from '../../../application/use-cases/create-order.js';
+} from '../../../../application/dtos/create-order-dto.js';
+import { CreateOrder } from '../../../../application/use-cases/orders/create-order.js';
 
 export class CreateOrderController {
   public constructor(private readonly createOrder: CreateOrder) {}

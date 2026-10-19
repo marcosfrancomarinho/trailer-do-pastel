@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { LoginUser } from '../src/application/use-cases/login-user.js';
+import { LoginUser } from '../src/application/use-cases/users/login-user.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
-import { LoginUserController } from '../src/infrastructure/http/controllers/login-user-controller.js';
+import { LoginUserController } from '../src/infrastructure/http/controllers/users/login-user-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
 
 function createUseCase(): LoginUser {
   return new LoginUser(
     { findByName: async () => null, existsByName: async () => false, save: async () => 'unused' },
     { hash: async () => 'unused', match: async () => false },
-    { issue: async () => 'unused' },
+    { issue: async () => 'unused', verify: async () => null },
   );
 }
 

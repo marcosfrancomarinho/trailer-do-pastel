@@ -1,25 +1,29 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { CreateProduct } from '../src/application/use-cases/create-product.js';
+import { CreateProduct } from '../src/application/use-cases/products/create-product.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
-import { CreateProductController } from '../src/infrastructure/http/controllers/create-product-controller.js';
+import { CreateProductController } from '../src/infrastructure/http/controllers/products/create-product-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
-import { createProductRepository } from './helpers/order-fixtures.js';
+import { createAdditionRepository, createCategoryRepository, createProductRepository } from './helpers/order-fixtures.js';
 
 describe('CreateProductController', () => {
-  const input = { name: 'Pastel', description: 'Queijo', price: '12.50', categoryId: 'category-1', available: false };
+  const input = {
+    name: 'Pastel', description: 'Queijo', price: '12.50', categoryId: 'category-1', available: false,
+    additionIds: ['addition-1'],
+  };
 
   it('maps the input fields and responds with 201 and the created ID', async (context) => {
     const repository = createProductRepository({
-      async save(product) {
+      async save(product, additions) {
         assert.equal(product.isAvailable(), false);
         assert.equal(product.getCategoryId(), input.categoryId);
+        assert.deepEqual(additions.map((addition) => addition.getId()), ['addition-1']);
         return 'product-id';
       },
     });
-    const useCase = new CreateProduct(repository);
+    const useCase = new CreateProduct(repository, createAdditionRepository(), createCategoryRepository());
     const create = context.mock.method(useCase, 'create');
     const controller = new CreateProductController(useCase);
     const request = { body: { ...input, id: 'ignored-id' } } as Request;
@@ -42,7 +46,7 @@ describe('CreateProductController', () => {
     ];
 
     for (const error of errors) {
-      const useCase = new CreateProduct(createProductRepository());
+      const useCase = new CreateProduct(createProductRepository(), createAdditionRepository(), createCategoryRepository());
       context.mock.method(useCase, 'create', async () => { throw error; });
       const controller = new CreateProductController(useCase);
       const { response, status, json } = createResponse(context);

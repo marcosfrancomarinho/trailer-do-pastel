@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { ListProductsByCategory } from '../src/application/use-cases/list-products-by-category.js';
+import { ListProductsByCategory } from '../src/application/use-cases/products/list-products-by-category.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
-import { ListProductsByCategoryController } from '../src/infrastructure/http/controllers/list-products-by-category-controller.js';
+import { ListProductsByCategoryController } from '../src/infrastructure/http/controllers/products/list-products-by-category-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
 
 describe('ListProductsByCategoryController', () => {
@@ -17,7 +17,7 @@ describe('ListProductsByCategoryController', () => {
       available: true,
     }];
     const findByCategoryId = context.mock.fn(async () => products);
-    const controller = new ListProductsByCategoryController(new ListProductsByCategory({ findByCategoryId }));
+    const controller = new ListProductsByCategoryController(new ListProductsByCategory({ findAll: async () => [], findByCategoryId }));
     const { response, status, json } = createResponse(context);
     const next = context.mock.fn();
 
@@ -31,7 +31,7 @@ describe('ListProductsByCategoryController', () => {
 
   it('forwards invalid category IDs to the error handler', async (context) => {
     const findByCategoryId = context.mock.fn(async () => []);
-    const controller = new ListProductsByCategoryController(new ListProductsByCategory({ findByCategoryId }));
+    const controller = new ListProductsByCategoryController(new ListProductsByCategory({ findAll: async () => [], findByCategoryId }));
     const { response, status, json } = createResponse(context);
     const next = context.mock.fn();
 

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { ApplicationError } from '../src/application/errors/application-error.js';
-import { CreateCategory } from '../src/application/use-cases/create-category.js';
+import { CreateCategory } from '../src/application/use-cases/categories/create-category.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
 
 describe('CreateCategory', () => {
   it('normalizes the name, saves the category and returns its ID', async () => {
     const calls: string[] = [];
     const useCase = new CreateCategory({
+      existsById: async () => false,
       async existsByName(name) {
         calls.push('lookup');
         assert.equal(name, 'Pastéis');
@@ -27,7 +28,7 @@ describe('CreateCategory', () => {
   it('rejects an invalid name before consulting the repository', async (context) => {
     const existsByName = context.mock.fn(async () => false);
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = new CreateCategory({ existsByName, save });
+    const useCase = new CreateCategory({ existsById: async () => false, existsByName, save });
 
     for (const name of [null, '  ']) {
       await assert.rejects(
@@ -42,7 +43,7 @@ describe('CreateCategory', () => {
 
   it('does not save a category with an existing name', async (context) => {
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = new CreateCategory({ existsByName: async () => true, save });
+    const useCase = new CreateCategory({ existsById: async () => false, existsByName: async () => true, save });
 
     await assert.rejects(
       useCase.create({ name: 'Pastéis' }),
@@ -54,6 +55,7 @@ describe('CreateCategory', () => {
   it('propagates repository failures', async () => {
     const failure = new Error('Database unavailable');
     const useCase = new CreateCategory({
+      existsById: async () => false,
       existsByName: async () => false,
       save: async () => { throw failure; },
     });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { CreateAddition } from '../src/application/use-cases/create-addition.js';
+import { CreateAddition } from '../src/application/use-cases/additions/create-addition.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
 

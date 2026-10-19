@@ -6,6 +6,15 @@ import type { CategoryRepository } from '../../domain/repositories/category-repo
 export class PrismaCategoryRepository implements CategoryRepository {
   public constructor(private readonly prisma: PrismaClient) {}
 
+  public async existsById(id: string): Promise<boolean> {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    return category !== null;
+  }
+
   public async existsByName(name: string): Promise<boolean> {
     const category = await this.prisma.category.findUnique({
       where: { name },

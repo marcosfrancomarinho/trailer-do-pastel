@@ -68,8 +68,11 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | POST | `/categories` | Categoria | `{ "id": "..." }` |
 | GET | `/categories` | Listar categorias | `[{ "id": "...", "name": "Pastéis" }]` |
 | GET | `/categories/:categoryId/products` | Listar produtos da categoria | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
+| GET | `/products` | Listar todos os produtos | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
-| POST | `/additions` | Adicional | `{ "id": "..." }` |
+| POST | `/additions` | Cadastrar adicional (Bearer JWT) | `{ "id": "..." }` |
+| GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
+| GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
 
 ### Usuários
@@ -103,9 +106,12 @@ O nome da categoria é obrigatório e único. Crie a categoria antes de cadastra
   "description": "Pastel recheado com queijo e orégano",
   "categoryId": "ID_DA_CATEGORIA",
   "price": "12.50",
-  "available": true
+  "available": true,
+  "additionIds": ["ID_DO_ADICIONAL"]
 }
 ```
+
+`additionIds` é opcional: omita o campo ou envie `[]` para cadastrar um produto sem adicionais. Para um produto com adicionais, informe os IDs dos adicionais já cadastrados. A criação do produto e dos vínculos acontece na mesma operação. IDs repetidos ou inválidos retornam `400`; um adicional não encontrado retorna `404`.
 
 ### Adicionais
 
@@ -117,9 +123,17 @@ O nome da categoria é obrigatório e único. Crie a categoria antes de cadastra
 }
 ```
 
-O nome e a descrição do produto são obrigatórios; a descrição não pode ser nula nem vazia. `categoryId` também é obrigatório e deve apontar para uma categoria existente. Uma categoria pode ter vários produtos.
+O nome e a descrição do produto são obrigatórios; a descrição não pode ser nula nem vazia. `categoryId` também é obrigatório e deve apontar para uma categoria existente. Se a categoria não existir, `POST /products` retorna `404`. Uma categoria pode ter vários produtos.
 
 `GET /categories/:categoryId/products` lista os produtos da categoria em ordem alfabética, incluindo os indisponíveis. O preço é retornado como string decimal. Se não houver produtos para o ID informado, a resposta é `[]`.
+
+`GET /products` lista todos os produtos em ordem alfabética, incluindo os indisponíveis. Quando não há produtos cadastrados, retorna `[]`.
+
+`GET /additions` lista todos os adicionais em ordem alfabética, incluindo os indisponíveis. O preço é retornado como string decimal; quando não há adicionais cadastrados, a resposta é `[]`.
+
+`GET /products/:productId/additions` lista os adicionais vinculados ao produto pela relação `product_additions`, também em ordem alfabética e incluindo os indisponíveis. Se não houver vínculos para o ID informado, retorna `[]`.
+
+Para cadastrar um adicional, envie `POST /additions` com `Authorization: Bearer <accessToken>` obtido em `POST /login` e o nome, preço e disponibilidade no corpo JSON.
 
 Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido. As datas `createdAt` são preenchidas pelo banco e não fazem parte dos payloads.
 
@@ -161,7 +175,7 @@ No exemplo, dois pastéis de `12.50`, cada um com um adicional de `2.50`, totali
 
 O arquivo [api.http](api.http) contém exemplos das rotas de cadastro e consulta, pedidos com e sem adicionais e respostas de erro.
 
-Com a API rodando e a migration de categorias aplicada, abra o arquivo em um cliente compatível com REST Client. Execute `criarCategoria`, `criarProduto` e `criarAdicional` antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
+Com a API rodando e a migration de categorias aplicada, abra o arquivo em um cliente compatível com REST Client. Execute `criarUsuario` e `loginUsuario` antes de `criarAdicional`, e crie categoria, produto e adicional antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
 
 ## Erros
 
@@ -170,7 +184,7 @@ Os controllers encaminham os erros para o middleware `ErrorHandler`.
 | Status | Situação |
 | --- | --- |
 | 400 | Erro de validação do domínio |
-| 401 | Nome ou senha incorretos no login |
+| 401 | Nome ou senha incorretos no login, ou token ausente/inválido na rota autenticada |
 | 404 | Produto ou adicional não encontrado |
 | 409 | Nome já cadastrado ou item indisponível |
 | 500 | Erro interno inesperado |

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { CreateCategoryInput, CreateCategoryOutput } from '../../../application/dtos/create-category-dto.js';
-import { CreateCategory } from '../../../application/use-cases/create-category.js';
+import type { CreateCategoryInput, CreateCategoryOutput } from '../../../../application/dtos/create-category-dto.js';
+import { CreateCategory } from '../../../../application/use-cases/categories/create-category.js';
 
 export class CreateCategoryController {
   public constructor(private readonly createCategory: CreateCategory) {}

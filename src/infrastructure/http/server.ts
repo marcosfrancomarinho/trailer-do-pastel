@@ -1,15 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import type { Server as HttpServer } from 'node:http';
-import { CreateUserController } from './controllers/create-user-controller.js';
-import { LoginUserController } from './controllers/login-user-controller.js';
-import { CreateProductController } from './controllers/create-product-controller.js';
-import { CreateAdditionController } from './controllers/create-addition-controller.js';
-import { CreateCategoryController } from './controllers/create-category-controller.js';
-import { ListCategoriesController } from './controllers/list-categories-controller.js';
-import { ListProductsByCategoryController } from './controllers/list-products-by-category-controller.js';
-import { CreateOrderController } from './controllers/create-order-controller.js';
+import { CreateUserController } from './controllers/users/create-user-controller.js';
+import { LoginUserController } from './controllers/users/login-user-controller.js';
+import { CreateProductController } from './controllers/products/create-product-controller.js';
+import { CreateAdditionController } from './controllers/additions/create-addition-controller.js';
+import { ListAdditionsController } from './controllers/additions/list-additions-controller.js';
+import { ListAdditionsByProductController } from './controllers/additions/list-additions-by-product-controller.js';
+import { CreateCategoryController } from './controllers/categories/create-category-controller.js';
+import { ListCategoriesController } from './controllers/categories/list-categories-controller.js';
+import { ListProductsByCategoryController } from './controllers/products/list-products-by-category-controller.js';
+import { ListProductsController } from './controllers/products/list-products-controller.js';
+import { CreateOrderController } from './controllers/orders/create-order-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
+import { RequireAuthentication } from './middlewares/require-authentication.js';
 
 export class Server {
   private readonly app = express();
@@ -19,11 +23,15 @@ export class Server {
     private readonly loginUserController: LoginUserController,
     private readonly createProductController: CreateProductController,
     private readonly createAdditionController: CreateAdditionController,
+    private readonly listAdditionsController: ListAdditionsController,
+    private readonly listAdditionsByProductController: ListAdditionsByProductController,
     private readonly createCategoryController: CreateCategoryController,
     private readonly listCategoriesController: ListCategoriesController,
     private readonly listProductsByCategoryController: ListProductsByCategoryController,
+    private readonly listProductsController: ListProductsController,
     private readonly createOrderController: CreateOrderController,
     private readonly errorHandler: ErrorHandler,
+    private readonly requireAuthentication: RequireAuthentication,
   ) {
     this.app.use(express.json(), cors());
     this.routes();
@@ -40,7 +48,17 @@ export class Server {
     this.app.post('/users', this.createUserController.execute.bind(this.createUserController));
     this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
     this.app.post('/products', this.createProductController.execute.bind(this.createProductController));
-    this.app.post('/additions', this.createAdditionController.execute.bind(this.createAdditionController));
+    this.app.get('/products', this.listProductsController.execute.bind(this.listProductsController));
+    this.app.get(
+      '/products/:productId/additions',
+      this.listAdditionsByProductController.execute.bind(this.listAdditionsByProductController),
+    );
+    this.app.post(
+      '/additions',
+      this.requireAuthentication.execute.bind(this.requireAuthentication),
+      this.createAdditionController.execute.bind(this.createAdditionController),
+    );
+    this.app.get('/additions', this.listAdditionsController.execute.bind(this.listAdditionsController));
     this.app.post('/categories', this.createCategoryController.execute.bind(this.createCategoryController));
     this.app.get('/categories', this.listCategoriesController.execute.bind(this.listCategoriesController));
     this.app.get(

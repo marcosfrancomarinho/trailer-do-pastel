@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { LoginUser } from '../src/application/use-cases/login-user.js';
+import { LoginUser } from '../src/application/use-cases/users/login-user.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
 import { User } from '../src/domain/entities/user.js';
@@ -15,6 +15,7 @@ describe('LoginUser', () => {
     existsByName: async () => false,
     save: async () => 'unused',
   };
+  const unusedVerify = async () => null;
 
   it('checks the exact password and issues a token for the persisted user ID', async (context) => {
     const calls: string[] = [];
@@ -37,7 +38,7 @@ describe('LoginUser', () => {
     const useCase = new LoginUser(
       { ...unusedRepositoryMethods, findByName },
       { hash: async () => 'unused', match },
-      { issue },
+      { issue, verify: unusedVerify },
     );
 
     assert.deepEqual(await useCase.login(input), { name: 'Marcos', accessToken: 'signed-token' });
@@ -52,7 +53,7 @@ describe('LoginUser', () => {
       const useCase = new LoginUser(
         { ...unusedRepositoryMethods, findByName: async () => foundUser },
         { hash: async () => 'unused', match },
-        { issue },
+        { issue, verify: unusedVerify },
       );
 
       await assert.rejects(
@@ -75,7 +76,7 @@ describe('LoginUser', () => {
     const useCase = new LoginUser(
       { ...unusedRepositoryMethods, findByName },
       { hash: async () => 'unused', match },
-      { issue },
+      { issue, verify: unusedVerify },
     );
 
     for (const invalidInput of [
@@ -99,7 +100,7 @@ describe('LoginUser', () => {
     const useCase = new LoginUser(
       { ...unusedRepositoryMethods, findByName: async () => user },
       { hash: async () => 'unused', match: async () => true },
-      { issue: async () => { throw failure; } },
+      { issue: async () => { throw failure; }, verify: unusedVerify },
     );
 
     await assert.rejects(useCase.login(input), (error: unknown) => error === failure);

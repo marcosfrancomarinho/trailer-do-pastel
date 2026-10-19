@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from 'express';
 import type {
   ListProductsByCategoryInput,
   ListProductsByCategoryOutput,
-} from '../../../application/dtos/list-products-by-category-dto.js';
-import { ListProductsByCategory } from '../../../application/use-cases/list-products-by-category.js';
+} from '../../../../application/dtos/list-products-by-category-dto.js';
+import { ListProductsByCategory } from '../../../../application/use-cases/products/list-products-by-category.js';
 
 export class ListProductsByCategoryController {
   public constructor(private readonly listProductsByCategory: ListProductsByCategory) {}

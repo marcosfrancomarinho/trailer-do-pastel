@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { CreateUser } from '../src/application/use-cases/create-user.js';
+import { CreateUser } from '../src/application/use-cases/users/create-user.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { DomainError } from '../src/domain/errors/domain-error.js';
-import { CreateUserController } from '../src/infrastructure/http/controllers/create-user-controller.js';
+import { CreateUserController } from '../src/infrastructure/http/controllers/users/create-user-controller.js';
 import { createResponse } from './helpers/http-fixtures.js';
 
 function createUseCase(): CreateUser {

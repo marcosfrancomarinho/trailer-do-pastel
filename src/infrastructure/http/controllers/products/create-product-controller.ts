@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { CreateProductInput, CreateProductOutput } from '../../../application/dtos/create-product-dto.js';
-import { CreateProduct } from '../../../application/use-cases/create-product.js';
+import type { CreateProductInput, CreateProductOutput } from '../../../../application/dtos/create-product-dto.js';
+import { CreateProduct } from '../../../../application/use-cases/products/create-product.js';
 
 export class CreateProductController {
   public constructor(private readonly createProduct: CreateProduct) {}
@@ -13,6 +13,7 @@ export class CreateProductController {
         categoryId: request.body?.categoryId,
         price: request.body?.price,
         available: request.body?.available,
+        additionIds: request.body?.additionIds,
       };
 
       const output = await this.createProduct.create(input);
