@@ -5,17 +5,14 @@ import { Product } from '../../src/domain/entities/product.js';
 import { Addition } from '../../src/domain/entities/addition.js';
 import { ProductPrice } from '../../src/domain/value-objects/product/product-price.js';
 import { ProductDescription } from '../../src/domain/value-objects/product/product-description.js';
-import { ProductCreatedAt } from '../../src/domain/value-objects/product/product-created-at.js';
 import { AdditionName } from '../../src/domain/value-objects/addition/addition-name.js';
 import { AdditionPrice } from '../../src/domain/value-objects/addition/addition-price.js';
-import { AdditionCreatedAt } from '../../src/domain/value-objects/addition/addition-created-at.js';
 import type { OrderRepository } from '../../src/domain/repositories/order-repository.js';
 import type { ProductRepository } from '../../src/domain/repositories/product-repository.js';
 import type { AdditionRepository } from '../../src/domain/repositories/addition-repository.js';
 import { CustomerName } from '../../src/domain/value-objects/customer/customer-name.js';
 import { CustomerPhone } from '../../src/domain/value-objects/customer/customer-phone.js';
 import { DecimalValue } from '../../src/domain/value-objects/shared/decimal-value.js';
-import { OrderCreatedAt } from '../../src/domain/value-objects/order/order-created-at.js';
 import { OrderQuantity } from '../../src/domain/value-objects/order/order-quantity.js';
 import { OrderUnitPrice } from '../../src/domain/value-objects/order/order-unit-price.js';
 import { ProductName } from '../../src/domain/value-objects/product/product-name.js';
@@ -48,7 +45,6 @@ export function buildOrder(items: OrderItem[] = [buildOrderItem()], id?: string)
     CustomerName.create(' Marcos '),
     CustomerPhone.create('(11) 99999-9999'),
     items,
-    OrderCreatedAt.create(),
     id,
   );
 }
@@ -106,7 +102,7 @@ export function buildCatalogProduct(
     ProductName.create(name),
     ProductPrice.create(DecimalValue.create(price)),
     ProductDescription.create('Preparado na hora'),
-    ProductCreatedAt.restore(new Date('2026-01-01T12:00:00Z')),
+    ReferenceId.create('category-1', 'categoryId'),
     available,
     id,
   );
@@ -116,7 +112,6 @@ export function buildCatalogAddition(id: string, price: string, available: boole
   return Addition.create(
     AdditionName.create('Queijo extra'),
     AdditionPrice.create(DecimalValue.create(price)),
-    AdditionCreatedAt.restore(new Date('2026-01-01T12:00:00Z')),
     available,
     id,
   );

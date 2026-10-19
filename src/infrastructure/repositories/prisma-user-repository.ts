@@ -21,7 +21,6 @@ export class PrismaUserRepository implements UserRepository {
         data: {
           name: user.getName(),
           password: user.getPassword(),
-          createdAt: user.getCreatedAt(),
         },
         select: { id: true },
       });

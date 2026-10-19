@@ -1,5 +1,7 @@
-# Inicie a API com npm run dev e execute as requisições pelo REST Client.
+# Inicie a API com yarn dev e execute as requisições pelo REST Client.
 # Altere testId para cadastrar novos registros sem repetir os nomes.
+# Antes dos cadastros de categoria e produto, aplique a migration de categorias (ainda não versionada).
+# Execute criarCategoria antes de criarProduto.
 # Execute criarProduto e criarAdicional antes dos exemplos de pedido.
 
 @baseUrl = http://localhost:3000
@@ -14,8 +16,17 @@ POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "name": "marcos{{testId}}",
+  "name": "marcosfranco{{testId}}",
   "password": "Pastel123!"
+}
+
+### Cadastrar categoria — 201
+# @name criarCategoria
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "Pastéis {{testId}}"
 }
 
 ### Cadastrar produto — 201
@@ -26,6 +37,7 @@ Content-Type: application/json
 {
   "name": "{{productName}}",
   "description": "Pastel recheado com queijo e orégano",
+  "categoryId": "{{criarCategoria.response.body.$.id}}",
   "price": "{{productPrice}}",
   "available": true
 }
@@ -112,6 +124,7 @@ Content-Type: application/json
 {
   "name": "{{productName}}",
   "description": "Mesmo nome do produto já cadastrado",
+  "categoryId": "{{criarCategoria.response.body.$.id}}",
   "price": "{{productPrice}}",
   "available": true
 }

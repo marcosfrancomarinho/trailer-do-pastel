@@ -14,7 +14,6 @@ export class PrismaOrderRepository implements OrderRepository {
           customerPhone: order.getCustomerPhone(),
           status: order.getStatus(),
           total: order.getTotal(),
-          createdAt: order.getCreatedAt(),
           items: {
             create: order.getItems().map((item) => ({
               productId: item.getProductId(),
@@ -31,7 +30,7 @@ export class PrismaOrderRepository implements OrderRepository {
             })),
           },
           histories: {
-            create: { status: order.getStatus(), changedAt: order.getCreatedAt() },
+            create: { status: order.getStatus() },
           },
         },
         select: { id: true, trackingToken: true },

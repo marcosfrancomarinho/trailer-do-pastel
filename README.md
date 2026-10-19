@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml)
 
-API para cadastrar usuários, produtos, adicionais e pedidos de uma pastelaria.
+API para cadastrar usuários, categorias, produtos, adicionais e pedidos de uma pastelaria.
 
 O cliente pode fazer um pedido sem criar uma conta. Os itens registram o nome e o preço informados no pedido, e a API consulta os produtos e adicionais para verificar se existem e estão disponíveis.
 
@@ -50,7 +50,7 @@ O arquivo `.env.example` contém uma configuração local de SQLite:
 DATABASE_URL="file:./database.sqlite"
 ```
 
-Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. As migrations criam as tabelas do projeto nesse arquivo. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
+Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. As migrations existentes criam as tabelas já versionadas nesse arquivo. A tabela de categorias e a relação obrigatória com produtos ainda não têm migration; as rotas `POST /categories` e `POST /products` dependem dessa etapa para funcionar com o banco. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
 
 ## Rotas
 
@@ -59,6 +59,7 @@ Todas as rotas recebem JSON e retornam `201 Created` em caso de sucesso.
 | Método | Rota | Cadastro | Resposta |
 | --- | --- | --- | --- |
 | POST | `/users` | Usuário | `{ "id": "..." }` |
+| POST | `/categories` | Categoria | `{ "id": "..." }` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
 | POST | `/additions` | Adicional | `{ "id": "..." }` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
@@ -74,12 +75,23 @@ Todas as rotas recebem JSON e retornam `201 Created` em caso de sucesso.
 
 O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e números, respeitando o limite de 72 bytes do bcrypt. Somente o hash é persistido, e a resposta não inclui a senha.
 
+### Categorias
+
+```json
+{
+  "name": "Pastéis"
+}
+```
+
+O nome da categoria é obrigatório e único. Crie a categoria antes de cadastrar produtos e use o ID retornado em `categoryId`.
+
 ### Produtos
 
 ```json
 {
   "name": "Pastel de queijo",
   "description": "Pastel recheado com queijo e orégano",
+  "categoryId": "ID_DA_CATEGORIA",
   "price": "12.50",
   "available": true
 }
@@ -95,7 +107,9 @@ O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e n�
 }
 ```
 
-Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido.
+O nome e a descrição do produto são obrigatórios; a descrição não pode ser nula nem vazia. `categoryId` também é obrigatório e deve apontar para uma categoria existente. Uma categoria pode ter vários produtos. A criação de categorias e produtos requer a migration de categorias, ainda não versionada.
+
+Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido. As datas `createdAt` são preenchidas pelo banco e não fazem parte dos payloads.
 
 ### Pedidos
 
@@ -136,9 +150,9 @@ No exemplo, dois pastéis de `12.50`, cada um com um adicional de `2.50`, totali
 
 ## Testar as requisições
 
-O arquivo [api.http](api.http) contém exemplos de todos os cadastros, pedidos com e sem adicionais e respostas de erro.
+O arquivo [api.http](api.http) contém exemplos das rotas de cadastro disponíveis, pedidos com e sem adicionais e respostas de erro.
 
-Com a API rodando, abra o arquivo em um cliente compatível com REST Client e execute as requisições. Execute `criarProduto` e `criarAdicional` antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
+Com a API rodando e a migration de categorias aplicada, abra o arquivo em um cliente compatível com REST Client. Execute `criarCategoria`, `criarProduto` e `criarAdicional` antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
 
 ## Erros
 

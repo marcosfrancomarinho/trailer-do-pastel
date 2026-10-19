@@ -1,5 +1,4 @@
 import { DomainError } from '../errors/domain-error.js';
-import type { AdditionCreatedAt } from '../value-objects/addition/addition-created-at.js';
 import type { AdditionName } from '../value-objects/addition/addition-name.js';
 import type { AdditionPrice } from '../value-objects/addition/addition-price.js';
 import type { DecimalValue } from '../value-objects/shared/decimal-value.js';
@@ -9,18 +8,16 @@ export class Addition {
     private readonly name: AdditionName,
     private readonly price: AdditionPrice,
     private readonly available: boolean,
-    private readonly createdAt: AdditionCreatedAt,
     private readonly id: string | undefined,
   ) {}
 
   public static create(
     name: AdditionName,
     price: AdditionPrice,
-    createdAt: AdditionCreatedAt,
     available: boolean = true,
     id?: string,
   ): Addition {
-    return new Addition(name, price, available, createdAt, id);
+    return new Addition(name, price, available, id);
   }
 
   public getId(): string {
@@ -41,9 +38,5 @@ export class Addition {
 
   public isAvailable(): boolean {
     return this.available;
-  }
-
-  public getCreatedAt(): Date {
-    return this.createdAt.getValue();
   }
 }

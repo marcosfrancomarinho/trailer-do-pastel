@@ -10,6 +10,7 @@ export class CreateProductController {
       const input: CreateProductInput = {
         name: request.body?.name,
         description: request.body?.description,
+        categoryId: request.body?.categoryId,
         price: request.body?.price,
         available: request.body?.available,
       };

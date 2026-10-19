@@ -9,12 +9,13 @@ import { createResponse } from './helpers/http-fixtures.js';
 import { createProductRepository } from './helpers/order-fixtures.js';
 
 describe('CreateProductController', () => {
-  const input = { name: 'Pastel', description: 'Queijo', price: '12.50', available: false };
+  const input = { name: 'Pastel', description: 'Queijo', price: '12.50', categoryId: 'category-1', available: false };
 
   it('maps the input fields and responds with 201 and the created ID', async (context) => {
     const repository = createProductRepository({
       async save(product) {
         assert.equal(product.isAvailable(), false);
+        assert.equal(product.getCategoryId(), input.categoryId);
         return 'product-id';
       },
     });

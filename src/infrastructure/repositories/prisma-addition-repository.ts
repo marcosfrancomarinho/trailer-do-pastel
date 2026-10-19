@@ -4,7 +4,6 @@ import { Addition } from '../../domain/entities/addition.js';
 import type { AdditionRepository } from '../../domain/repositories/addition-repository.js';
 import { AdditionName } from '../../domain/value-objects/addition/addition-name.js';
 import { AdditionPrice } from '../../domain/value-objects/addition/addition-price.js';
-import { AdditionCreatedAt } from '../../domain/value-objects/addition/addition-created-at.js';
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 
 export class PrismaAdditionRepository implements AdditionRepository {
@@ -17,9 +16,7 @@ export class PrismaAdditionRepository implements AdditionRepository {
 
     const name = AdditionName.create(addition.name);
     const price = AdditionPrice.create(DecimalValue.create(addition.price.toString()));
-    const createdAt = AdditionCreatedAt.restore(addition.createdAt);
-
-    return Addition.create(name, price, createdAt, addition.available, addition.id);
+    return Addition.create(name, price, addition.available, addition.id);
   }
 
   public async existsByName(name: string): Promise<boolean> {
@@ -38,7 +35,6 @@ export class PrismaAdditionRepository implements AdditionRepository {
           name: addition.getName(),
           price: addition.getPrice().getValue(),
           available: addition.isAvailable(),
-          createdAt: addition.getCreatedAt(),
         },
         select: { id: true },
       });

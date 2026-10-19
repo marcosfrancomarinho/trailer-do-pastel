@@ -5,16 +5,13 @@ import { DomainError } from '../src/domain/errors/domain-error.js';
 import { buildOrder, buildOrderAddition, buildOrderItem } from './helpers/order-fixtures.js';
 
 describe('Order', () => {
-  it('starts as pending and calculates the total from all item snapshots', (context) => {
-    const now = Date.parse('2026-10-18T12:00:00Z');
-    context.mock.method(Date, 'now', () => now);
+  it('starts as pending and calculates the total from all item snapshots', () => {
     const order = buildOrder([buildOrderItem(2, '10', [buildOrderAddition()]), buildOrderItem(3, '12.5')], 'order-id');
 
     assert.equal(order.getId(), 'order-id');
     assert.equal(order.getCustomerName(), 'Marcos');
     assert.equal(order.getCustomerPhone(), '11999999999');
     assert.equal(order.getStatus(), 'PENDING');
-    assert.equal(order.getCreatedAt().getTime(), now);
     assert.equal(order.getTotal(), '62.5');
   });
 
@@ -43,18 +40,15 @@ describe('Order', () => {
     }
   });
 
-  it('protects its item list and creation timestamp from mutation', () => {
+  it('protects its item list from mutation', () => {
     const items = [buildOrderItem(2)];
     const order = buildOrder(items);
-    const createdAt = order.getCreatedAt().getTime();
 
     items.length = 0;
     (order.getItems() as OrderItem[]).length = 0;
     order.getItems().push(buildOrderItem());
-    order.getCreatedAt().setTime(0);
 
     assert.equal(order.getItems().length, 1);
     assert.equal(order.getTotal(), '20');
-    assert.equal(order.getCreatedAt().getTime(), createdAt);
   });
 });

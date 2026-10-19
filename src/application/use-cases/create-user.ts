@@ -1,6 +1,5 @@
 import { User } from '../../domain/entities/user.js';
 import type { UserRepository } from '../../domain/repositories/user-repository.js';
-import { UserCreatedAt } from '../../domain/value-objects/user/user-created-at.js';
 import { UserName } from '../../domain/value-objects/user/user-name.js';
 import { UserPassword } from '../../domain/value-objects/user/user-password.js';
 import type { CreateUserInput, CreateUserOutput } from '../dtos/create-user-dto.js';
@@ -22,9 +21,7 @@ export class CreateUser {
     }
 
     const password = UserPassword.create(input.password);
-    const createdAt = UserCreatedAt.create();
-
-    const user = User.create(name, password, createdAt);
+    const user = User.create(name, password);
     const hash = await this.passwordHasher.hash(user.getPassword());
 
     user.defineEncryptedPassword(hash);

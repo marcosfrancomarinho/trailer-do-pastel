@@ -1,29 +1,45 @@
 import { DomainError } from '../errors/domain-error.js';
 import type { DecimalValue } from '../value-objects/shared/decimal-value.js';
-import type { ProductCreatedAt } from '../value-objects/product/product-created-at.js';
-import type { ProductDescription } from '../value-objects/product/product-description.js';
+import { ProductDescription } from '../value-objects/product/product-description.js';
 import type { ProductName } from '../value-objects/product/product-name.js';
 import type { ProductPrice } from '../value-objects/product/product-price.js';
+import { ReferenceId } from '../value-objects/shared/reference-id.js';
 
 export class Product {
   private constructor(
     private readonly name: ProductName,
     private readonly price: ProductPrice,
-    private readonly description: ProductDescription | null,
+    private readonly description: ProductDescription,
+    private readonly categoryId: ReferenceId,
     private readonly available: boolean,
-    private readonly createdAt: ProductCreatedAt,
     private readonly id: string | undefined,
   ) {}
 
   public static create(
     name: ProductName,
     price: ProductPrice,
-    description: ProductDescription | null,
-    createdAt: ProductCreatedAt,
+    description: ProductDescription,
+    categoryId: ReferenceId,
     available: boolean = true,
     id?: string,
   ): Product {
-    return new Product(name, price, description, available, createdAt, id);
+    if (description === null || description === undefined) {
+      throw new DomainError('description', 'REQUIRED', 'A descrição do produto é obrigatória.');
+    }
+
+    if (!(description instanceof ProductDescription)) {
+      throw new DomainError('description', 'INVALID_TYPE', 'A descrição do produto deve ser válida.');
+    }
+
+    if (categoryId === null || categoryId === undefined) {
+      throw new DomainError('categoryId', 'REQUIRED', 'A categoria do produto é obrigatória.');
+    }
+
+    if (!(categoryId instanceof ReferenceId)) {
+      throw new DomainError('categoryId', 'INVALID_TYPE', 'A categoria do produto deve ser um identificador.');
+    }
+
+    return new Product(name, price, description, categoryId, available, id);
   }
 
   public getId(): string {
@@ -38,8 +54,12 @@ export class Product {
     return this.name.getValue();
   }
 
-  public getDescription(): string | null {
-    return this.description?.getValue() ?? null;
+  public getDescription(): string {
+    return this.description.getValue();
+  }
+
+  public getCategoryId(): string {
+    return this.categoryId.getValue();
   }
 
   public getPrice(): DecimalValue {
@@ -48,9 +68,5 @@ export class Product {
 
   public isAvailable(): boolean {
     return this.available;
-  }
-
-  public getCreatedAt(): Date {
-    return this.createdAt.getValue();
   }
 }

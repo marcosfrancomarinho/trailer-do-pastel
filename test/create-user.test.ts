@@ -11,9 +11,6 @@ describe('CreateUser', () => {
 
   it('checks the name, hashes the exact password and saves only the hash before returning the ID', async (context) => {
     const calls: string[] = [];
-    let now = Date.parse('2026-10-18T12:00:00Z');
-    const createdAt = now;
-    context.mock.method(Date, 'now', () => now);
     const create = context.mock.method(User, 'create');
     const defineEncryptedPassword = context.mock.method(User.prototype, 'defineEncryptedPassword');
     const useCase = new CreateUser({
@@ -27,7 +24,6 @@ describe('CreateUser', () => {
         assert.equal(user.getName(), 'Marcos');
         assert.equal(user.getPassword(), '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         assert.notEqual(user.getPassword(), input.password);
-        assert.equal(user.getCreatedAt().getTime(), createdAt);
         assert.equal(defineEncryptedPassword.mock.callCount(), 1);
         return 'generated-id';
       },
@@ -38,7 +34,6 @@ describe('CreateUser', () => {
         assert.equal(password, input.password);
         assert.equal(create.mock.callCount(), 1);
         assert.equal(defineEncryptedPassword.mock.callCount(), 0);
-        now += 1000;
         return '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
       },
     });

@@ -12,12 +12,16 @@ import { PrismaUserRepository } from '../infrastructure/repositories/prisma-user
 import { CreateUserController } from '../infrastructure/http/controllers/create-user-controller.js';
 import { CreateProductController } from '../infrastructure/http/controllers/create-product-controller.js';
 import { CreateAdditionController } from '../infrastructure/http/controllers/create-addition-controller.js';
+import { CreateCategoryController } from '../infrastructure/http/controllers/create-category-controller.js';
 import { CreateOrderController } from '../infrastructure/http/controllers/create-order-controller.js';
 import { ErrorHandler } from '../infrastructure/http/middlewares/error-handler.js';
 import { Server } from '../infrastructure/http/server.js';
 import { CreateAddition } from '../application/use-cases/create-addition.js';
+import { CreateCategory } from '../application/use-cases/create-category.js';
 import type { AdditionRepository } from '../domain/repositories/addition-repository.js';
 import { PrismaAdditionRepository } from '../infrastructure/repositories/prisma-addition-repository.js';
+import type { CategoryRepository } from '../domain/repositories/category-repository.js';
+import { PrismaCategoryRepository } from '../infrastructure/repositories/prisma-category-repository.js';
 import { CreateProduct } from '../application/use-cases/create-product.js';
 import type { ProductRepository } from '../domain/repositories/product-repository.js';
 import { PrismaProductRepository } from '../infrastructure/repositories/prisma-product-repository.js';
@@ -29,6 +33,7 @@ const providers = new AppConfig()
   .useClass<PasswordHasher>(BcryptPasswordHasher)
   .useClass<UserRepository>(PrismaUserRepository)
   .useClass<AdditionRepository>(PrismaAdditionRepository)
+  .useClass<CategoryRepository>(PrismaCategoryRepository)
   .useClass<ProductRepository>(PrismaProductRepository)
   .useClass(CreateOrderItemAdditionService)
   .useClass(CreateOrderItemService)
@@ -38,6 +43,8 @@ const providers = new AppConfig()
   .useClass(ErrorHandler)
   .useClass(CreateAddition)
   .useClass(CreateAdditionController)
+  .useClass(CreateCategory)
+  .useClass(CreateCategoryController)
   .useClass(CreateProduct)
   .useClass(CreateProductController)
   .useClass(CreateOrderController)

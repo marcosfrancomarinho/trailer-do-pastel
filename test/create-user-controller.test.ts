@@ -12,7 +12,7 @@ function createUseCase(): CreateUser {
     existsByName: async () => false,
     save: async () => 'user-id',
   }, {
-    hash: async () => 'encrypted-password',
+    hash: async () => '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     match: async () => false,
   });
 }

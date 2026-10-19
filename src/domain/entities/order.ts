@@ -3,14 +3,12 @@ import { DecimalValue } from '../value-objects/shared/decimal-value.js';
 import { OrderItem } from './order-item.js';
 import type { CustomerName } from '../value-objects/customer/customer-name.js';
 import type { CustomerPhone } from '../value-objects/customer/customer-phone.js';
-import type { OrderCreatedAt } from '../value-objects/order/order-created-at.js';
 
 export class Order {
   private constructor(
     private readonly customerName: CustomerName,
     private readonly customerPhone: CustomerPhone,
     private readonly items: OrderItem[],
-    private readonly createdAt: OrderCreatedAt,
     private readonly id: string | undefined,
   ) {}
 
@@ -18,11 +16,10 @@ export class Order {
     customerName: CustomerName,
     customerPhone: CustomerPhone,
     items: OrderItem[] = [],
-    createdAt: OrderCreatedAt,
     id?: string,
   ): Order {
     Order.validateItems(items);
-    return new Order(customerName, customerPhone, [...items], createdAt, id);
+    return new Order(customerName, customerPhone, [...items], id);
   }
 
   public getId(): string {
@@ -42,10 +39,6 @@ export class Order {
 
   public getItems(): OrderItem[] {
     return [...this.items];
-  }
-
-  public getCreatedAt(): Date {
-    return this.createdAt.getValue();
   }
 
   public getStatus(): 'PENDING' {

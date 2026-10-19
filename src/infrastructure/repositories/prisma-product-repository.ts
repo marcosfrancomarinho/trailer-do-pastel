@@ -5,8 +5,8 @@ import type { ProductRepository } from '../../domain/repositories/product-reposi
 import { ProductName } from '../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../domain/value-objects/product/product-price.js';
 import { ProductDescription } from '../../domain/value-objects/product/product-description.js';
-import { ProductCreatedAt } from '../../domain/value-objects/product/product-created-at.js';
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
+import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
 
 export class PrismaProductRepository implements ProductRepository {
   public constructor(private readonly prisma: PrismaClient) {}
@@ -18,10 +18,9 @@ export class PrismaProductRepository implements ProductRepository {
 
     const name = ProductName.create(product.name);
     const price = ProductPrice.create(DecimalValue.create(product.price.toString()));
-    const description = product.description === null ? null : ProductDescription.create(product.description);
-    const createdAt = ProductCreatedAt.restore(product.createdAt);
-
-    return Product.create(name, price, description, createdAt, product.available, product.id);
+    const description = ProductDescription.create(product.description);
+    const categoryId = ReferenceId.create(product.categoryId, 'categoryId');
+    return Product.create(name, price, description, categoryId, product.available, product.id);
   }
 
   public async existsByName(name: string): Promise<boolean> {
@@ -39,9 +38,9 @@ export class PrismaProductRepository implements ProductRepository {
         data: {
           name: product.getName(),
           description: product.getDescription(),
+          categoryId: product.getCategoryId(),
           price: product.getPrice().getValue(),
           available: product.isAvailable(),
-          createdAt: product.getCreatedAt(),
         },
         select: { id: true },
       });

@@ -5,11 +5,9 @@ import { ApplicationError } from '../src/application/errors/application-error.js
 import { DomainError } from '../src/domain/errors/domain-error.js';
 
 describe('CreateProduct', () => {
-  const input = { name: ' Pastel de queijo ', description: 'Queijo', price: '12.50' };
+  const input = { name: ' Pastel de queijo ', description: 'Queijo', price: '12.50', categoryId: 'category-1' };
 
-  it('looks up the normalized name before saving and returns the generated ID', async (context) => {
-    const now = Date.parse('2026-10-18T12:00:00Z');
-    context.mock.method(Date, 'now', () => now);
+  it('looks up the normalized name before saving and returns the generated ID', async () => {
     const calls: string[] = [];
     const useCase = new CreateProduct({
       findProductById: async () => null,
@@ -23,8 +21,8 @@ describe('CreateProduct', () => {
         assert.equal(product.getName(), 'Pastel de queijo');
         assert.equal(product.getPrice().getValue(), '12.5');
         assert.equal(product.getDescription(), input.description);
+        assert.equal(product.getCategoryId(), input.categoryId);
         assert.equal(product.isAvailable(), true);
-        assert.equal(product.getCreatedAt().getTime(), now);
         return 'generated-id';
       },
     });
@@ -128,6 +126,17 @@ describe('CreateProduct', () => {
       (error: unknown) => error instanceof DomainError && error.field === 'description' && error.code === 'EMPTY',
     );
     assert.equal(existsByName.mock.callCount(), 1);
+    assert.equal(save.mock.callCount(), 0);
+  });
+
+  it('rejects a missing category without saving', async (context) => {
+    const save = context.mock.fn(async () => 'unexpected-id');
+    const useCase = new CreateProduct({ findProductById: async () => null, existsByName: async () => false, save });
+
+    await assert.rejects(
+      useCase.create({ ...input, categoryId: null as unknown as string }),
+      (error: unknown) => error instanceof DomainError && error.field === 'categoryId' && error.code === 'REQUIRED',
+    );
     assert.equal(save.mock.callCount(), 0);
   });
 

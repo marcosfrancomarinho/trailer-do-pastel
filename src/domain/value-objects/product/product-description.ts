@@ -13,12 +13,12 @@ export class ProductDescription {
   }
 
   private static validate(description: unknown): void {
-    if (description === undefined) {
-      throw new DomainError('description', 'REQUIRED', 'A descrição do produto não pode ser indefinida.');
+    if (description === undefined || description === null) {
+      throw new DomainError('description', 'REQUIRED', 'A descrição do produto não pode ser nula ou indefinida.');
     }
 
     if (typeof description !== 'string') {
-      throw new DomainError('description', 'INVALID_TYPE', 'A descrição do produto deve ser um texto ou nula.');
+      throw new DomainError('description', 'INVALID_TYPE', 'A descrição do produto deve ser um texto.');
     }
 
     if (!description.trim()) {

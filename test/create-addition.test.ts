@@ -7,9 +7,7 @@ import { DomainError } from '../src/domain/errors/domain-error.js';
 describe('CreateAddition', () => {
   const input = { name: ' Queijo extra ', price: '12.50' };
 
-  it('looks up the normalized name before saving and returns the generated ID', async (context) => {
-    const now = Date.parse('2026-10-18T12:00:00Z');
-    context.mock.method(Date, 'now', () => now);
+  it('looks up the normalized name before saving and returns the generated ID', async () => {
     const calls: string[] = [];
     const useCase = new CreateAddition({
       findAdditionById: async () => null,
@@ -23,7 +21,6 @@ describe('CreateAddition', () => {
         assert.equal(addition.getName(), 'Queijo extra');
         assert.equal(addition.getPrice().getValue(), '12.5');
         assert.equal(addition.isAvailable(), true);
-        assert.equal(addition.getCreatedAt().getTime(), now);
         return 'generated-id';
       },
     });

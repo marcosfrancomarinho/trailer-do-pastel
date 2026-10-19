@@ -3,7 +3,6 @@ import type { OrderItem } from '../../domain/entities/order-item.js';
 import type { OrderRepository } from '../../domain/repositories/order-repository.js';
 import { CustomerName } from '../../domain/value-objects/customer/customer-name.js';
 import { CustomerPhone } from '../../domain/value-objects/customer/customer-phone.js';
-import { OrderCreatedAt } from '../../domain/value-objects/order/order-created-at.js';
 import type { CreateOrderInput, CreateOrderOutput } from '../dtos/create-order-dto.js';
 import { CreateOrderItemService } from '../services/create-order-item-service.js';
 
@@ -16,7 +15,6 @@ export class CreateOrder {
   public async create(input: CreateOrderInput): Promise<CreateOrderOutput> {
     const customerName = CustomerName.create(input.customerName);
     const customerPhone = CustomerPhone.create(input.customerPhone);
-    const createdAt = OrderCreatedAt.create();
     const items: OrderItem[] = [];
 
     for (const item of input.items) {
@@ -24,7 +22,7 @@ export class CreateOrder {
       items.push(orderItem);
     }
 
-    const order = Order.create(customerName, customerPhone, items, createdAt);
+    const order = Order.create(customerName, customerPhone, items);
     const { id, trackingToken } = await this.orderRepository.save(order);
 
     return {

@@ -4,6 +4,7 @@ import type { Server as HttpServer } from 'node:http';
 import { CreateUserController } from './controllers/create-user-controller.js';
 import { CreateProductController } from './controllers/create-product-controller.js';
 import { CreateAdditionController } from './controllers/create-addition-controller.js';
+import { CreateCategoryController } from './controllers/create-category-controller.js';
 import { CreateOrderController } from './controllers/create-order-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
 
@@ -14,6 +15,7 @@ export class Server {
     private readonly createUserController: CreateUserController,
     private readonly createProductController: CreateProductController,
     private readonly createAdditionController: CreateAdditionController,
+    private readonly createCategoryController: CreateCategoryController,
     private readonly createOrderController: CreateOrderController,
     private readonly errorHandler: ErrorHandler,
   ) {
@@ -32,6 +34,7 @@ export class Server {
     this.app.post('/users', this.createUserController.execute.bind(this.createUserController));
     this.app.post('/products', this.createProductController.execute.bind(this.createProductController));
     this.app.post('/additions', this.createAdditionController.execute.bind(this.createAdditionController));
+    this.app.post('/categories', this.createCategoryController.execute.bind(this.createCategoryController));
     this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
   }
 }

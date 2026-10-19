@@ -1,6 +1,5 @@
 import { Addition } from '../../domain/entities/addition.js';
 import type { AdditionRepository } from '../../domain/repositories/addition-repository.js';
-import { AdditionCreatedAt } from '../../domain/value-objects/addition/addition-created-at.js';
 import { AdditionName } from '../../domain/value-objects/addition/addition-name.js';
 import { AdditionPrice } from '../../domain/value-objects/addition/addition-price.js';
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
@@ -20,9 +19,7 @@ export class CreateAddition {
 
     const decimalPrice = DecimalValue.create(input.price);
     const price = AdditionPrice.create(decimalPrice);
-    const createdAt = AdditionCreatedAt.create();
-
-    const addition = Addition.create(name, price, createdAt, input.available);
+    const addition = Addition.create(name, price, input.available);
     const id = await this.additionRepository.save(addition);
 
     return { id };

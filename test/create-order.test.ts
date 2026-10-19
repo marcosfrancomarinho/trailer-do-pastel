@@ -34,12 +34,9 @@ describe('CreateOrder', () => {
   };
 
   it('uses the input product name and unit price, applies additions per unit, and returns the saved ID and tracking token', async (context) => {
-    const now = Date.parse('2026-10-18T12:00:00Z');
-    context.mock.method(Date, 'now', () => now);
     const save = context.mock.fn(async (order: Order) => {
       assert.equal(order.getCustomerName(), 'Marcos');
       assert.equal(order.getCustomerPhone(), '11999999999');
-      assert.equal(order.getCreatedAt().getTime(), now);
       assert.equal(order.getStatus(), 'PENDING');
       assert.equal(order.getTotal(), '67');
       const items = order.getItems();

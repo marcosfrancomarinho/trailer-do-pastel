@@ -1,10 +1,10 @@
 import { Product } from '../../domain/entities/product.js';
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 import type { ProductRepository } from '../../domain/repositories/product-repository.js';
-import { ProductCreatedAt } from '../../domain/value-objects/product/product-created-at.js';
 import { ProductDescription } from '../../domain/value-objects/product/product-description.js';
 import { ProductName } from '../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../domain/value-objects/product/product-price.js';
+import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
 import type { CreateProductInput, CreateProductOutput } from '../dtos/create-product-dto.js';
 import { ApplicationError } from '../errors/application-error.js';
 
@@ -22,9 +22,8 @@ export class CreateProduct {
     const decimalPrice = DecimalValue.create(input.price);
     const price = ProductPrice.create(decimalPrice);
     const description = ProductDescription.create(input.description);
-    const createdAt = ProductCreatedAt.create();
-
-    const product = Product.create(name, price, description, createdAt, input.available);
+    const categoryId = ReferenceId.create(input.categoryId, 'categoryId');
+    const product = Product.create(name, price, description, categoryId, input.available);
 
     const id = await this.productRepository.save(product);
 

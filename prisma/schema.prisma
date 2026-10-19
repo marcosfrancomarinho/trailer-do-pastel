@@ -33,16 +33,29 @@ model User {
   @@map("users")
 }
 
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
 model Product {
   id          String   @id @default(uuid())
   name        String   @unique
-  description String?
+  description String
+  categoryId  String   @map("category_id")
   price       Decimal
   available   Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
 
-  items OrderItem[]
+  category Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
 
+  @@index([categoryId])
   @@map("products")
 }
 

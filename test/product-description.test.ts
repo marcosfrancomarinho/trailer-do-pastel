@@ -12,7 +12,7 @@ describe('ProductDescription', () => {
 
   it('rejects missing values, non-text descriptions and blank text', () => {
     const cases: [unknown, DomainErrorCode][] = [
-      [undefined, 'REQUIRED'], [null, 'INVALID_TYPE'],
+      [undefined, 'REQUIRED'], [null, 'REQUIRED'],
       [123, 'INVALID_TYPE'], [false, 'INVALID_TYPE'], [{}, 'INVALID_TYPE'],
       ['', 'EMPTY'], [' \t\n', 'EMPTY'],
     ];
