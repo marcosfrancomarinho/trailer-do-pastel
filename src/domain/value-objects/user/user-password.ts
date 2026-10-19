@@ -9,6 +9,14 @@ export class UserPassword {
     return new UserPassword(password);
   }
 
+  public static fromHash(hash: string): UserPassword {
+    if (typeof hash !== 'string' || !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(hash)) {
+      throw new DomainError('password', 'INVALID_HASH', 'O hash da senha é inválido.');
+    }
+
+    return new UserPassword(hash);
+  }
+
   public getValue(): string {
     return this.password;
   }
