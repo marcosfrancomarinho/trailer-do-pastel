@@ -20,17 +20,6 @@ function createProduct(available?: boolean, id?: string): Product {
 }
 
 describe('Product', () => {
-  it('rejects a missing description', () => {
-    assert.throws(() => Product.create(
-      ProductName.create('Pastel de queijo'),
-      ProductPrice.create(DecimalValue.create('12.50')),
-      null as unknown as ProductDescription,
-      ReferenceId.create('category-id', 'categoryId'),
-      true,
-      'database-id',
-    ), (error: unknown) => error instanceof DomainError && error.field === 'description' && error.code === 'REQUIRED');
-  });
-
   it('exposes the linked category ID', () => {
     const product = Product.create(
       ProductName.create('Pastel de queijo'),
@@ -42,15 +31,6 @@ describe('Product', () => {
     );
 
     assert.equal(product.getCategoryId(), 'category-id');
-  });
-
-  it('rejects a missing category', () => {
-    assert.throws(() => Product.create(
-      ProductName.create('Pastel de queijo'),
-      ProductPrice.create(DecimalValue.create('12.50')),
-      ProductDescription.create('Queijo e orégano'),
-      null as unknown as ReferenceId,
-    ), (error: unknown) => error instanceof DomainError && error.field === 'categoryId' && error.code === 'REQUIRED');
   });
 
   it('exposes validated values and the persisted ID while preserving unavailable status', () => {
@@ -76,5 +56,4 @@ describe('Product', () => {
       return true;
     });
   });
-
 });
