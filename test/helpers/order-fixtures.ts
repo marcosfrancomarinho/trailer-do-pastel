@@ -72,6 +72,7 @@ export function createProductRepository(overrides: Partial<ProductRepository> = 
     async save() {
       return 'product-id';
     },
+    async update() {},
     ...overrides,
   };
 }

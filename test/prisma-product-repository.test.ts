@@ -36,4 +36,48 @@ describe('PrismaProductRepository', () => {
     const data = create.mock.calls[0].arguments[0].data;
     assert.equal(Object.hasOwn(data, 'additions'), false);
   });
+
+  it('updates product fields and replaces addition links in one transaction', async (context) => {
+    const calls: string[] = [];
+    const update = context.mock.fn(async () => { calls.push('update'); });
+    const deleteMany = context.mock.fn(async () => { calls.push('delete'); });
+    const createMany = context.mock.fn(async () => { calls.push('create'); });
+    const transaction = context.mock.fn(async (operation) => operation({
+      product: { update },
+      productAddition: { deleteMany, createMany },
+    }));
+    const prisma = { $transaction: transaction } as unknown as PrismaClient;
+    const repository = new PrismaProductRepository(prisma);
+
+    await repository.update(buildCatalogProduct('product-1', '14.50'), [buildCatalogAddition('addition-1', '2.50')]);
+
+    assert.deepEqual(calls, ['update', 'delete', 'create']);
+    assert.deepEqual(update.mock.calls[0].arguments[0], {
+      where: { id: 'product-1' },
+      data: { name: 'Pastel de queijo', description: 'Preparado na hora', categoryId: 'category-1', price: '14.5', available: true },
+      select: { id: true },
+    });
+    assert.deepEqual(deleteMany.mock.calls[0].arguments[0], { where: { productId: 'product-1' } });
+    assert.deepEqual(createMany.mock.calls[0].arguments[0], {
+      data: [{ productId: 'product-1', additionId: 'addition-1' }],
+    });
+  });
+
+  it('leaves addition links untouched when omitted and removes all when given an empty list', async (context) => {
+    const update = context.mock.fn(async () => {});
+    const deleteMany = context.mock.fn(async () => {});
+    const createMany = context.mock.fn(async () => {});
+    const prisma = {
+      $transaction: async (operation) => operation({ product: { update }, productAddition: { deleteMany, createMany } }),
+    } as unknown as PrismaClient;
+    const repository = new PrismaProductRepository(prisma);
+    const product = buildCatalogProduct('product-1', '14.50');
+
+    await repository.update(product);
+    assert.equal(deleteMany.mock.callCount(), 0);
+
+    await repository.update(product, []);
+    assert.equal(deleteMany.mock.callCount(), 1);
+    assert.equal(createMany.mock.callCount(), 0);
+  });
 });

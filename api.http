@@ -60,6 +60,24 @@ Content-Type: application/json
 
 GET {{baseUrl}}/products
 
+### Atualizar preço e disponibilidade do produto — 200
+PATCH {{baseUrl}}/products/{{criarProduto.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "price": "14.50",
+  "available": false
+}
+
+### Substituir os adicionais do produto — 200
+# Execute criarAdicional antes desta requisição.
+PATCH {{baseUrl}}/products/{{criarProduto.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "additionIds": ["{{criarAdicional.response.body.$.id}}"]
+}
+
 ### Listar produtos da categoria — 200
 # @name listarProdutosDaCategoria
 GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products

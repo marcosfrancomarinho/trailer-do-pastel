@@ -61,4 +61,47 @@ export class PrismaProductRepository implements ProductRepository {
       throw error;
     }
   }
+
+  public async update(product: Product, additions?: Addition[]): Promise<void> {
+    const data: Prisma.ProductUncheckedUpdateInput = {
+      name: product.getName(),
+      description: product.getDescription(),
+      categoryId: product.getCategoryId(),
+      price: product.getPrice().getValue(),
+      available: product.isAvailable(),
+    };
+
+    try {
+      await this.prisma.$transaction(async (transaction) => {
+        const productId = product.getId();
+        await transaction.product.update({
+          where: { id: productId },
+          data,
+          select: { id: true },
+        });
+
+        if (additions === undefined) return;
+
+        await transaction.productAddition.deleteMany({ where: { productId } });
+        if (additions.length === 0) return;
+
+        await transaction.productAddition.createMany({
+          data: additions.map((addition) => ({ productId, additionId: addition.getId() })),
+        });
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
+        }
+        if (error.code === 'P2025') {
+          throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
+        }
+        if (error.code === 'P2003') {
+          throw new ApplicationError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
+        }
+      }
+      throw error;
+    }
+  }
 }

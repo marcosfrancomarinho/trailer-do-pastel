@@ -70,6 +70,7 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | GET | `/categories/:categoryId/products` | Listar produtos da categoria | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | GET | `/products` | Listar todos os produtos | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
+| PATCH | `/products/:productId` | Atualizar produto | `{ "id": "..." }` |
 | POST | `/additions` | Cadastrar adicional | `{ "id": "..." }` |
 | GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
@@ -113,6 +114,8 @@ O nome da categoria é obrigatório e único. Crie a categoria antes de cadastra
 ```
 
 `additionIds` é opcional: omita o campo ou envie `[]` para cadastrar um produto sem adicionais. Para um produto com adicionais, informe os IDs dos adicionais já cadastrados. A criação do produto e dos vínculos acontece na mesma operação. IDs repetidos ou inválidos retornam `400`; um adicional não encontrado retorna `404`.
+
+Para atualizar um produto, envie `PATCH /products/:productId` com pelo menos um campo: `name`, `description`, `categoryId`, `price`, `available` ou `additionIds`. Os campos omitidos mantêm seus valores atuais. Omitir `additionIds` mantém os vínculos; enviar `[]` remove todos; enviar IDs substitui a lista. A atualização do produto e dos vínculos acontece na mesma transação. O produto, a nova categoria e os adicionais informados precisam existir. Nome duplicado retorna `409`.
 
 ### Adicionais
 

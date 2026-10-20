@@ -13,6 +13,7 @@ import { CreateCategory } from '../application/use-cases/categories/create-categ
 import { CreateOrder } from '../application/use-cases/orders/create-order.js';
 import { ListPendingOrders } from '../application/use-cases/orders/list-pending-orders.js';
 import { CreateProduct } from '../application/use-cases/products/create-product.js';
+import { UpdateProduct } from '../application/use-cases/products/update-product.js';
 import { CreateUser } from '../application/use-cases/users/create-user.js';
 import { ListCategories } from '../application/use-cases/categories/list-categories.js';
 import { ListAdditions } from '../application/use-cases/additions/list-additions.js';
@@ -32,6 +33,7 @@ import { CreateCategoryController } from '../infrastructure/http/controllers/cat
 import { CreateOrderController } from '../infrastructure/http/controllers/orders/create-order-controller.js';
 import { ListPendingOrdersController } from '../infrastructure/http/controllers/orders/list-pending-orders-controller.js';
 import { CreateProductController } from '../infrastructure/http/controllers/products/create-product-controller.js';
+import { UpdateProductController } from '../infrastructure/http/controllers/products/update-product-controller.js';
 import { CreateUserController } from '../infrastructure/http/controllers/users/create-user-controller.js';
 import { ListCategoriesController } from '../infrastructure/http/controllers/categories/list-categories-controller.js';
 import { ListAdditionsController } from '../infrastructure/http/controllers/additions/list-additions-controller.js';
@@ -91,6 +93,8 @@ const providers = new AppConfig()
   .useClass(ListProductsByCategoryController)
   .useClass(CreateProduct)
   .useClass(CreateProductController)
+  .useClass(UpdateProduct)
+  .useClass(UpdateProductController)
   .useClass(CreateOrderController)
   .useClass(ListPendingOrdersController)
   .useClass(Server);

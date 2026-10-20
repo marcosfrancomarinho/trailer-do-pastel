@@ -4,6 +4,7 @@ import type { Server as HttpServer } from 'node:http';
 import { CreateUserController } from './controllers/users/create-user-controller.js';
 import { LoginUserController } from './controllers/users/login-user-controller.js';
 import { CreateProductController } from './controllers/products/create-product-controller.js';
+import { UpdateProductController } from './controllers/products/update-product-controller.js';
 import { CreateAdditionController } from './controllers/additions/create-addition-controller.js';
 import { ListAdditionsController } from './controllers/additions/list-additions-controller.js';
 import { ListAdditionsByProductController } from './controllers/additions/list-additions-by-product-controller.js';
@@ -22,6 +23,7 @@ export class Server {
     private readonly createUserController: CreateUserController,
     private readonly loginUserController: LoginUserController,
     private readonly createProductController: CreateProductController,
+    private readonly updateProductController: UpdateProductController,
     private readonly createAdditionController: CreateAdditionController,
     private readonly listAdditionsController: ListAdditionsController,
     private readonly listAdditionsByProductController: ListAdditionsByProductController,
@@ -48,6 +50,7 @@ export class Server {
     this.app.post('/users', this.createUserController.execute.bind(this.createUserController));
     this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
     this.app.post('/products', this.createProductController.execute.bind(this.createProductController));
+    this.app.patch('/products/:productId', this.updateProductController.execute.bind(this.updateProductController));
     this.app.get('/products', this.listProductsController.execute.bind(this.listProductsController));
     this.app.get(
       '/products/:productId/additions',

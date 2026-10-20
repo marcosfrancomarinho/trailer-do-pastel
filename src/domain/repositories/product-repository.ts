@@ -5,4 +5,5 @@ export interface ProductRepository {
   findProductById(id: string): Promise<Product | null>;
   existsByName(name: string): Promise<boolean>;
   save(product: Product, additions: Addition[]): Promise<string>;
+  update(product: Product, additions?: Addition[]): Promise<void>;
 }
