@@ -20,8 +20,8 @@ export class UpdateProduct {
   ) {}
 
   public async update(input: UpdateProductInput): Promise<UpdateProductOutput> {
-    const productId = ReferenceId.create(input.productId, 'productId');
-    const currentProduct = await this.productRepository.findProductById(productId.getValue());
+    const productId = ReferenceId.create(input.productId, 'productId').getValue();
+    const currentProduct = await this.productRepository.findProductById(productId);
 
     if (!currentProduct) {
       throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
@@ -36,48 +36,57 @@ export class UpdateProduct {
     const additions = await this.findAdditions(input.additionIds);
     await this.productRepository.update(product, additions);
 
-    return { id: productId.getValue() };
+    return { id: productId };
   }
 
   private ensureHasChanges(input: UpdateProductInput): void {
     const changes = [input.name, input.description, input.categoryId, input.price, input.available, input.additionIds];
-    if (changes.every((value) => value === undefined)) {
+    const hasChanges = changes.some((value) => value !== undefined);
+
+    if (!hasChanges) {
       throw new DomainError('product', 'EMPTY', 'Informe pelo menos um campo para atualizar o produto.');
     }
   }
 
   private buildUpdatedProduct(input: UpdateProductInput, currentProduct: Product): Product {
-    const name = ProductName.create(input.name === undefined ? currentProduct.getName() : input.name);
-    const description = ProductDescription.create(
-      input.description === undefined ? currentProduct.getDescription() : input.description,
-    );
-    const categoryId = ReferenceId.create(
-      input.categoryId === undefined ? currentProduct.getCategoryId() : input.categoryId,
-      'categoryId',
-    );
+    const nameValue = input.name === undefined ? currentProduct.getName() : input.name;
+    const descriptionValue = input.description === undefined ? currentProduct.getDescription() : input.description;
+    const categoryIdValue = input.categoryId === undefined ? currentProduct.getCategoryId() : input.categoryId;
     const priceValue = input.price === undefined ? currentProduct.getPrice().getValue() : input.price;
-    const price = ProductPrice.create(DecimalValue.create(priceValue));
+
+    const name = ProductName.create(nameValue);
+    const description = ProductDescription.create(descriptionValue);
+    const categoryId = ReferenceId.create(categoryIdValue, 'categoryId');
+    const decimalPrice = DecimalValue.create(priceValue);
+    const price = ProductPrice.create(decimalPrice);
 
     if (input.available !== undefined && typeof input.available !== 'boolean') {
       throw new DomainError('available', 'INVALID_TYPE', 'A disponibilidade do produto deve ser um booleano.');
     }
     const available = input.available === undefined ? currentProduct.isAvailable() : input.available;
+    const productId = currentProduct.getId();
 
-    return Product.create(name, price, description, categoryId, available, currentProduct.getId());
+    return Product.create(name, price, description, categoryId, available, productId);
   }
 
   private async ensureUniqueName(product: Product, currentProduct: Product): Promise<void> {
-    if (product.getName() === currentProduct.getName()) return;
+    const updatedName = product.getName();
+    const currentName = currentProduct.getName();
+    if (updatedName === currentName) return;
 
-    if (await this.productRepository.existsByName(product.getName())) {
+    const nameExists = await this.productRepository.existsByName(updatedName);
+    if (nameExists) {
       throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
     }
   }
 
   private async ensureCategoryExists(product: Product, currentProduct: Product): Promise<void> {
-    if (product.getCategoryId() === currentProduct.getCategoryId()) return;
+    const updatedCategoryId = product.getCategoryId();
+    const currentCategoryId = currentProduct.getCategoryId();
+    if (updatedCategoryId === currentCategoryId) return;
 
-    if (!(await this.categoryRepository.existsById(product.getCategoryId()))) {
+    const categoryExists = await this.categoryRepository.existsById(updatedCategoryId);
+    if (!categoryExists) {
       throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
     }
   }
@@ -104,9 +113,14 @@ export class UpdateProduct {
       throw new DomainError('additionIds', 'INVALID_TYPE', 'Os IDs dos adicionais devem ser uma lista.');
     }
 
-    const additionIds = value.map((rawId) => ReferenceId.create(rawId, 'additionIds').getValue());
+    const additionIds: string[] = [];
+    for (const rawId of value) {
+      const additionId = ReferenceId.create(rawId, 'additionIds').getValue();
+      additionIds.push(additionId);
+    }
 
-    if (new Set(additionIds).size !== additionIds.length) {
+    const hasDuplicateIds = new Set(additionIds).size !== additionIds.length;
+    if (hasDuplicateIds) {
       throw new DomainError('additionIds', 'DUPLICATE', 'O mesmo adicional não pode ser informado mais de uma vez.');
     }
 
