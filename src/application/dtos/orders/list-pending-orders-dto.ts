@@ -1,3 +1,7 @@
+export interface ListPendingOrdersInput {
+  date?: unknown;
+}
+
 export interface PendingOrderAddition {
   additionId: string;
   additionName: string;

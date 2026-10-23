@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListOrderHistoryOutput } from '../../../../application/dtos/orders/list-order-history-dto.js';
+import type { ListOrderHistoryInput, ListOrderHistoryOutput } from '../../../../application/dtos/orders/list-order-history-dto.js';
 import { ListOrderHistory } from '../../../../application/use-cases/orders/list-order-history.js';
 
 export class ListOrderHistoryController {
@@ -7,7 +7,8 @@ export class ListOrderHistoryController {
 
   public async execute(request: Request, response: Response<ListOrderHistoryOutput>, next: NextFunction): Promise<void> {
     try {
-      const output = await this.listOrderHistory.list(request.query.date);
+      const input: ListOrderHistoryInput = { date: request.query.date };
+      const output = await this.listOrderHistory.list(input);
       response.status(200);
       response.json(output);
     } catch (error) {

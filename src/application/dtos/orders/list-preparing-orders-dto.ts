@@ -1,5 +1,9 @@
 import type { PendingOrderItem } from './list-pending-orders-dto.js';
 
+export interface ListPreparingOrdersInput {
+  date?: unknown;
+}
+
 export interface PreparingOrderListItem {
   id: string;
   customerName: string;

@@ -1,4 +1,4 @@
-import type { OrderDateRange } from '../dtos/orders/order-date-range.js';
+import type { OrderDateRange } from '../../domain/value-objects/order/order-date-range.js';
 import type { PendingOrderListItem } from '../dtos/orders/list-pending-orders-dto.js';
 import type { OrderHistoryListItem } from '../dtos/orders/list-order-history-dto.js';
 import type { PreparingOrderListItem } from '../dtos/orders/list-preparing-orders-dto.js';

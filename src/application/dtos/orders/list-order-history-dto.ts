@@ -1,6 +1,10 @@
 import type { OrderStatusValue } from '../../../domain/value-objects/order/order-status.js';
 import type { PendingOrderItem } from './list-pending-orders-dto.js';
 
+export interface ListOrderHistoryInput {
+  date?: unknown;
+}
+
 export interface OrderHistoryEntry {
   status: OrderStatusValue;
   changedAt: string;

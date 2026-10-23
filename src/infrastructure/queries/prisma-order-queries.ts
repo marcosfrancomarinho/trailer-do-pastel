@@ -4,7 +4,7 @@ import type {
   PendingOrderItem,
   PendingOrderListItem,
 } from '../../application/dtos/orders/list-pending-orders-dto.js';
-import type { OrderDateRange } from '../../application/dtos/orders/order-date-range.js';
+import type { OrderDateRange } from '../../domain/value-objects/order/order-date-range.js';
 import type { OrderHistoryListItem } from '../../application/dtos/orders/list-order-history-dto.js';
 import type { PreparingOrderListItem } from '../../application/dtos/orders/list-preparing-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
@@ -45,8 +45,9 @@ export class PrismaOrderQueries implements OrderQueries {
   }
 
   public async findPending(range?: OrderDateRange): Promise<PendingOrderListItem[]> {
+    const dateRange = range?.getValue();
     const orders = await this.prisma.order.findMany({
-      where: { status: 'PENDING', ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
+      where: { status: 'PENDING', ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}) },
       select: {
         id: true,
         customerName: true,
@@ -77,8 +78,9 @@ export class PrismaOrderQueries implements OrderQueries {
   }
 
   public async findHistory(range?: OrderDateRange): Promise<OrderHistoryListItem[]> {
+    const dateRange = range?.getValue();
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['COMPLETED', 'CANCELED'] }, ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
+      where: { status: { in: ['COMPLETED', 'CANCELED'] }, ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}) },
       select: {
         id: true,
         customerName: true,
@@ -113,8 +115,9 @@ export class PrismaOrderQueries implements OrderQueries {
   }
 
   public async findPreparing(range?: OrderDateRange): Promise<PreparingOrderListItem[]> {
+    const dateRange = range?.getValue();
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['CONFIRMED', 'PREPARING'] }, ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
+      where: { status: { in: ['CONFIRMED', 'PREPARING'] }, ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}) },
       select: {
         id: true,
         customerName: true,

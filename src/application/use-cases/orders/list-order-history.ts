@@ -1,11 +1,11 @@
-import { orderDateRange } from '../../dtos/orders/order-date-range.js';
-import type { ListOrderHistoryOutput } from '../../dtos/orders/list-order-history-dto.js';
+import { OrderDateRange } from '../../../domain/value-objects/order/order-date-range.js';
+import type { ListOrderHistoryInput, ListOrderHistoryOutput } from '../../dtos/orders/list-order-history-dto.js';
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class ListOrderHistory {
   public constructor(private readonly orderQueries: OrderQueries) {}
 
-  public async list(date?: unknown): Promise<ListOrderHistoryOutput> {
-    return this.orderQueries.findHistory(orderDateRange(date));
+  public async list(input: ListOrderHistoryInput): Promise<ListOrderHistoryOutput> {
+    return this.orderQueries.findHistory(OrderDateRange.create(input.date));
   }
 }
