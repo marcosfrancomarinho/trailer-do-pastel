@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { CreateProductInput, CreateProductOutput } from '../../../../application/dtos/create-product-dto.js';
+import type { CreateProductInput, CreateProductOutput } from '../../../../application/dtos/products/create-product-dto.js';
 import { CreateProduct } from '../../../../application/use-cases/products/create-product.js';
 
 export class CreateProductController {
@@ -12,6 +12,7 @@ export class CreateProductController {
         description: request.body?.description,
         categoryId: request.body?.categoryId,
         price: request.body?.price,
+        imageUrl: request.body?.imageUrl,
         available: request.body?.available,
         additionIds: request.body?.additionIds,
       };

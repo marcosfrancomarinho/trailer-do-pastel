@@ -159,6 +159,17 @@ Content-Type: application/json
 # @name listarPedidosPendentes
 GET {{baseUrl}}/orders/pending
 
+### Acompanhar pedido pelo token — 200
+GET {{baseUrl}}/orders/tracking/{{criarPedido.response.body.$.trackingToken}}
+
+### Atualizar status do pedido — 200
+PATCH {{baseUrl}}/orders/{{criarPedido.response.body.$.id}}/status
+Content-Type: application/json
+
+{
+  "status": "CONFIRMED"
+}
+
 ### Senha inválida — 400, TOO_SHORT
 POST {{baseUrl}}/users
 Content-Type: application/json

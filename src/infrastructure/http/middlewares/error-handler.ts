@@ -7,6 +7,8 @@ export class ErrorHandler {
     ALREADY_EXISTS: 409,
     NOT_FOUND: 404,
     UNAVAILABLE: 409,
+    NOT_ASSOCIATED: 400,
+    IN_USE: 409,
     INVALID_CREDENTIALS: 401,
     UNAUTHORIZED: 401,
   };

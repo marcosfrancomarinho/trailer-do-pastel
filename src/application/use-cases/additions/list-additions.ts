@@ -1,4 +1,4 @@
-import type { ListAdditionsOutput } from '../../dtos/list-additions-dto.js';
+import type { ListAdditionsOutput } from '../../dtos/additions/list-additions-dto.js';
 import type { AdditionQueries } from '../../queries/addition-queries.js';
 
 export class ListAdditions {

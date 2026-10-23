@@ -4,8 +4,9 @@ import type { ProductRepository } from '../../domain/repositories/product-reposi
 import { OrderQuantity } from '../../domain/value-objects/order/order-quantity.js';
 import { OrderUnitPrice } from '../../domain/value-objects/order/order-unit-price.js';
 import { ProductName } from '../../domain/value-objects/product/product-name.js';
+import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
-import type { CreateOrderItemInput } from '../dtos/create-order-dto.js';
+import type { CreateOrderItemInput } from '../dtos/orders/create-order-dto.js';
 import { ApplicationError } from '../errors/application-error.js';
 import { CreateOrderItemAdditionService } from './create-order-item-addition-service.js';
 
@@ -31,10 +32,10 @@ export class CreateOrderItemService {
     }
 
     const productName = ProductName.create(product.getName());
-    const unitPrice = OrderUnitPrice.create(product.getPrice());
+    const unitPrice = OrderUnitPrice.create(DecimalValue.create(product.getPrice()));
 
     for (const addition of input.additions) {
-      const itemAddition = await this.createOrderItemAdditionService.create(addition);
+      const itemAddition = await this.createOrderItemAdditionService.create(addition, productId.getValue());
       itemAdditions.push(itemAddition);
     }
 

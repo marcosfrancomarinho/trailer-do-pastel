@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { CreateAdditionInput, CreateAdditionOutput } from '../../../../application/dtos/create-addition-dto.js';
+import type { CreateAdditionInput, CreateAdditionOutput } from '../../../../application/dtos/additions/create-addition-dto.js';
 import { CreateAddition } from '../../../../application/use-cases/additions/create-addition.js';
 
 export class CreateAdditionController {

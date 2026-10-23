@@ -19,7 +19,7 @@ describe('CreateAddition', () => {
       async save(addition) {
         calls.push('save');
         assert.equal(addition.getName(), 'Queijo extra');
-        assert.equal(addition.getPrice().getValue(), '12.5');
+        assert.equal(addition.getPrice(), '12.5');
         assert.equal(addition.isAvailable(), true);
         return 'generated-id';
       },
@@ -38,7 +38,7 @@ describe('CreateAddition', () => {
       },
       async save(addition) {
         assert.equal(addition.isAvailable(), false);
-        assert.equal(addition.getPrice().getValue(), price);
+        assert.equal(addition.getPrice(), price);
         return 'generated-id';
       },
     });

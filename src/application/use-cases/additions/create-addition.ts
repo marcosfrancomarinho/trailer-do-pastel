@@ -3,7 +3,7 @@ import type { AdditionRepository } from '../../../domain/repositories/addition-r
 import { AdditionName } from '../../../domain/value-objects/addition/addition-name.js';
 import { AdditionPrice } from '../../../domain/value-objects/addition/addition-price.js';
 import { DecimalValue } from '../../../domain/value-objects/shared/decimal-value.js';
-import type { CreateAdditionInput, CreateAdditionOutput } from '../../dtos/create-addition-dto.js';
+import type { CreateAdditionInput, CreateAdditionOutput } from '../../dtos/additions/create-addition-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateAddition {

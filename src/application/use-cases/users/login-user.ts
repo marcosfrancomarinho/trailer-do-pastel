@@ -1,7 +1,7 @@
 import type { UserRepository } from '../../../domain/repositories/user-repository.js';
 import { UserName } from '../../../domain/value-objects/user/user-name.js';
 import { UserPassword } from '../../../domain/value-objects/user/user-password.js';
-import type { LoginUserInput, LoginUserOutput } from '../../dtos/login-user-dto.js';
+import type { LoginUserInput, LoginUserOutput } from '../../dtos/users/login-user-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
 import type { AuthTokenGateway } from '../../gateways/auth-token-gateway.js';
 import type { PasswordHasher } from '../../gateways/password-hasher.js';

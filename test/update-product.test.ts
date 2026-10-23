@@ -12,7 +12,8 @@ describe('UpdateProduct', () => {
       assert.equal(product.getName(), 'Pastel de queijo');
       assert.equal(product.getDescription(), 'Preparado na hora');
       assert.equal(product.getCategoryId(), 'category-1');
-      assert.equal(product.getPrice().getValue(), '14.5');
+      assert.equal(product.getPrice(), '14.5');
+      assert.equal(product.getImageUrl(), null);
       assert.equal(product.isAvailable(), true);
       assert.equal(additions, undefined);
     });
@@ -24,6 +25,22 @@ describe('UpdateProduct', () => {
 
     assert.deepEqual(await useCase.update({ productId: ' product-1 ', price: '14.50' }), { id: 'product-1' });
     assert.equal(update.mock.callCount(), 1);
+  });
+
+  it('updates and clears the image URL without changing other fields', async (context) => {
+    const update = context.mock.fn(async () => {});
+    const useCase = new UpdateProduct(
+      createProductRepository({ update }),
+      createAdditionRepository(),
+      createCategoryRepository(),
+    );
+
+    await useCase.update({ productId: 'product-1', imageUrl: ' https://example.com/new.jpg ' });
+    await useCase.update({ productId: 'product-1', imageUrl: null });
+
+    assert.equal(update.mock.calls[0].arguments[0].getImageUrl(), 'https://example.com/new.jpg');
+    assert.equal(update.mock.calls[1].arguments[0].getImageUrl(), null);
+    assert.equal(update.mock.calls[0].arguments[0].getPrice(), '10');
   });
 
   it('replaces additions when IDs are supplied and removes all when the list is empty', async (context) => {
@@ -56,6 +73,7 @@ describe('UpdateProduct', () => {
       { productId: 'product-1' },
       { productId: 'product-1', price: '0' },
       { productId: 'product-1', available: null as unknown as boolean },
+      { productId: 'product-1', imageUrl: 'ftp://example.com/pastel.jpg' },
       { productId: 'product-1', additionIds: ['addition-1', ' addition-1 '] },
     ]) {
       await assert.rejects(useCase.update(input), DomainError);

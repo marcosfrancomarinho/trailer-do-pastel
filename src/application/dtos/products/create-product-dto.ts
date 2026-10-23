@@ -3,6 +3,7 @@ export interface CreateProductInput {
   description: string;
   categoryId: string;
   price: string;
+  imageUrl?: string | null;
   available?: boolean;
   additionIds?: string[];
 }

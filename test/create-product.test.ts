@@ -18,7 +18,13 @@ function createUseCase(
 }
 
 describe('CreateProduct', () => {
-  const input = { name: ' Pastel de queijo ', description: 'Queijo', price: '12.50', categoryId: 'category-1' };
+  const input = {
+    name: ' Pastel de queijo ',
+    description: 'Queijo',
+    price: '12.50',
+    categoryId: 'category-1',
+    imageUrl: ' https://example.com/pastel.jpg ',
+  };
 
   it('looks up the normalized name before saving and returns the generated ID', async () => {
     const calls: string[] = [];
@@ -32,9 +38,10 @@ describe('CreateProduct', () => {
       async save(product) {
         calls.push('save');
         assert.equal(product.getName(), 'Pastel de queijo');
-        assert.equal(product.getPrice().getValue(), '12.5');
+        assert.equal(product.getPrice(), '12.5');
         assert.equal(product.getDescription(), input.description);
         assert.equal(product.getCategoryId(), input.categoryId);
+        assert.equal(product.getImageUrl(), 'https://example.com/pastel.jpg');
         assert.equal(product.isAvailable(), true);
         return 'generated-id';
       },
@@ -53,7 +60,7 @@ describe('CreateProduct', () => {
       },
       async save(product) {
         assert.equal(product.isAvailable(), false);
-        assert.equal(product.getPrice().getValue(), price);
+        assert.equal(product.getPrice(), price);
         return 'generated-id';
       },
     });
@@ -76,6 +83,21 @@ describe('CreateProduct', () => {
     assert.deepEqual(await useCase.create({ ...input, additionIds: [] }), { id: 'generated-id' });
     assert.equal(findAdditionById.mock.callCount(), 0);
     assert.equal(save.mock.callCount(), 2);
+  });
+
+  it('accepts a product without an image and rejects an invalid image URL', async (context) => {
+    const save = context.mock.fn(async (product) => {
+      assert.equal(product.getImageUrl(), null);
+      return 'generated-id';
+    });
+    const useCase = createUseCase({ findProductById: async () => null, existsByName: async () => false, save });
+
+    assert.deepEqual(await useCase.create({ ...input, imageUrl: undefined }), { id: 'generated-id' });
+    await assert.rejects(
+      useCase.create({ ...input, imageUrl: 'not-a-url' }),
+      (error: unknown) => error instanceof DomainError && error.field === 'imageUrl',
+    );
+    assert.equal(save.mock.callCount(), 1);
   });
 
   it('validates and saves the selected additions with the product', async (context) => {

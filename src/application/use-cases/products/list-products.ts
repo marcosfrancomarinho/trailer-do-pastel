@@ -1,4 +1,4 @@
-import type { ListProductsOutput } from '../../dtos/list-products-dto.js';
+import type { ListProductsOutput } from '../../dtos/products/list-products-dto.js';
 import type { ProductQueries } from '../../queries/product-queries.js';
 
 export class ListProducts {

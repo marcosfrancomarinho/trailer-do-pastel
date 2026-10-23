@@ -11,6 +11,7 @@ describe('PrismaProductQueries', () => {
       description: 'Recheio especial',
       categoryId: 'category-1',
       price: new Prisma.Decimal('9007199254740993.01'),
+      imageUrl: 'https://example.com/pastel.jpg',
       available: false,
     }]);
     const prisma = { product: { findMany } } as unknown as PrismaClient;
@@ -22,6 +23,7 @@ describe('PrismaProductQueries', () => {
       description: 'Recheio especial',
       categoryId: 'category-1',
       price: '9007199254740993.01',
+      imageUrl: 'https://example.com/pastel.jpg',
       available: false,
     }]);
     assert.equal(findMany.mock.callCount(), 1);
@@ -32,6 +34,7 @@ describe('PrismaProductQueries', () => {
         description: true,
         categoryId: true,
         price: true,
+        imageUrl: true,
         available: true,
       },
       orderBy: { name: 'asc' },
@@ -51,6 +54,7 @@ describe('PrismaProductQueries', () => {
       description: 'Recheio especial',
       categoryId: 'category-1',
       price: new Prisma.Decimal('9007199254740993.01'),
+      imageUrl: null,
       available: false,
     }]);
     const prisma = { product: { findMany } } as unknown as PrismaClient;
@@ -64,6 +68,7 @@ describe('PrismaProductQueries', () => {
       description: 'Recheio especial',
       categoryId: 'category-1',
       price: '9007199254740993.01',
+      imageUrl: null,
       available: false,
     }]);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
@@ -74,6 +79,7 @@ describe('PrismaProductQueries', () => {
         description: true,
         categoryId: true,
         price: true,
+        imageUrl: true,
         available: true,
       },
       orderBy: { name: 'asc' },

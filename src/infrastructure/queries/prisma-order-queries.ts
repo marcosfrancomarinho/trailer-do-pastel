@@ -3,11 +3,26 @@ import type {
   PendingOrderAddition,
   PendingOrderItem,
   PendingOrderListItem,
-} from '../../application/dtos/list-pending-orders-dto.js';
+} from '../../application/dtos/orders/list-pending-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
+import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
 
 export class PrismaOrderQueries implements OrderQueries {
   public constructor(private readonly prisma: PrismaClient) {}
+
+  public async findByTrackingToken(trackingToken: string): Promise<TrackOrderOutput | null> {
+    const order = await this.prisma.order.findUnique({
+      where: { trackingToken },
+      select: { status: true, updatedAt: true },
+    });
+
+    if (!order) return null;
+
+    return {
+      status: order.status,
+      updatedAt: order.updatedAt.toISOString(),
+    };
+  }
 
   public async findPending(): Promise<PendingOrderListItem[]> {
     const orders = await this.prisma.order.findMany({

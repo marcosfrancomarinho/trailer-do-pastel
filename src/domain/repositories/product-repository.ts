@@ -6,4 +6,5 @@ export interface ProductRepository {
   existsByName(name: string): Promise<boolean>;
   save(product: Product, additions: Addition[]): Promise<string>;
   update(product: Product, additions?: Addition[]): Promise<void>;
+  deleteById(id: string): Promise<void>;
 }

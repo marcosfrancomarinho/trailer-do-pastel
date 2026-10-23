@@ -55,6 +55,7 @@ export function createOrderRepository(overrides: Partial<OrderRepository> = {}):
     async save() {
       return { id: 'order-id', trackingToken: 'tracking-token' };
     },
+    async updateStatus() {},
     ...overrides,
   };
 }
@@ -73,6 +74,7 @@ export function createProductRepository(overrides: Partial<ProductRepository> = 
       return 'product-id';
     },
     async update() {},
+    async deleteById() {},
     ...overrides,
   };
 }
@@ -84,12 +86,17 @@ export function createAdditionRepository(overrides: Partial<AdditionRepository> 
       if (id === 'addition-2') return buildCatalogAddition(id, '1.00');
       return null;
     },
+    async isLinkedToProduct() {
+      return true;
+    },
     async existsByName() {
       return false;
     },
     async save() {
       return 'addition-id';
     },
+    async update() {},
+    async deleteById() {},
     ...overrides,
   };
 }
@@ -105,6 +112,8 @@ export function createCategoryRepository(overrides: Partial<CategoryRepository> 
     async save() {
       return 'category-id';
     },
+    async update() {},
+    async deleteById() {},
     ...overrides,
   };
 }
@@ -121,6 +130,7 @@ export function buildCatalogProduct(
     ProductDescription.create('Preparado na hora'),
     ReferenceId.create('category-1', 'categoryId'),
     available,
+    null,
     id,
   );
 }

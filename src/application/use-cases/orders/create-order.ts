@@ -3,7 +3,7 @@ import type { OrderItem } from '../../../domain/entities/order-item.js';
 import type { OrderRepository } from '../../../domain/repositories/order-repository.js';
 import { CustomerName } from '../../../domain/value-objects/customer/customer-name.js';
 import { CustomerPhone } from '../../../domain/value-objects/customer/customer-phone.js';
-import type { CreateOrderInput, CreateOrderOutput } from '../../dtos/create-order-dto.js';
+import type { CreateOrderInput, CreateOrderOutput } from '../../dtos/orders/create-order-dto.js';
 import { CreateOrderItemService } from '../../services/create-order-item-service.js';
 
 export class CreateOrder {

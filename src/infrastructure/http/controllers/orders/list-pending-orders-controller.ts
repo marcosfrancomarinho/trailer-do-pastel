@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListPendingOrdersOutput } from '../../../../application/dtos/list-pending-orders-dto.js';
+import type { ListPendingOrdersOutput } from '../../../../application/dtos/orders/list-pending-orders-dto.js';
 import { ListPendingOrders } from '../../../../application/use-cases/orders/list-pending-orders.js';
 
 export class ListPendingOrdersController {

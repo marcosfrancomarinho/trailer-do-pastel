@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListProductsOutput } from '../../../../application/dtos/list-products-dto.js';
+import type { ListProductsOutput } from '../../../../application/dtos/products/list-products-dto.js';
 import { ListProducts } from '../../../../application/use-cases/products/list-products.js';
 
 export class ListProductsController {

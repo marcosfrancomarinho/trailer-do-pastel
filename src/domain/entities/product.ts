@@ -1,6 +1,6 @@
 import { DomainError } from '../errors/domain-error.js';
-import type { DecimalValue } from '../value-objects/shared/decimal-value.js';
 import type { ProductDescription } from '../value-objects/product/product-description.js';
+import type { ProductImageUrl } from '../value-objects/product/product-image-url.js';
 import type { ProductName } from '../value-objects/product/product-name.js';
 import type { ProductPrice } from '../value-objects/product/product-price.js';
 import type { ReferenceId } from '../value-objects/shared/reference-id.js';
@@ -12,6 +12,7 @@ export class Product {
     private readonly description: ProductDescription,
     private readonly categoryId: ReferenceId,
     private readonly available: boolean,
+    private readonly imageUrl: ProductImageUrl | null,
     private readonly id: string | undefined,
   ) {}
 
@@ -21,9 +22,10 @@ export class Product {
     description: ProductDescription,
     categoryId: ReferenceId,
     available: boolean = true,
+    imageUrl: ProductImageUrl | null = null,
     id?: string,
   ): Product {
-    return new Product(name, price, description, categoryId, available, id);
+    return new Product(name, price, description, categoryId, available, imageUrl, id);
   }
 
   public getId(): string {
@@ -46,8 +48,12 @@ export class Product {
     return this.categoryId.getValue();
   }
 
-  public getPrice(): DecimalValue {
-    return this.price.getValue();
+  public getPrice(): string {
+    return this.price.getValue().getValue();
+  }
+
+  public getImageUrl(): string | null {
+    return this.imageUrl?.getValue() ?? null;
   }
 
   public isAvailable(): boolean {

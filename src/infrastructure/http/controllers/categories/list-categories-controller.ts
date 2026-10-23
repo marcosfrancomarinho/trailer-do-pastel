@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListCategoriesOutput } from '../../../../application/dtos/list-categories-dto.js';
+import type { ListCategoriesOutput } from '../../../../application/dtos/categories/list-categories-dto.js';
 import { ListCategories } from '../../../../application/use-cases/categories/list-categories.js';
 
 export class ListCategoriesController {

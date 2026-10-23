@@ -1,4 +1,4 @@
-import type { ListPendingOrdersOutput } from '../../dtos/list-pending-orders-dto.js';
+import type { ListPendingOrdersOutput } from '../../dtos/orders/list-pending-orders-dto.js';
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class ListPendingOrders {

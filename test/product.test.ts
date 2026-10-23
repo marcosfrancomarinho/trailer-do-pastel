@@ -15,6 +15,7 @@ function createProduct(available?: boolean, id?: string): Product {
     ProductDescription.create('Queijo e orégano'),
     ReferenceId.create('category-id', 'categoryId'),
     available,
+    null,
     id,
   );
 }
@@ -27,6 +28,7 @@ describe('Product', () => {
       ProductDescription.create('Queijo e orégano'),
       ReferenceId.create('category-id', 'categoryId'),
       true,
+      null,
       'database-id',
     );
 
@@ -39,7 +41,8 @@ describe('Product', () => {
     assert.equal(product.getId(), 'database-id');
     assert.equal(product.getName(), 'Pastel de queijo');
     assert.equal(product.getDescription(), 'Queijo e orégano');
-    assert.equal(product.getPrice().getValue(), '12.5');
+    assert.equal(product.getPrice(), '12.5');
+    assert.equal(product.getImageUrl(), null);
     assert.equal(product.isAvailable(), false);
   });
 

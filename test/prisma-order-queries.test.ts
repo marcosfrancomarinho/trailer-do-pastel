@@ -4,6 +4,29 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaOrderQueries } from '../src/infrastructure/queries/prisma-order-queries.js';
 
 describe('PrismaOrderQueries', () => {
+  it('returns the current status by tracking token without customer details', async (context) => {
+    const findUnique = context.mock.fn(async () => ({
+      status: 'READY',
+      updatedAt: new Date('2026-10-22T12:00:00.000Z'),
+    }));
+    const prisma = { order: { findUnique } } as unknown as PrismaClient;
+
+    assert.deepEqual(await new PrismaOrderQueries(prisma).findByTrackingToken('token-1'), {
+      status: 'READY',
+      updatedAt: '2026-10-22T12:00:00.000Z',
+    });
+    assert.deepEqual(findUnique.mock.calls[0].arguments, [{
+      where: { trackingToken: 'token-1' },
+      select: { status: true, updatedAt: true },
+    }]);
+  });
+
+  it('returns null when the tracking token is unknown', async () => {
+    const prisma = { order: { findUnique: async () => null } } as unknown as PrismaClient;
+
+    assert.equal(await new PrismaOrderQueries(prisma).findByTrackingToken('unknown'), null);
+  });
+
   it('returns only pending orders with item details, ordered oldest first', async (context) => {
     const findMany = context.mock.fn(async () => [{
       id: 'order-1',

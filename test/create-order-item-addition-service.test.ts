@@ -11,9 +11,10 @@ describe('CreateOrderItemAdditionService', () => {
   it('looks up the addition and uses its catalog price with the requested quantity', async (context) => {
     const repository = createAdditionRepository();
     const lookup = context.mock.method(repository, 'findAdditionById');
+    const isLinkedToProduct = context.mock.method(repository, 'isLinkedToProduct');
     const service = new CreateOrderItemAdditionService(repository);
 
-    const addition = await service.create(input);
+    const addition = await service.create(input, 'product-1');
     const unitPrice = addition.getUnitPrice();
     const total = addition.getTotal();
 
@@ -22,6 +23,7 @@ describe('CreateOrderItemAdditionService', () => {
     assert.equal(unitPrice, '2.5');
     assert.equal(total, '5');
     assert.deepEqual(lookup.mock.calls[0].arguments, ['addition-1']);
+    assert.deepEqual(isLinkedToProduct.mock.calls[0].arguments, ['product-1', 'addition-1']);
   });
 
   it('rejects missing and unavailable additions with application errors', async () => {
@@ -35,10 +37,24 @@ describe('CreateOrderItemAdditionService', () => {
       const service = new CreateOrderItemAdditionService(repository);
 
       await assert.rejects(
-        service.create(input),
+        service.create(input, 'product-1'),
         (error: unknown) => error instanceof ApplicationError && error.field === 'additionId' && error.code === code,
       );
     }
+  });
+
+  it('rejects an addition that does not belong to the product', async (context) => {
+    const repository = createAdditionRepository({ isLinkedToProduct: async () => false });
+    const lookup = context.mock.method(repository, 'isLinkedToProduct');
+    const service = new CreateOrderItemAdditionService(repository);
+
+    await assert.rejects(
+      service.create(input, 'product-2'),
+      (error: unknown) => error instanceof ApplicationError
+        && error.field === 'additionId'
+        && error.code === 'NOT_ASSOCIATED',
+    );
+    assert.deepEqual(lookup.mock.calls[0].arguments, ['product-2', 'addition-1']);
   });
 
   it('rejects invalid IDs and quantities before looking up the addition', async (context) => {
@@ -46,8 +62,8 @@ describe('CreateOrderItemAdditionService', () => {
     const lookup = context.mock.method(repository, 'findAdditionById');
     const service = new CreateOrderItemAdditionService(repository);
 
-    await assert.rejects(service.create({ ...input, additionId: ' ' }), DomainError);
-    await assert.rejects(service.create({ ...input, quantity: 0 }), DomainError);
+    await assert.rejects(service.create({ ...input, additionId: ' ' }, 'product-1'), DomainError);
+    await assert.rejects(service.create({ ...input, quantity: 0 }, 'product-1'), DomainError);
     assert.equal(lookup.mock.callCount(), 0);
   });
 
@@ -56,6 +72,6 @@ describe('CreateOrderItemAdditionService', () => {
     const repository = createAdditionRepository({ findAdditionById: async () => { throw failure; } });
     const service = new CreateOrderItemAdditionService(repository);
 
-    await assert.rejects(service.create(input), (error: unknown) => error === failure);
+    await assert.rejects(service.create(input, 'product-1'), (error: unknown) => error === failure);
   });
 });

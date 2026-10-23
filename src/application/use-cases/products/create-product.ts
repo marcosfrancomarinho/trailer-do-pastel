@@ -6,10 +6,11 @@ import type { AdditionRepository } from '../../../domain/repositories/addition-r
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import { DomainError } from '../../../domain/errors/domain-error.js';
 import { ProductDescription } from '../../../domain/value-objects/product/product-description.js';
+import { ProductImageUrl } from '../../../domain/value-objects/product/product-image-url.js';
 import { ProductName } from '../../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../../domain/value-objects/product/product-price.js';
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
-import type { CreateProductInput, CreateProductOutput } from '../../dtos/create-product-dto.js';
+import type { CreateProductInput, CreateProductOutput } from '../../dtos/products/create-product-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateProduct {
@@ -36,7 +37,8 @@ export class CreateProduct {
 
     const price = ProductPrice.create(DecimalValue.create(input.price));
     const description = ProductDescription.create(input.description);
-    const product = Product.create(name, price, description, categoryId, input.available);
+    const imageUrl = input.imageUrl == null ? null : ProductImageUrl.create(input.imageUrl);
+    const product = Product.create(name, price, description, categoryId, input.available, imageUrl);
 
     const additionIds = this.validateAdditionIds(input.additionIds);
     const additions: Addition[] = [];

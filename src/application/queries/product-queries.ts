@@ -1,4 +1,4 @@
-import type { ProductListItem } from '../dtos/list-products-dto.js';
+import type { ProductListItem } from '../dtos/products/list-products-dto.js';
 
 export interface ProductQueries {
   findAll(): Promise<ProductListItem[]>;

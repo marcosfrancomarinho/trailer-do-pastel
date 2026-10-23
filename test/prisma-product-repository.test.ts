@@ -1,10 +1,31 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { ApplicationError } from '../src/application/errors/application-error.js';
 import { PrismaProductRepository } from '../src/infrastructure/repositories/prisma-product-repository.js';
 import { buildCatalogAddition, buildCatalogProduct } from './helpers/order-fixtures.js';
 
 describe('PrismaProductRepository', () => {
+  it('loads the image URL from a stored product', async () => {
+    const prisma = {
+      product: {
+        findUnique: async () => ({
+          id: 'product-1',
+          name: 'Pastel de queijo',
+          description: 'Preparado na hora',
+          categoryId: 'category-1',
+          price: '12.50',
+          imageUrl: 'https://example.com/pastel.jpg',
+          available: true,
+        }),
+      },
+    } as unknown as PrismaClient;
+
+    const product = await new PrismaProductRepository(prisma).findProductById('product-1');
+
+    assert.equal(product?.getImageUrl(), 'https://example.com/pastel.jpg');
+  });
+
   it('creates product and selected addition links in one nested write', async (context) => {
     const create = context.mock.fn(async () => ({ id: 'product-id' }));
     const prisma = { product: { create } } as unknown as PrismaClient;
@@ -20,6 +41,7 @@ describe('PrismaProductRepository', () => {
         description: 'Preparado na hora',
         categoryId: 'category-1',
         price: '12.5',
+        imageUrl: null,
         available: true,
         additions: { create: [{ additionId: 'addition-1' }, { additionId: 'addition-2' }] },
       },
@@ -54,7 +76,14 @@ describe('PrismaProductRepository', () => {
     assert.deepEqual(calls, ['update', 'delete', 'create']);
     assert.deepEqual(update.mock.calls[0].arguments[0], {
       where: { id: 'product-1' },
-      data: { name: 'Pastel de queijo', description: 'Preparado na hora', categoryId: 'category-1', price: '14.5', available: true },
+      data: {
+        name: 'Pastel de queijo',
+        description: 'Preparado na hora',
+        categoryId: 'category-1',
+        price: '14.5',
+        imageUrl: null,
+        available: true,
+      },
       select: { id: true },
     });
     assert.deepEqual(deleteMany.mock.calls[0].arguments[0], { where: { productId: 'product-1' } });
@@ -79,5 +108,38 @@ describe('PrismaProductRepository', () => {
     await repository.update(product, []);
     assert.equal(deleteMany.mock.callCount(), 1);
     assert.equal(createMany.mock.callCount(), 0);
+  });
+
+  it('deletes a product by ID', async (context) => {
+    const remove = context.mock.fn(async () => ({ id: 'product-1' }));
+    const prisma = { product: { delete: remove } } as unknown as PrismaClient;
+
+    await new PrismaProductRepository(prisma).deleteById('product-1');
+
+    assert.deepEqual(remove.mock.calls[0].arguments, [{ where: { id: 'product-1' } }]);
+  });
+
+  it('reports missing products and products used in orders', async () => {
+    const cases = [
+      { prismaCode: 'P2025', applicationCode: 'NOT_FOUND' },
+      { prismaCode: 'P2003', applicationCode: 'IN_USE' },
+    ];
+
+    for (const { prismaCode, applicationCode } of cases) {
+      const prismaError = new Prisma.PrismaClientKnownRequestError('Deletion failed', {
+        code: prismaCode,
+        clientVersion: '6.19.3',
+      });
+      const prisma = {
+        product: { delete: async () => { throw prismaError; } },
+      } as unknown as PrismaClient;
+
+      await assert.rejects(
+        new PrismaProductRepository(prisma).deleteById('product-1'),
+        (error: unknown) => error instanceof ApplicationError
+          && error.field === 'productId'
+          && error.code === applicationCode,
+      );
+    }
   });
 });

@@ -11,6 +11,7 @@ import { createAdditionRepository, createCategoryRepository, createProductReposi
 describe('CreateProductController', () => {
   const input = {
     name: 'Pastel', description: 'Queijo', price: '12.50', categoryId: 'category-1', available: false,
+    imageUrl: 'https://example.com/pastel.jpg',
     additionIds: ['addition-1'],
   };
 
@@ -19,6 +20,7 @@ describe('CreateProductController', () => {
       async save(product, additions) {
         assert.equal(product.isAvailable(), false);
         assert.equal(product.getCategoryId(), input.categoryId);
+        assert.equal(product.getImageUrl(), input.imageUrl);
         assert.deepEqual(additions.map((addition) => addition.getId()), ['addition-1']);
         return 'product-id';
       },

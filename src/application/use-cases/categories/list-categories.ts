@@ -1,4 +1,4 @@
-import type { ListCategoriesOutput } from '../../dtos/list-categories-dto.js';
+import type { ListCategoriesOutput } from '../../dtos/categories/list-categories-dto.js';
 import type { CategoryQueries } from '../../queries/category-queries.js';
 
 export class ListCategories {

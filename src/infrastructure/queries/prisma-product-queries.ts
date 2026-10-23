@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { ProductListItem } from '../../application/dtos/list-products-dto.js';
+import type { ProductListItem } from '../../application/dtos/products/list-products-dto.js';
 import type { ProductQueries } from '../../application/queries/product-queries.js';
 
 export class PrismaProductQueries implements ProductQueries {
@@ -13,6 +13,7 @@ export class PrismaProductQueries implements ProductQueries {
         description: true,
         categoryId: true,
         price: true,
+        imageUrl: true,
         available: true,
       },
       orderBy: { name: 'asc' },
@@ -24,6 +25,7 @@ export class PrismaProductQueries implements ProductQueries {
       description: product.description,
       categoryId: product.categoryId,
       price: product.price.toString(),
+      imageUrl: product.imageUrl,
       available: product.available,
     }));
   }
@@ -37,6 +39,7 @@ export class PrismaProductQueries implements ProductQueries {
         description: true,
         categoryId: true,
         price: true,
+        imageUrl: true,
         available: true,
       },
       orderBy: { name: 'asc' },
@@ -48,6 +51,7 @@ export class PrismaProductQueries implements ProductQueries {
       description: product.description,
       categoryId: product.categoryId,
       price: product.price.toString(),
+      imageUrl: product.imageUrl,
       available: product.available,
     }));
   }

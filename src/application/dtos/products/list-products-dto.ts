@@ -4,6 +4,7 @@ export interface ProductListItem {
   description: string;
   categoryId: string;
   price: string;
+  imageUrl: string | null;
   available: boolean;
 }
 

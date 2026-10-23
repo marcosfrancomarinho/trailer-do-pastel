@@ -11,6 +11,7 @@ describe('ListProducts', () => {
         description: 'Queijo e orégano',
         categoryId: 'category-1',
         price: '12.5',
+        imageUrl: 'https://example.com/pastel.jpg',
         available: true,
       },
       {
@@ -19,6 +20,7 @@ describe('ListProducts', () => {
         description: 'Suco natural',
         categoryId: 'category-2',
         price: '8',
+        imageUrl: null,
         available: false,
       },
     ];

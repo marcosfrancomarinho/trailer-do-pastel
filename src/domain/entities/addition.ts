@@ -1,7 +1,6 @@
 import { DomainError } from '../errors/domain-error.js';
 import type { AdditionName } from '../value-objects/addition/addition-name.js';
 import type { AdditionPrice } from '../value-objects/addition/addition-price.js';
-import type { DecimalValue } from '../value-objects/shared/decimal-value.js';
 
 export class Addition {
   private constructor(
@@ -32,8 +31,8 @@ export class Addition {
     return this.name.getValue();
   }
 
-  public getPrice(): DecimalValue {
-    return this.price.getValue();
+  public getPrice(): string {
+    return this.price.getValue().getValue();
   }
 
   public isAvailable(): boolean {

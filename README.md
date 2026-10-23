@@ -75,6 +75,8 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
+| GET | `/orders/tracking/:trackingToken` | Acompanhar pedido | `{ "status": "PREPARING", "updatedAt": "..." }` |
+| PATCH | `/orders/:orderId/status` | Atualizar status do pedido | `{ "status": "READY", "id": "..." }` |
 | GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
 
 ### Usuários
@@ -175,7 +177,11 @@ total do pedido = soma dos totais dos itens
 
 No exemplo, dois pastéis de `12.50`, cada um com um adicional de `2.50`, totalizam `30`. A API calcula o total e cria o pedido com status `PENDING` e um token de acompanhamento.
 
-`GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto. Ainda não há rota para alterar o status do pedido, portanto pedidos criados permanecem pendentes. Nenhuma rota exige autenticação neste momento; configure a proteção antes de disponibilizar a API publicamente.
+O cliente pode consultar `GET /orders/tracking/:trackingToken` com o token recebido na criação. A resposta contém o status atual e `updatedAt` em UTC; um token desconhecido retorna `404 NOT_FOUND`. A resposta não contém dados pessoais do cliente e não é armazenada em cache. Para acompanhar mudanças, o cliente pode repetir a consulta.
+
+`GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto.
+
+Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "READY" }`. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `READY`, `COMPLETED` e `CANCELED`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`. Nenhuma rota exige autenticação neste momento; configure a proteção antes de disponibilizar a API publicamente.
 
 ## Testar as requisições
 

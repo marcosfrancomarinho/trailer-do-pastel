@@ -5,11 +5,12 @@ import type { AdditionRepository } from '../../../domain/repositories/addition-r
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import type { ProductRepository } from '../../../domain/repositories/product-repository.js';
 import { ProductDescription } from '../../../domain/value-objects/product/product-description.js';
+import { ProductImageUrl } from '../../../domain/value-objects/product/product-image-url.js';
 import { ProductName } from '../../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../../domain/value-objects/product/product-price.js';
 import { DecimalValue } from '../../../domain/value-objects/shared/decimal-value.js';
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
-import type { UpdateProductInput, UpdateProductOutput } from '../../dtos/update-product-dto.js';
+import type { UpdateProductInput, UpdateProductOutput } from '../../dtos/products/update-product-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class UpdateProduct {
@@ -20,8 +21,8 @@ export class UpdateProduct {
   ) {}
 
   public async update(input: UpdateProductInput): Promise<UpdateProductOutput> {
-    const productId = ReferenceId.create(input.productId, 'productId').getValue();
-    const currentProduct = await this.productRepository.findProductById(productId);
+    const productId = ReferenceId.create(input.productId, 'productId');
+    const currentProduct = await this.productRepository.findProductById(productId.getValue());
 
     if (!currentProduct) {
       throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
@@ -36,11 +37,19 @@ export class UpdateProduct {
     const additions = await this.findAdditions(input.additionIds);
     await this.productRepository.update(product, additions);
 
-    return { id: productId };
+    return { id: productId.getValue() };
   }
 
   private ensureHasChanges(input: UpdateProductInput): void {
-    const changes = [input.name, input.description, input.categoryId, input.price, input.available, input.additionIds];
+    const changes = [
+      input.name,
+      input.description,
+      input.categoryId,
+      input.price,
+      input.imageUrl,
+      input.available,
+      input.additionIds,
+    ];
     const hasChanges = changes.some((value) => value !== undefined);
 
     if (!hasChanges) {
@@ -52,13 +61,14 @@ export class UpdateProduct {
     const nameValue = input.name === undefined ? currentProduct.getName() : input.name;
     const descriptionValue = input.description === undefined ? currentProduct.getDescription() : input.description;
     const categoryIdValue = input.categoryId === undefined ? currentProduct.getCategoryId() : input.categoryId;
-    const priceValue = input.price === undefined ? currentProduct.getPrice().getValue() : input.price;
+    const priceValue = input.price === undefined ? currentProduct.getPrice() : input.price;
+    const imageUrlValue = input.imageUrl === undefined ? currentProduct.getImageUrl() : input.imageUrl;
 
     const name = ProductName.create(nameValue);
     const description = ProductDescription.create(descriptionValue);
     const categoryId = ReferenceId.create(categoryIdValue, 'categoryId');
-    const decimalPrice = DecimalValue.create(priceValue);
-    const price = ProductPrice.create(decimalPrice);
+    const price = ProductPrice.create(DecimalValue.create(priceValue));
+    const imageUrl = imageUrlValue === null ? null : ProductImageUrl.create(imageUrlValue);
 
     if (input.available !== undefined && typeof input.available !== 'boolean') {
       throw new DomainError('available', 'INVALID_TYPE', 'A disponibilidade do produto deve ser um booleano.');
@@ -66,7 +76,7 @@ export class UpdateProduct {
     const available = input.available === undefined ? currentProduct.isAvailable() : input.available;
     const productId = currentProduct.getId();
 
-    return Product.create(name, price, description, categoryId, available, productId);
+    return Product.create(name, price, description, categoryId, available, imageUrl, productId);
   }
 
   private async ensureUniqueName(product: Product, currentProduct: Product): Promise<void> {
@@ -115,8 +125,8 @@ export class UpdateProduct {
 
     const additionIds: string[] = [];
     for (const rawId of value) {
-      const additionId = ReferenceId.create(rawId, 'additionIds').getValue();
-      additionIds.push(additionId);
+      const additionId = ReferenceId.create(rawId, 'additionIds');
+      additionIds.push(additionId.getValue());
     }
 
     const hasDuplicateIds = new Set(additionIds).size !== additionIds.length;

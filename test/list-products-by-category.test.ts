@@ -11,6 +11,7 @@ describe('ListProductsByCategory', () => {
       description: 'Queijo e orégano',
       categoryId: 'category-1',
       price: '12.50',
+      imageUrl: 'https://example.com/pastel.jpg',
       available: true,
     }];
     const findByCategoryId = context.mock.fn(async (categoryId: string) => {

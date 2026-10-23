@@ -1,4 +1,4 @@
-import type { CategoryListItem } from '../dtos/list-categories-dto.js';
+import type { CategoryListItem } from '../dtos/categories/list-categories-dto.js';
 
 export interface CategoryQueries {
   findAll(): Promise<CategoryListItem[]>;

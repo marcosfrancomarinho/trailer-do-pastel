@@ -19,6 +19,17 @@ export class PrismaAdditionRepository implements AdditionRepository {
     return Addition.create(name, price, addition.available, addition.id);
   }
 
+  public async isLinkedToProduct(productId: string, additionId: string): Promise<boolean> {
+    const link = await this.prisma.productAddition.findUnique({
+      where: {
+        productId_additionId: { productId, additionId },
+      },
+      select: { productId: true },
+    });
+
+    return link !== null;
+  }
+
   public async existsByName(name: string): Promise<boolean> {
     const addition = await this.prisma.addition.findUnique({
       where: { name },
@@ -33,7 +44,7 @@ export class PrismaAdditionRepository implements AdditionRepository {
       const savedAddition = await this.prisma.addition.create({
         data: {
           name: addition.getName(),
-          price: addition.getPrice().getValue(),
+          price: addition.getPrice(),
           available: addition.isAvailable(),
         },
         select: { id: true },
@@ -43,6 +54,49 @@ export class PrismaAdditionRepository implements AdditionRepository {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
+      }
+
+      throw error;
+    }
+  }
+
+  public async update(addition: Addition): Promise<void> {
+    try {
+      await this.prisma.addition.update({
+        where: { id: addition.getId() },
+        data: {
+          name: addition.getName(),
+          price: addition.getPrice(),
+          available: addition.isAvailable(),
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
+        }
+
+        if (error.code === 'P2025') {
+          throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  public async deleteById(id: string): Promise<void> {
+    try {
+      await this.prisma.addition.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');
+        }
+
+        if (error.code === 'P2003') {
+          throw new ApplicationError('additionId', 'IN_USE', 'O adicional não pode ser excluído porque já está em um pedido.');
+        }
       }
 
       throw error;

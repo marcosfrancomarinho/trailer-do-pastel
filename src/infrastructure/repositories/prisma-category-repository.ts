@@ -40,4 +40,43 @@ export class PrismaCategoryRepository implements CategoryRepository {
       throw error;
     }
   }
+
+  public async update(category: Category): Promise<void> {
+    try {
+      await this.prisma.category.update({
+        where: { id: category.getId() },
+        data: { name: category.getName() },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
+        }
+
+        if (error.code === 'P2025') {
+          throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  public async deleteById(id: string): Promise<void> {
+    try {
+      await this.prisma.category.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
+        }
+
+        if (error.code === 'P2003') {
+          throw new ApplicationError('categoryId', 'IN_USE', 'A categoria não pode ser excluída porque possui produtos.');
+        }
+      }
+
+      throw error;
+    }
+  }
 }

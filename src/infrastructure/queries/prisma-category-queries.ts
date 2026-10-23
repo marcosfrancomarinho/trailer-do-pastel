@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { CategoryListItem } from '../../application/dtos/list-categories-dto.js';
+import type { CategoryListItem } from '../../application/dtos/categories/list-categories-dto.js';
 import type { CategoryQueries } from '../../application/queries/category-queries.js';
 
 export class PrismaCategoryQueries implements CategoryQueries {

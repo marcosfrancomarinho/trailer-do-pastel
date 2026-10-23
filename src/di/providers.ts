@@ -9,11 +9,18 @@ import type { OrderQueries } from '../application/queries/order-queries.js';
 import { CreateOrderItemAdditionService } from '../application/services/create-order-item-addition-service.js';
 import { CreateOrderItemService } from '../application/services/create-order-item-service.js';
 import { CreateAddition } from '../application/use-cases/additions/create-addition.js';
+import { UpdateAddition } from '../application/use-cases/additions/update-addition.js';
+import { DeleteAddition } from '../application/use-cases/additions/delete-addition.js';
 import { CreateCategory } from '../application/use-cases/categories/create-category.js';
+import { UpdateCategory } from '../application/use-cases/categories/update-category.js';
+import { DeleteCategory } from '../application/use-cases/categories/delete-category.js';
 import { CreateOrder } from '../application/use-cases/orders/create-order.js';
+import { UpdateOrderStatus } from '../application/use-cases/orders/update-order-status.js';
+import { TrackOrder } from '../application/use-cases/orders/track-order.js';
 import { ListPendingOrders } from '../application/use-cases/orders/list-pending-orders.js';
 import { CreateProduct } from '../application/use-cases/products/create-product.js';
 import { UpdateProduct } from '../application/use-cases/products/update-product.js';
+import { DeleteProduct } from '../application/use-cases/products/delete-product.js';
 import { CreateUser } from '../application/use-cases/users/create-user.js';
 import { ListCategories } from '../application/use-cases/categories/list-categories.js';
 import { ListAdditions } from '../application/use-cases/additions/list-additions.js';
@@ -29,11 +36,18 @@ import type { UserRepository } from '../domain/repositories/user-repository.js';
 import { BcryptPasswordHasher } from '../infrastructure/gateways/bcrypt-password-hasher.js';
 import { JwtAuthTokenGateway } from '../infrastructure/gateways/jwt-auth-token-gateway.js';
 import { CreateAdditionController } from '../infrastructure/http/controllers/additions/create-addition-controller.js';
+import { UpdateAdditionController } from '../infrastructure/http/controllers/additions/update-addition-controller.js';
+import { DeleteAdditionController } from '../infrastructure/http/controllers/additions/delete-addition-controller.js';
 import { CreateCategoryController } from '../infrastructure/http/controllers/categories/create-category-controller.js';
+import { UpdateCategoryController } from '../infrastructure/http/controllers/categories/update-category-controller.js';
+import { DeleteCategoryController } from '../infrastructure/http/controllers/categories/delete-category-controller.js';
 import { CreateOrderController } from '../infrastructure/http/controllers/orders/create-order-controller.js';
+import { UpdateOrderStatusController } from '../infrastructure/http/controllers/orders/update-order-status-controller.js';
+import { TrackOrderController } from '../infrastructure/http/controllers/orders/track-order-controller.js';
 import { ListPendingOrdersController } from '../infrastructure/http/controllers/orders/list-pending-orders-controller.js';
 import { CreateProductController } from '../infrastructure/http/controllers/products/create-product-controller.js';
 import { UpdateProductController } from '../infrastructure/http/controllers/products/update-product-controller.js';
+import { DeleteProductController } from '../infrastructure/http/controllers/products/delete-product-controller.js';
 import { CreateUserController } from '../infrastructure/http/controllers/users/create-user-controller.js';
 import { ListCategoriesController } from '../infrastructure/http/controllers/categories/list-categories-controller.js';
 import { ListAdditionsController } from '../infrastructure/http/controllers/additions/list-additions-controller.js';
@@ -71,6 +85,10 @@ const providers = new AppConfig()
   .useClass(CreateOrderItemAdditionService)
   .useClass(CreateOrderItemService)
   .useClass(CreateOrder)
+  .useClass(UpdateOrderStatus)
+  .useClass(UpdateOrderStatusController)
+  .useClass(TrackOrder)
+  .useClass(TrackOrderController)
   .useClass(ListPendingOrders)
   .useClass(CreateUser)
   .useClass(CreateUserController)
@@ -79,12 +97,20 @@ const providers = new AppConfig()
   .useClass(ErrorHandler)
   .useClass(CreateAddition)
   .useClass(CreateAdditionController)
+  .useClass(UpdateAddition)
+  .useClass(UpdateAdditionController)
+  .useClass(DeleteAddition)
+  .useClass(DeleteAdditionController)
   .useClass(ListAdditions)
   .useClass(ListAdditionsController)
   .useClass(ListAdditionsByProduct)
   .useClass(ListAdditionsByProductController)
   .useClass(CreateCategory)
   .useClass(CreateCategoryController)
+  .useClass(UpdateCategory)
+  .useClass(UpdateCategoryController)
+  .useClass(DeleteCategory)
+  .useClass(DeleteCategoryController)
   .useClass(ListCategories)
   .useClass(ListCategoriesController)
   .useClass(ListProducts)
@@ -95,6 +121,8 @@ const providers = new AppConfig()
   .useClass(CreateProductController)
   .useClass(UpdateProduct)
   .useClass(UpdateProductController)
+  .useClass(DeleteProduct)
+  .useClass(DeleteProductController)
   .useClass(CreateOrderController)
   .useClass(ListPendingOrdersController)
   .useClass(Server);

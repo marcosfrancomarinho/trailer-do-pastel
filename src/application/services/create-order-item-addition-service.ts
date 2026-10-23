@@ -2,14 +2,15 @@ import { OrderItemAddition } from '../../domain/entities/order-item-addition.js'
 import type { AdditionRepository } from '../../domain/repositories/addition-repository.js';
 import { OrderQuantity } from '../../domain/value-objects/order/order-quantity.js';
 import { OrderUnitPrice } from '../../domain/value-objects/order/order-unit-price.js';
+import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
-import type { CreateOrderAdditionInput } from '../dtos/create-order-dto.js';
+import type { CreateOrderAdditionInput } from '../dtos/orders/create-order-dto.js';
 import { ApplicationError } from '../errors/application-error.js';
 
 export class CreateOrderItemAdditionService {
   public constructor(private readonly additionRepository: AdditionRepository) {}
 
-  public async create(input: CreateOrderAdditionInput): Promise<OrderItemAddition> {
+  public async create(input: CreateOrderAdditionInput, productId: string): Promise<OrderItemAddition> {
     const additionId = ReferenceId.create(input.additionId, 'additionId');
     const quantity = OrderQuantity.create(input.quantity);
 
@@ -23,7 +24,13 @@ export class CreateOrderItemAdditionService {
       throw new ApplicationError('additionId', 'UNAVAILABLE', 'O adicional informado está indisponível.');
     }
 
-    const unitPrice = OrderUnitPrice.create(addition.getPrice());
+    const belongsToProduct = await this.additionRepository.isLinkedToProduct(productId, additionId.getValue());
+
+    if (!belongsToProduct) {
+      throw new ApplicationError('additionId', 'NOT_ASSOCIATED', 'O adicional informado não pertence ao produto.');
+    }
+
+    const unitPrice = OrderUnitPrice.create(DecimalValue.create(addition.getPrice()));
 
     return OrderItemAddition.create(additionId, quantity, unitPrice);
   }

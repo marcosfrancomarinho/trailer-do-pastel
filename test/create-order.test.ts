@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { CreateOrderInput } from '../src/application/dtos/create-order-dto.js';
+import type { CreateOrderInput } from '../src/application/dtos/orders/create-order-dto.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { CreateOrder } from '../src/application/use-cases/orders/create-order.js';
 import { CreateOrderItemService } from '../src/application/services/create-order-item-service.js';
@@ -145,6 +145,11 @@ describe('CreateOrder', () => {
         payload: withAddition,
         additionOverrides: { findAdditionById: async (id) => buildCatalogAddition(id, '2.50', false) },
         field: 'additionId', code: 'UNAVAILABLE',
+      },
+      {
+        payload: withAddition,
+        additionOverrides: { isLinkedToProduct: async () => false },
+        field: 'additionId', code: 'NOT_ASSOCIATED',
       },
     ];
 

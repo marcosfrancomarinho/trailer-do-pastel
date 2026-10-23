@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { CreateOrderItemInput } from '../src/application/dtos/create-order-dto.js';
+import type { CreateOrderItemInput } from '../src/application/dtos/orders/create-order-dto.js';
 import { ApplicationError } from '../src/application/errors/application-error.js';
 import { CreateOrderItemService } from '../src/application/services/create-order-item-service.js';
 import { CreateOrderItemAdditionService } from '../src/application/services/create-order-item-addition-service.js';
@@ -44,7 +44,7 @@ describe('CreateOrderItemService', () => {
     assert.deepEqual(additions.map((addition) => addition.getAdditionId()), ['cheese', 'olives']);
     assert.deepEqual(lookup.mock.calls[0].arguments, ['product-1']);
     assert.equal(createAddition.mock.callCount(), 2);
-    assert.deepEqual(createAddition.mock.calls.map((call) => call.arguments), input.additions.map((addition) => [addition]));
+    assert.deepEqual(createAddition.mock.calls.map((call) => call.arguments), input.additions.map((addition) => [addition, 'product-1']));
   });
 
   it('does not create additions when the product is missing or unavailable', async (context) => {

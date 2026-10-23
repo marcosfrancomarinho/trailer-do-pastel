@@ -13,6 +13,7 @@ describe('ListProductsController', () => {
       description: 'Queijo e orégano',
       categoryId: 'category-1',
       price: '12.5',
+      imageUrl: 'https://example.com/pastel.jpg',
       available: false,
     }];
     const findAll = context.mock.fn(async () => products);

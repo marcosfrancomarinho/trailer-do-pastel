@@ -4,6 +4,7 @@ export interface UpdateProductInput {
   description?: string;
   categoryId?: string;
   price?: string;
+  imageUrl?: string | null;
   available?: boolean;
   additionIds?: string[];
 }

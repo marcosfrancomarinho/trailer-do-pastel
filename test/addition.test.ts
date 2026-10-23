@@ -21,7 +21,7 @@ describe('Addition', () => {
 
     assert.equal(addition.getId(), 'database-id');
     assert.equal(addition.getName(), 'Queijo extra');
-    assert.equal(addition.getPrice().getValue(), '12.5');
+    assert.equal(addition.getPrice(), '12.5');
     assert.equal(addition.isAvailable(), false);
   });
 

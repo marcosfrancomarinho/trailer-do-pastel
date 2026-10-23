@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { AdditionListItem } from '../../application/dtos/list-additions-dto.js';
+import type { AdditionListItem } from '../../application/dtos/additions/list-additions-dto.js';
 import type { AdditionQueries } from '../../application/queries/addition-queries.js';
 
 export class PrismaAdditionQueries implements AdditionQueries {

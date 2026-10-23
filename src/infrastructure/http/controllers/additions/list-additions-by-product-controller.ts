@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import type {
   ListAdditionsByProductInput,
   ListAdditionsByProductOutput,
-} from '../../../../application/dtos/list-additions-by-product-dto.js';
+} from '../../../../application/dtos/additions/list-additions-by-product-dto.js';
 import { ListAdditionsByProduct } from '../../../../application/use-cases/additions/list-additions-by-product.js';
 
 export class ListAdditionsByProductController {
