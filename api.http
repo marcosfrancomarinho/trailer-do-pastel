@@ -9,21 +9,25 @@
 @productName = Pastel de queijo {{testId}}
 @productPrice = 12.50
 @additionPrice = 2.50
-
-### Cadastrar usuário — 201
-# @name criarUsuario
-POST {{baseUrl}}/users
-Content-Type: application/json
-
-{
-  "name": "marcosfranco{{testId}}",
-  "password": "Pastel123!"
-}
+@adminName = SEU_USUARIO
+@adminPassword = SUA_SENHA
+@accessToken = {{loginUsuario.response.body.$.accessToken}}
 
 ### Login de usuário — 200; retorna name e accessToken
 # @name loginUsuario
 POST {{baseUrl}}/login
 Content-Type: application/json
+
+{
+  "name": "{{adminName}}",
+  "password": "{{adminPassword}}"
+}
+
+### Cadastrar outro usuário — 201
+# @name criarUsuario
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "marcosfranco{{testId}}",
@@ -34,6 +38,7 @@ Content-Type: application/json
 # @name criarCategoria
 POST {{baseUrl}}/categories
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Pastéis {{testId}}"
@@ -47,6 +52,7 @@ GET {{baseUrl}}/categories
 # @name criarProduto
 POST {{baseUrl}}/products
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "{{productName}}",
@@ -63,6 +69,7 @@ GET {{baseUrl}}/products
 ### Atualizar preço e disponibilidade do produto — 200
 PATCH {{baseUrl}}/products/{{criarProduto.response.body.$.id}}
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "price": "14.50",
@@ -73,6 +80,7 @@ Content-Type: application/json
 # Execute criarAdicional antes desta requisição.
 PATCH {{baseUrl}}/products/{{criarProduto.response.body.$.id}}
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "additionIds": ["{{criarAdicional.response.body.$.id}}"]
@@ -86,6 +94,7 @@ GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products
 # @name criarAdicional
 POST {{baseUrl}}/additions
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Queijo extra {{testId}}",
@@ -101,6 +110,7 @@ GET {{baseUrl}}/additions
 # @name criarProdutoComAdicional
 POST {{baseUrl}}/products
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "Pastel com queijo extra {{testId}}",
@@ -158,6 +168,7 @@ Content-Type: application/json
 ### Listar pedidos pendentes — 200
 # @name listarPedidosPendentes
 GET {{baseUrl}}/orders/pending
+Authorization: Bearer {{accessToken}}
 
 ### Acompanhar pedido pelo token — 200
 GET {{baseUrl}}/orders/tracking/{{criarPedido.response.body.$.trackingToken}}
@@ -165,6 +176,7 @@ GET {{baseUrl}}/orders/tracking/{{criarPedido.response.body.$.trackingToken}}
 ### Atualizar status do pedido — 200
 PATCH {{baseUrl}}/orders/{{criarPedido.response.body.$.id}}/status
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "status": "CONFIRMED"
@@ -173,6 +185,7 @@ Content-Type: application/json
 ### Senha inválida — 400, TOO_SHORT
 POST {{baseUrl}}/users
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "usuario-invalido{{testId}}",
@@ -192,6 +205,7 @@ Content-Type: application/json
 # Execute criarProduto antes desta requisição.
 POST {{baseUrl}}/products
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
   "name": "{{productName}}",

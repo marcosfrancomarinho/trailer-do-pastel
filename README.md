@@ -57,6 +57,8 @@ Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar 
 
 Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar e os tokens de login expiram em uma hora.
 
+O primeiro usuário deve existir no banco antes de usar o login. O cadastro de novos usuários pela API exige o token de um usuário já autenticado.
+
 ## Rotas
 
 As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de sucesso. Login e listagens retornam `200 OK`.
@@ -66,18 +68,25 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | POST | `/users` | Usuário | `{ "id": "..." }` |
 | POST | `/login` | Login de usuário | `{ "name": "marcos", "accessToken": "..." }` |
 | POST | `/categories` | Categoria | `{ "id": "..." }` |
+| PATCH | `/categories/:categoryId` | Atualizar categoria | `{ "id": "..." }` |
+| DELETE | `/categories/:categoryId` | Excluir categoria | `204 No Content` |
 | GET | `/categories` | Listar categorias | `[{ "id": "...", "name": "Pastéis" }]` |
 | GET | `/categories/:categoryId/products` | Listar produtos da categoria | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | GET | `/products` | Listar todos os produtos | `[{ "id": "...", "name": "Pastel de queijo", "description": "...", "categoryId": "...", "price": "12.5", "available": true }]` |
 | POST | `/products` | Produto | `{ "id": "..." }` |
 | PATCH | `/products/:productId` | Atualizar produto | `{ "id": "..." }` |
+| DELETE | `/products/:productId` | Excluir produto | `204 No Content` |
 | POST | `/additions` | Cadastrar adicional | `{ "id": "..." }` |
+| PATCH | `/additions/:additionId` | Atualizar adicional | `{ "id": "..." }` |
+| DELETE | `/additions/:additionId` | Excluir adicional | `204 No Content` |
 | GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
 | GET | `/orders/tracking/:trackingToken` | Acompanhar pedido | `{ "status": "PREPARING", "updatedAt": "..." }` |
 | PATCH | `/orders/:orderId/status` | Atualizar status do pedido | `{ "status": "READY", "id": "..." }` |
 | GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
+
+O cadastro de usuários e as rotas de cadastro, atualização e exclusão de categorias, produtos e adicionais exigem `Authorization: Bearer <accessToken>`. Também exigem token `GET /orders/pending` e `PATCH /orders/:orderId/status`. Login, consultas do catálogo, criação de pedidos e acompanhamento por `trackingToken` são públicos. Um token ausente ou inválido retorna `401 UNAUTHORIZED`.
 
 ### Usuários
 
@@ -90,7 +99,7 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 
 O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e números, respeitando o limite de 72 bytes do bcrypt. Somente o hash é persistido, e a resposta não inclui a senha.
 
-Para entrar, envie o mesmo `name` e `password` no JSON de `POST /login`. A resposta contém o nome cadastrado e um token JWT com o ID do usuário em `sub`. Se o usuário não existir ou a senha não conferir, a API retorna `401 INVALID_CREDENTIALS`; campos inválidos retornam `400`.
+Para entrar, envie o mesmo `name` e `password` no JSON de `POST /login`. A resposta contém o nome cadastrado e um token JWT com o ID do usuário em `sub`. Envie esse token no cabeçalho `Authorization` das rotas protegidas. Se o usuário não existir ou a senha não conferir, a API retorna `401 INVALID_CREDENTIALS`; campos inválidos retornam `400`.
 
 ### Categorias
 
@@ -181,13 +190,13 @@ O cliente pode consultar `GET /orders/tracking/:trackingToken` com o token receb
 
 `GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto.
 
-Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "READY" }`. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `READY`, `COMPLETED` e `CANCELED`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`. Nenhuma rota exige autenticação neste momento; configure a proteção antes de disponibilizar a API publicamente.
+Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "READY" }` e o token de acesso. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `READY`, `COMPLETED` e `CANCELED`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`.
 
 ## Testar as requisições
 
 O arquivo [api.http](api.http) contém exemplos das rotas de cadastro e consulta, pedidos com e sem adicionais e respostas de erro.
 
-Com a API rodando e a migration de categorias aplicada, abra o arquivo em um cliente compatível com REST Client. Execute `criarUsuario` e `loginUsuario` antes de `criarAdicional`, e crie categoria, produto e adicional antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
+Com a API rodando e as migrations aplicadas, abra o arquivo em um cliente compatível com REST Client. Configure o nome e a senha do usuário existente, execute `loginUsuario` e depois as requisições protegidas. Crie categoria, produto e adicional antes dos pedidos: os exemplos reutilizam os IDs das respostas. Altere `testId` ao repetir os cadastros para evitar nomes duplicados.
 
 ## Erros
 

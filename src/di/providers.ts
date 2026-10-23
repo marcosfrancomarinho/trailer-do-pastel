@@ -56,6 +56,7 @@ import { ListProductsByCategoryController } from '../infrastructure/http/control
 import { ListProductsController } from '../infrastructure/http/controllers/products/list-products-controller.js';
 import { LoginUserController } from '../infrastructure/http/controllers/users/login-user-controller.js';
 import { ErrorHandler } from '../infrastructure/http/middlewares/error-handler.js';
+import { RequireAuthentication } from '../infrastructure/http/middlewares/require-authentication.js';
 import { Server } from '../infrastructure/http/server.js';
 import { PrismaCategoryQueries } from '../infrastructure/queries/prisma-category-queries.js';
 import { PrismaAdditionQueries } from '../infrastructure/queries/prisma-addition-queries.js';
@@ -95,6 +96,7 @@ const providers = new AppConfig()
   .useClass(LoginUser)
   .useClass(LoginUserController)
   .useClass(ErrorHandler)
+  .useClass(RequireAuthentication)
   .useClass(CreateAddition)
   .useClass(CreateAdditionController)
   .useClass(UpdateAddition)

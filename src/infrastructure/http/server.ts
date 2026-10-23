@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import cors from 'cors';
 import type { Server as HttpServer } from 'node:http';
 import { CreateUserController } from './controllers/users/create-user-controller.js';
@@ -22,6 +22,7 @@ import { UpdateOrderStatusController } from './controllers/orders/update-order-s
 import { TrackOrderController } from './controllers/orders/track-order-controller.js';
 import { ListPendingOrdersController } from './controllers/orders/list-pending-orders-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
+import { RequireAuthentication } from './middlewares/require-authentication.js';
 
 export class Server {
   private readonly app = express();
@@ -47,6 +48,7 @@ export class Server {
     private readonly updateOrderStatusController: UpdateOrderStatusController,
     private readonly trackOrderController: TrackOrderController,
     private readonly listPendingOrdersController: ListPendingOrdersController,
+    private readonly requireAuthentication: RequireAuthentication,
     private readonly errorHandler: ErrorHandler,
   ) {
     this.app.use(express.json(), cors());
@@ -61,31 +63,96 @@ export class Server {
   }
 
   private routes(): void {
-    this.app.post('/users', this.createUserController.execute.bind(this.createUserController));
+    const authenticate = this.requireAuthentication.execute.bind(this.requireAuthentication);
+
+    this.registerUserRoutes(authenticate);
+    this.registerProductRoutes(authenticate);
+    this.registerAdditionRoutes(authenticate);
+    this.registerCategoryRoutes(authenticate);
+    this.registerOrderRoutes(authenticate);
+  }
+
+  private registerUserRoutes(authenticate: RequestHandler): void {
+    this.app.post('/users', authenticate, this.createUserController.execute.bind(this.createUserController));
     this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
-    this.app.post('/products', this.createProductController.execute.bind(this.createProductController));
-    this.app.patch('/products/:productId', this.updateProductController.execute.bind(this.updateProductController));
-    this.app.delete('/products/:productId', this.deleteProductController.execute.bind(this.deleteProductController));
+  }
+
+  private registerProductRoutes(authenticate: RequestHandler): void {
+    this.app.post('/products', authenticate, this.createProductController.execute.bind(this.createProductController));
+    this.app.patch(
+      '/products/:productId',
+      authenticate,
+      this.updateProductController.execute.bind(this.updateProductController),
+    );
+    this.app.delete(
+      '/products/:productId',
+      authenticate,
+      this.deleteProductController.execute.bind(this.deleteProductController),
+    );
     this.app.get('/products', this.listProductsController.execute.bind(this.listProductsController));
     this.app.get(
       '/products/:productId/additions',
       this.listAdditionsByProductController.execute.bind(this.listAdditionsByProductController),
     );
-    this.app.post('/additions', this.createAdditionController.execute.bind(this.createAdditionController));
-    this.app.patch('/additions/:additionId', this.updateAdditionController.execute.bind(this.updateAdditionController));
-    this.app.delete('/additions/:additionId', this.deleteAdditionController.execute.bind(this.deleteAdditionController));
+  }
+
+  private registerAdditionRoutes(authenticate: RequestHandler): void {
+    this.app.post(
+      '/additions',
+      authenticate,
+      this.createAdditionController.execute.bind(this.createAdditionController),
+    );
+    this.app.patch(
+      '/additions/:additionId',
+      authenticate,
+      this.updateAdditionController.execute.bind(this.updateAdditionController),
+    );
+    this.app.delete(
+      '/additions/:additionId',
+      authenticate,
+      this.deleteAdditionController.execute.bind(this.deleteAdditionController),
+    );
     this.app.get('/additions', this.listAdditionsController.execute.bind(this.listAdditionsController));
-    this.app.post('/categories', this.createCategoryController.execute.bind(this.createCategoryController));
-    this.app.patch('/categories/:categoryId', this.updateCategoryController.execute.bind(this.updateCategoryController));
-    this.app.delete('/categories/:categoryId', this.deleteCategoryController.execute.bind(this.deleteCategoryController));
+  }
+
+  private registerCategoryRoutes(authenticate: RequestHandler): void {
+    this.app.post(
+      '/categories',
+      authenticate,
+      this.createCategoryController.execute.bind(this.createCategoryController),
+    );
+    this.app.patch(
+      '/categories/:categoryId',
+      authenticate,
+      this.updateCategoryController.execute.bind(this.updateCategoryController),
+    );
+    this.app.delete(
+      '/categories/:categoryId',
+      authenticate,
+      this.deleteCategoryController.execute.bind(this.deleteCategoryController),
+    );
     this.app.get('/categories', this.listCategoriesController.execute.bind(this.listCategoriesController));
     this.app.get(
       '/categories/:categoryId/products',
       this.listProductsByCategoryController.execute.bind(this.listProductsByCategoryController),
     );
+  }
+
+  private registerOrderRoutes(authenticate: RequestHandler): void {
     this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
-    this.app.patch('/orders/:orderId/status', this.updateOrderStatusController.execute.bind(this.updateOrderStatusController));
-    this.app.get('/orders/pending', this.listPendingOrdersController.execute.bind(this.listPendingOrdersController));
-    this.app.get('/orders/tracking/:trackingToken', this.trackOrderController.execute.bind(this.trackOrderController));
+    this.app.patch(
+      '/orders/:orderId/status',
+      authenticate,
+      this.updateOrderStatusController.execute.bind(this.updateOrderStatusController),
+    );
+    this.app.get(
+      '/orders/pending',
+      authenticate,
+      this.listPendingOrdersController.execute.bind(this.listPendingOrdersController),
+    );
+    this.app.get(
+      '/orders/tracking/:trackingToken',
+      this.trackOrderController.execute.bind(this.trackOrderController),
+    );
   }
 }
