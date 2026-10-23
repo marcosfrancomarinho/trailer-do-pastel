@@ -5,9 +5,9 @@ import { ListPendingOrders } from '../../../../application/use-cases/orders/list
 export class ListPendingOrdersController {
   public constructor(private readonly listPendingOrders: ListPendingOrders) {}
 
-  public async execute(_request: Request, response: Response<ListPendingOrdersOutput>, next: NextFunction): Promise<void> {
+  public async execute(request: Request, response: Response<ListPendingOrdersOutput>, next: NextFunction): Promise<void> {
     try {
-      const output = await this.listPendingOrders.list();
+      const output = await this.listPendingOrders.list(request.query.date);
       response.status(200);
       response.json(output);
     } catch (error) {
