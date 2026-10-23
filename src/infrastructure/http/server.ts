@@ -21,6 +21,7 @@ import { CreateOrderController } from './controllers/orders/create-order-control
 import { UpdateOrderStatusController } from './controllers/orders/update-order-status-controller.js';
 import { TrackOrderController } from './controllers/orders/track-order-controller.js';
 import { ListPendingOrdersController } from './controllers/orders/list-pending-orders-controller.js';
+import { ListOrderHistoryController } from './controllers/orders/list-order-history-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
 import { RequireAuthentication } from './middlewares/require-authentication.js';
 
@@ -48,6 +49,7 @@ export class Server {
     private readonly updateOrderStatusController: UpdateOrderStatusController,
     private readonly trackOrderController: TrackOrderController,
     private readonly listPendingOrdersController: ListPendingOrdersController,
+    private readonly listOrderHistoryController: ListOrderHistoryController,
     private readonly requireAuthentication: RequireAuthentication,
     private readonly errorHandler: ErrorHandler,
   ) {
@@ -149,6 +151,11 @@ export class Server {
       '/orders/pending',
       authenticate,
       this.listPendingOrdersController.execute.bind(this.listPendingOrdersController),
+    );
+    this.app.get(
+      '/orders/history',
+      authenticate,
+      this.listOrderHistoryController.execute.bind(this.listOrderHistoryController),
     );
     this.app.get(
       '/orders/tracking/:trackingToken',

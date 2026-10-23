@@ -170,6 +170,10 @@ Content-Type: application/json
 GET {{baseUrl}}/orders/pending
 Authorization: Bearer {{accessToken}}
 
+### Listar histórico administrativo — 200
+GET {{baseUrl}}/orders/history
+Authorization: Bearer {{accessToken}}
+
 ### Acompanhar pedido pelo token — 200
 GET {{baseUrl}}/orders/tracking/{{criarPedido.response.body.$.trackingToken}}
 

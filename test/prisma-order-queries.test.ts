@@ -102,4 +102,93 @@ describe('PrismaOrderQueries', () => {
 
     assert.deepEqual(await new PrismaOrderQueries(prisma).findPending(), []);
   });
+
+  it('returns completed and canceled orders with items and chronological status changes', async (context) => {
+    const findMany = context.mock.fn(async () => [{
+      id: 'order-2',
+      customerName: 'Ana Souza',
+      customerPhone: '11988888888',
+      status: 'CANCELED',
+      total: new Prisma.Decimal('15.50'),
+      createdAt: new Date('2026-10-20T10:00:00.000Z'),
+      updatedAt: new Date('2026-10-20T10:05:00.000Z'),
+      items: [{
+        productId: 'product-1',
+        productName: 'Pastel de queijo',
+        quantity: 1,
+        unitPrice: new Prisma.Decimal('12.50'),
+        additions: [{
+          additionId: 'addition-1',
+          quantity: 1,
+          unitPrice: new Prisma.Decimal('3.00'),
+          addition: { name: 'Queijo extra' },
+        }],
+      }],
+      histories: [
+        { status: 'PENDING', changedAt: new Date('2026-10-20T10:00:00.000Z') },
+        { status: 'CANCELED', changedAt: new Date('2026-10-20T10:05:00.000Z') },
+      ],
+    }]);
+    const prisma = { order: { findMany } } as unknown as PrismaClient;
+
+    assert.deepEqual(await new PrismaOrderQueries(prisma).findHistory(), [{
+      id: 'order-2',
+      customerName: 'Ana Souza',
+      customerPhone: '11988888888',
+      status: 'CANCELED',
+      total: '15.5',
+      createdAt: '2026-10-20T10:00:00.000Z',
+      updatedAt: '2026-10-20T10:05:00.000Z',
+      items: [{
+        productId: 'product-1',
+        productName: 'Pastel de queijo',
+        quantity: 1,
+        unitPrice: '12.5',
+        additions: [{ additionId: 'addition-1', additionName: 'Queijo extra', quantity: 1, unitPrice: '3' }],
+      }],
+      histories: [
+        { status: 'PENDING', changedAt: '2026-10-20T10:00:00.000Z' },
+        { status: 'CANCELED', changedAt: '2026-10-20T10:05:00.000Z' },
+      ],
+    }]);
+    assert.deepEqual(findMany.mock.calls[0].arguments, [{
+      where: { status: { in: ['COMPLETED', 'CANCELED'] } },
+      select: {
+        id: true,
+        customerName: true,
+        customerPhone: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        updatedAt: true,
+        items: {
+          select: {
+            productId: true,
+            productName: true,
+            quantity: true,
+            unitPrice: true,
+            additions: {
+              select: {
+                additionId: true,
+                quantity: true,
+                unitPrice: true,
+                addition: { select: { name: true } },
+              },
+            },
+          },
+        },
+        histories: {
+          select: { status: true, changedAt: true },
+          orderBy: [{ changedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    }]);
+  });
+
+  it('returns an empty history when no order is completed or canceled', async () => {
+    const prisma = { order: { findMany: async () => [] } } as unknown as PrismaClient;
+
+    assert.deepEqual(await new PrismaOrderQueries(prisma).findHistory(), []);
+  });
 });

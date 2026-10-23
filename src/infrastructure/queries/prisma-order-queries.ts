@@ -1,11 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import type {
   PendingOrderAddition,
   PendingOrderItem,
   PendingOrderListItem,
 } from '../../application/dtos/orders/list-pending-orders-dto.js';
+import type { OrderHistoryListItem } from '../../application/dtos/orders/list-order-history-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
 import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
+
+const orderItemSelect = {
+  productId: true,
+  productName: true,
+  quantity: true,
+  unitPrice: true,
+  additions: {
+    select: {
+      additionId: true,
+      quantity: true,
+      unitPrice: true,
+      addition: { select: { name: true } },
+    },
+  },
+} satisfies Prisma.OrderItemSelect;
+
+type SelectedOrderItem = Prisma.OrderItemGetPayload<{ select: typeof orderItemSelect }>;
 
 export class PrismaOrderQueries implements OrderQueries {
   public constructor(private readonly prisma: PrismaClient) {}
@@ -34,22 +52,7 @@ export class PrismaOrderQueries implements OrderQueries {
         status: true,
         total: true,
         createdAt: true,
-        items: {
-          select: {
-            productId: true,
-            productName: true,
-            quantity: true,
-            unitPrice: true,
-            additions: {
-              select: {
-                additionId: true,
-                quantity: true,
-                unitPrice: true,
-                addition: { select: { name: true } },
-              },
-            },
-          },
-        },
+        items: { select: orderItemSelect },
       },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
@@ -57,29 +60,6 @@ export class PrismaOrderQueries implements OrderQueries {
     const pendingOrders: PendingOrderListItem[] = [];
 
     for (const order of orders) {
-      const items: PendingOrderItem[] = [];
-
-      for (const item of order.items) {
-        const additions: PendingOrderAddition[] = [];
-
-        for (const addition of item.additions) {
-          additions.push({
-            additionId: addition.additionId,
-            additionName: addition.addition.name,
-            quantity: addition.quantity,
-            unitPrice: addition.unitPrice.toString(),
-          });
-        }
-
-        items.push({
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toString(),
-          additions,
-        });
-      }
-
       pendingOrders.push({
         id: order.id,
         customerName: order.customerName,
@@ -87,10 +67,65 @@ export class PrismaOrderQueries implements OrderQueries {
         status: 'PENDING',
         total: order.total.toString(),
         createdAt: order.createdAt.toISOString(),
-        items,
+        items: this.mapItems(order.items),
       });
     }
 
     return pendingOrders;
+  }
+
+  public async findHistory(): Promise<OrderHistoryListItem[]> {
+    const orders = await this.prisma.order.findMany({
+      where: { status: { in: ['COMPLETED', 'CANCELED'] } },
+      select: {
+        id: true,
+        customerName: true,
+        customerPhone: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        updatedAt: true,
+        items: { select: orderItemSelect },
+        histories: {
+          select: { status: true, changedAt: true },
+          orderBy: [{ changedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return orders.map((order) => ({
+      id: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      status: order.status as 'COMPLETED' | 'CANCELED',
+      total: order.total.toString(),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      items: this.mapItems(order.items),
+      histories: order.histories.map((history) => ({
+        status: history.status,
+        changedAt: history.changedAt.toISOString(),
+      })),
+    }));
+  }
+
+  private mapItems(orderItems: SelectedOrderItem[]): PendingOrderItem[] {
+    return orderItems.map((item) => {
+      const additions: PendingOrderAddition[] = item.additions.map((addition) => ({
+        additionId: addition.additionId,
+        additionName: addition.addition.name,
+        quantity: addition.quantity,
+        unitPrice: addition.unitPrice.toString(),
+      }));
+
+      return {
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice.toString(),
+        additions,
+      };
+    });
   }
 }
