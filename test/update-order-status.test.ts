@@ -11,7 +11,7 @@ describe('UpdateOrderStatus', () => {
       assert.ok(status instanceof OrderStatus);
     });
     const useCase = new UpdateOrderStatus(createOrderRepository({ updateStatus }));
-    const statuses = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELED'];
+    const statuses = ['PENDING', 'CONFIRMED', 'PREPARING', 'COMPLETED', 'CANCELED'];
 
     for (const status of statuses) {
       assert.deepEqual(
@@ -29,7 +29,8 @@ describe('UpdateOrderStatus', () => {
     const useCase = new UpdateOrderStatus(createOrderRepository({ updateStatus }));
 
     for (const [orderId, status, field] of [
-      [' ', 'READY', 'orderId'],
+      [' ', 'COMPLETED', 'orderId'],
+      ['order-1', 'READY', 'status'],
       ['order-1', undefined, 'status'],
       ['order-1', null, 'status'],
       ['order-1', 3, 'status'],

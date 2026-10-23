@@ -6,13 +6,13 @@ import { PrismaOrderQueries } from '../src/infrastructure/queries/prisma-order-q
 describe('PrismaOrderQueries', () => {
   it('returns the current status by tracking token without customer details', async (context) => {
     const findUnique = context.mock.fn(async () => ({
-      status: 'READY',
+      status: 'COMPLETED',
       updatedAt: new Date('2026-10-22T12:00:00.000Z'),
     }));
     const prisma = { order: { findUnique } } as unknown as PrismaClient;
 
     assert.deepEqual(await new PrismaOrderQueries(prisma).findByTrackingToken('token-1'), {
-      status: 'READY',
+      status: 'COMPLETED',
       updatedAt: '2026-10-22T12:00:00.000Z',
     });
     assert.deepEqual(findUnique.mock.calls[0].arguments, [{
@@ -101,6 +101,58 @@ describe('PrismaOrderQueries', () => {
     const prisma = { order: { findMany: async () => [] } } as unknown as PrismaClient;
 
     assert.deepEqual(await new PrismaOrderQueries(prisma).findPending(), []);
+  });
+
+  it('returns confirmed and preparing orders with item details, ordered oldest first', async (context) => {
+    const findMany = context.mock.fn(async () => [{
+      id: 'order-1',
+      customerName: 'Maria Silva',
+      customerPhone: '11999999999',
+      status: 'CONFIRMED',
+      total: new Prisma.Decimal('15.50'),
+      createdAt: new Date('2026-10-19T10:00:00.000Z'),
+      updatedAt: new Date('2026-10-19T10:05:00.000Z'),
+      items: [{
+        productId: 'product-1',
+        productName: 'Pastel de queijo',
+        quantity: 1,
+        unitPrice: new Prisma.Decimal('12.50'),
+        additions: [{
+          additionId: 'addition-1',
+          quantity: 1,
+          unitPrice: new Prisma.Decimal('3.00'),
+          addition: { name: 'Queijo extra' },
+        }],
+      }],
+    }]);
+    const prisma = { order: { findMany } } as unknown as PrismaClient;
+
+    assert.deepEqual(await new PrismaOrderQueries(prisma).findPreparing(), [{
+      id: 'order-1',
+      customerName: 'Maria Silva',
+      customerPhone: '11999999999',
+      status: 'CONFIRMED',
+      total: '15.5',
+      createdAt: '2026-10-19T10:00:00.000Z',
+      updatedAt: '2026-10-19T10:05:00.000Z',
+      items: [{
+        productId: 'product-1',
+        productName: 'Pastel de queijo',
+        quantity: 1,
+        unitPrice: '12.5',
+        additions: [{ additionId: 'addition-1', additionName: 'Queijo extra', quantity: 1, unitPrice: '3' }],
+      }],
+    }]);
+    assert.deepEqual(findMany.mock.calls[0].arguments[0].where, {
+      status: { in: ['CONFIRMED', 'PREPARING'] },
+    });
+    assert.deepEqual(findMany.mock.calls[0].arguments[0].orderBy, [{ createdAt: 'asc' }, { id: 'asc' }]);
+  });
+
+  it('returns an empty preparation list when no order is confirmed or preparing', async () => {
+    const prisma = { order: { findMany: async () => [] } } as unknown as PrismaClient;
+
+    assert.deepEqual(await new PrismaOrderQueries(prisma).findPreparing(), []);
   });
 
   it('returns completed and canceled orders with items and chronological status changes', async (context) => {

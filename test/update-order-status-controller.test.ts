@@ -9,20 +9,20 @@ import { createResponse } from './helpers/http-fixtures.js';
 describe('UpdateOrderStatusController', () => {
   it('reads the order ID from the route and responds with the new status', async (context) => {
     const useCase = new UpdateOrderStatus(createOrderRepository());
-    const update = context.mock.method(useCase, 'update', async () => ({ id: 'order-1', status: 'READY' as const }));
+    const update = context.mock.method(useCase, 'update', async () => ({ id: 'order-1', status: 'COMPLETED' as const }));
     const controller = new UpdateOrderStatusController(useCase);
     const request = {
       params: { orderId: 'order-1' },
-      body: { status: 'READY', id: 'ignored' },
+      body: { status: 'COMPLETED', id: 'ignored' },
     } as unknown as Request;
     const { response, status, json } = createResponse(context);
     const next = context.mock.fn();
 
     await controller.execute(request, response, next);
 
-    assert.deepEqual(update.mock.calls[0].arguments, [{ status: 'READY', orderId: 'order-1' }]);
+    assert.deepEqual(update.mock.calls[0].arguments, [{ status: 'COMPLETED', orderId: 'order-1' }]);
     assert.deepEqual(status.mock.calls[0].arguments, [200]);
-    assert.deepEqual(json.mock.calls[0].arguments, [{ id: 'order-1', status: 'READY' }]);
+    assert.deepEqual(json.mock.calls[0].arguments, [{ id: 'order-1', status: 'COMPLETED' }]);
     assert.equal(next.mock.callCount(), 0);
   });
 
@@ -35,7 +35,7 @@ describe('UpdateOrderStatusController', () => {
 
     await controller.execute({
       params: { orderId: 'order-1' },
-      body: { status: 'READY' },
+      body: { status: 'COMPLETED' },
     } as unknown as Request, response, next);
 
     assert.deepEqual(next.mock.calls[0].arguments, [failure]);

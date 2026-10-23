@@ -5,6 +5,7 @@ import type {
   PendingOrderListItem,
 } from '../../application/dtos/orders/list-pending-orders-dto.js';
 import type { OrderHistoryListItem } from '../../application/dtos/orders/list-order-history-dto.js';
+import type { PreparingOrderListItem } from '../../application/dtos/orders/list-preparing-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
 import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
 
@@ -107,6 +108,34 @@ export class PrismaOrderQueries implements OrderQueries {
         status: history.status,
         changedAt: history.changedAt.toISOString(),
       })),
+    }));
+  }
+
+  public async findPreparing(): Promise<PreparingOrderListItem[]> {
+    const orders = await this.prisma.order.findMany({
+      where: { status: { in: ['CONFIRMED', 'PREPARING'] } },
+      select: {
+        id: true,
+        customerName: true,
+        customerPhone: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        updatedAt: true,
+        items: { select: orderItemSelect },
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+
+    return orders.map((order) => ({
+      id: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      status: order.status as 'CONFIRMED' | 'PREPARING',
+      total: order.total.toString(),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      items: this.mapItems(order.items),
     }));
   }
 

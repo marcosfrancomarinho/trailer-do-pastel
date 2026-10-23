@@ -18,6 +18,7 @@ import { CreateOrder } from '../application/use-cases/orders/create-order.js';
 import { UpdateOrderStatus } from '../application/use-cases/orders/update-order-status.js';
 import { TrackOrder } from '../application/use-cases/orders/track-order.js';
 import { ListPendingOrders } from '../application/use-cases/orders/list-pending-orders.js';
+import { ListPreparingOrders } from '../application/use-cases/orders/list-preparing-orders.js';
 import { ListOrderHistory } from '../application/use-cases/orders/list-order-history.js';
 import { CreateProduct } from '../application/use-cases/products/create-product.js';
 import { UpdateProduct } from '../application/use-cases/products/update-product.js';
@@ -46,6 +47,7 @@ import { CreateOrderController } from '../infrastructure/http/controllers/orders
 import { UpdateOrderStatusController } from '../infrastructure/http/controllers/orders/update-order-status-controller.js';
 import { TrackOrderController } from '../infrastructure/http/controllers/orders/track-order-controller.js';
 import { ListPendingOrdersController } from '../infrastructure/http/controllers/orders/list-pending-orders-controller.js';
+import { ListPreparingOrdersController } from '../infrastructure/http/controllers/orders/list-preparing-orders-controller.js';
 import { ListOrderHistoryController } from '../infrastructure/http/controllers/orders/list-order-history-controller.js';
 import { CreateProductController } from '../infrastructure/http/controllers/products/create-product-controller.js';
 import { UpdateProductController } from '../infrastructure/http/controllers/products/update-product-controller.js';
@@ -93,6 +95,7 @@ const providers = new AppConfig()
   .useClass(TrackOrder)
   .useClass(TrackOrderController)
   .useClass(ListPendingOrders)
+  .useClass(ListPreparingOrders)
   .useClass(ListOrderHistory)
   .useClass(CreateUser)
   .useClass(CreateUserController)
@@ -130,6 +133,7 @@ const providers = new AppConfig()
   .useClass(DeleteProductController)
   .useClass(CreateOrderController)
   .useClass(ListPendingOrdersController)
+  .useClass(ListPreparingOrdersController)
   .useClass(ListOrderHistoryController)
   .useClass(Server);
 

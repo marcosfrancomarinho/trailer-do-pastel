@@ -7,7 +7,7 @@ import { createResponse } from './helpers/http-fixtures.js';
 
 describe('TrackOrderController', () => {
   it('takes the tracking token from the route and returns the latest status', async (context) => {
-    const result = { status: 'READY' as const, updatedAt: '2026-10-22T12:00:00.000Z' };
+    const result = { status: 'COMPLETED' as const, updatedAt: '2026-10-22T12:00:00.000Z' };
     const useCase = new TrackOrder({ findPending: async () => [], findByTrackingToken: async () => result });
     const track = context.mock.method(useCase, 'track');
     const controller = new TrackOrderController(useCase);

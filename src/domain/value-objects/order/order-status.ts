@@ -5,7 +5,6 @@ export class OrderStatus {
     'PENDING',
     'CONFIRMED',
     'PREPARING',
-    'READY',
     'COMPLETED',
     'CANCELED',
   ] as const;

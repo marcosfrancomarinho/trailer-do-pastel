@@ -44,6 +44,7 @@ describe('Server authentication', () => {
       ['DELETE', '/categories/:categoryId'],
       ['PATCH', '/orders/:orderId/status'],
       ['GET', '/orders/pending'],
+      ['GET', '/orders/preparing'],
       ['GET', '/orders/history'],
     ] as const;
 

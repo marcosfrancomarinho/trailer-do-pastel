@@ -83,11 +83,12 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
 | GET | `/orders/tracking/:trackingToken` | Acompanhar pedido | `{ "status": "PREPARING", "updatedAt": "..." }` |
-| PATCH | `/orders/:orderId/status` | Atualizar status do pedido | `{ "status": "READY", "id": "..." }` |
+| PATCH | `/orders/:orderId/status` | Atualizar status do pedido | `{ "status": "COMPLETED", "id": "..." }` |
 | GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
+| GET | `/orders/preparing` | Listar pedidos confirmados e em preparo | `[{ "id": "...", "status": "CONFIRMED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...] }]` |
 | GET | `/orders/history` | Histórico administrativo de pedidos concluídos e cancelados | `[{ "id": "...", "status": "COMPLETED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...], "histories": [...] }]` |
 
-O cadastro de usuários e as rotas de cadastro, atualização e exclusão de categorias, produtos e adicionais exigem `Authorization: Bearer <accessToken>`. Também exigem token `GET /orders/pending`, `GET /orders/history` e `PATCH /orders/:orderId/status`. Login, consultas do catálogo, criação de pedidos e acompanhamento por `trackingToken` são públicos. Um token ausente ou inválido retorna `401 UNAUTHORIZED`.
+O cadastro de usuários e as rotas de cadastro, atualização e exclusão de categorias, produtos e adicionais exigem `Authorization: Bearer <accessToken>`. Também exigem token `GET /orders/pending`, `GET /orders/preparing`, `GET /orders/history` e `PATCH /orders/:orderId/status`. Login, consultas do catálogo, criação de pedidos e acompanhamento por `trackingToken` são públicos. Um token ausente ou inválido retorna `401 UNAUTHORIZED`.
 
 ### Usuários
 
@@ -191,9 +192,11 @@ O cliente pode consultar `GET /orders/tracking/:trackingToken` com o token receb
 
 `GET /orders/pending` retorna apenas pedidos com status `PENDING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. Cada pedido contém cliente, telefone, total, data e itens com produtos, quantidades, preços e adicionais. Os valores monetários são strings decimais. O nome do produto vem do registro salvo no pedido; o nome do adicional reflete o cadastro atual. O painel pode consultar essa rota a cada 5 segundos enquanto estiver aberto.
 
+`GET /orders/preparing` retorna pedidos com status `CONFIRMED` ou `PREPARING`, do mais antigo para o mais recente, ou `[]` quando não há nenhum. A resposta contém os mesmos dados de cliente e itens da lista de pendentes, além de `updatedAt`. Depois de aceitar um pedido com `PATCH /orders/:orderId/status` e `{ "status": "CONFIRMED" }`, ele aparece nesta lista; ao avançar para `PREPARING`, permanece nela até ser concluído ou cancelado.
+
 `GET /orders/history` retorna pedidos cujo status atual é `COMPLETED` ou `CANCELED`, do mais recentemente atualizado para o mais antigo, ou `[]` quando não há nenhum. A resposta inclui os mesmos dados de cliente e itens da listagem de pendentes, além de `updatedAt` e `histories`, uma lista cronológica de `{ "status": "...", "changedAt": "..." }`. As datas são UTC. O histórico registra os status pelos quais o pedido passou; não inclui o usuário responsável pela mudança.
 
-Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "READY" }` e o token de acesso. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `READY`, `COMPLETED` e `CANCELED`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`.
+Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "COMPLETED" }` e o token de acesso. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `COMPLETED` e `CANCELED`. Marcar como `COMPLETED` indica que o pedido está pronto e encerra o fluxo; ele passa a aparecer em `GET /orders/history`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`.
 
 ## Testar as requisições
 

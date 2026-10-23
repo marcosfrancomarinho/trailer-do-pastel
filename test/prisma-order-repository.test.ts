@@ -10,13 +10,13 @@ describe('PrismaOrderRepository', () => {
     const update = context.mock.fn(async () => ({ id: 'order-1' }));
     const prisma = { order: { update } } as unknown as PrismaClient;
 
-    await new PrismaOrderRepository(prisma).updateStatus('order-1', OrderStatus.create('READY'));
+    await new PrismaOrderRepository(prisma).updateStatus('order-1', OrderStatus.create('COMPLETED'));
 
     assert.deepEqual(update.mock.calls[0].arguments, [{
       where: { id: 'order-1' },
       data: {
-        status: 'READY',
-        histories: { create: { status: 'READY' } },
+        status: 'COMPLETED',
+        histories: { create: { status: 'COMPLETED' } },
       },
     }]);
   });
@@ -31,7 +31,7 @@ describe('PrismaOrderRepository', () => {
     } as unknown as PrismaClient;
 
     await assert.rejects(
-      new PrismaOrderRepository(prisma).updateStatus('missing', OrderStatus.create('READY')),
+      new PrismaOrderRepository(prisma).updateStatus('missing', OrderStatus.create('COMPLETED')),
       (error: unknown) => error instanceof ApplicationError
         && error.field === 'orderId'
         && error.code === 'NOT_FOUND',
