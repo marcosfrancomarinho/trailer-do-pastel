@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     env:
-      DATABASE_URL: file:./ci.sqlite
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/trailer_do_pastel?schema=public
 
     steps:
       - name: Checkout

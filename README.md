@@ -10,7 +10,7 @@ O cliente pode fazer um pedido sem criar uma conta. A API consulta os produtos e
 
 - Node.js 22 ou superior e TypeScript.
 - Express 5 e CORS.
-- Prisma 6 com SQLite e migrations versionadas.
+- Prisma 6 com PostgreSQL e migrations versionadas.
 - bcrypt para hash de senhas e comparação de credenciais.
 - JSON Web Token (JWT) para o login de usuários.
 - Decimal.js, encapsulado no VO `DecimalValue`, para cálculos monetários.
@@ -18,12 +18,12 @@ O cliente pode fazer um pedido sem criar uma conta. A API consulta os produtos e
 
 ## Executar localmente
 
-É necessário ter Node.js 22+ e Yarn 1 instalados.
+Requisitos: Node.js 22+, Yarn 1 e PostgreSQL. Crie o banco `trailer_do_pastel` e ajuste `DATABASE_URL` com suas credenciais.
 
 ```bash
 git clone https://github.com/marcosfrancomarinho/trailer-do-pastel.git
 cd trailer-do-pastel
-cp .env.example .env
+cp postgresql.env.example .env
 # Preencha JWT_SECRET no arquivo .env com uma chave aleatória; por exemplo, gere uma com: openssl rand -hex 32
 yarn install --frozen-lockfile
 yarn prisma generate
@@ -46,14 +46,14 @@ yarn dev --watch
 
 ## Configuração do banco
 
-O arquivo `.env.example` contém a configuração local de SQLite e a chave usada para assinar os tokens de login:
+O arquivo `postgresql.env.example` fornece a URL PostgreSQL e a chave para os tokens de login:
 
 ```dotenv
-DATABASE_URL="file:./database.sqlite"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/trailer_do_pastel?schema=public"
 JWT_SECRET=
 ```
 
-Crie o arquivo SQLite vazio com `touch prisma/database.sqlite` antes de aplicar as migrations. O arquivo `.env` e os bancos locais não são versionados; cada ambiente cria seu próprio banco a partir das migrations.
+Crie o banco antes das migrations: `createdb -U postgres trailer_do_pastel`. As migrations PostgreSQL ficam em `prisma/migrations-postgresql`. O arquivo SQLite e suas migrations foram preservados. Os dados existentes precisam ser transferidos separadamente: `migrate deploy` cria a estrutura e nao copia dados.
 
 Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar e os tokens de login expiram em uma hora.
 
@@ -252,7 +252,7 @@ yarn start
 
 O workflow [CI](.github/workflows/ci.yml) executa os testes, a verificação de tipos e o build em Linux, Windows e macOS, usando Node.js 22 e Yarn 1.22.22. Ele roda a cada push, em pull requests e também pode ser iniciado manualmente na aba Actions.
 
-O Prisma Client é gerado em cada ambiente. A CI usa uma configuração local de SQLite e não precisa de credenciais ou de acesso ao banco de desenvolvimento.
+O Prisma Client e gerado em cada ambiente. A CI usa uma URL PostgreSQL de exemplo; os testes unitarios usam mocks e dispensam conexao com o banco.
 
 ## Organização
 
