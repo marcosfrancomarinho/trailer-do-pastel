@@ -5,9 +5,9 @@ import { ListOrderHistory } from '../../../../application/use-cases/orders/list-
 export class ListOrderHistoryController {
   public constructor(private readonly listOrderHistory: ListOrderHistory) {}
 
-  public async execute(_request: Request, response: Response<ListOrderHistoryOutput>, next: NextFunction): Promise<void> {
+  public async execute(request: Request, response: Response<ListOrderHistoryOutput>, next: NextFunction): Promise<void> {
     try {
-      const output = await this.listOrderHistory.list();
+      const output = await this.listOrderHistory.list(request.query.date);
       response.status(200);
       response.json(output);
     } catch (error) {
