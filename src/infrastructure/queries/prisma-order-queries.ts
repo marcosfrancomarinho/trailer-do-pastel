@@ -4,6 +4,7 @@ import type {
   PendingOrderItem,
   PendingOrderListItem,
 } from '../../application/dtos/orders/list-pending-orders-dto.js';
+import type { OrderDateRange } from '../../application/dtos/orders/order-date-range.js';
 import type { OrderHistoryListItem } from '../../application/dtos/orders/list-order-history-dto.js';
 import type { PreparingOrderListItem } from '../../application/dtos/orders/list-preparing-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
@@ -43,9 +44,9 @@ export class PrismaOrderQueries implements OrderQueries {
     };
   }
 
-  public async findPending(): Promise<PendingOrderListItem[]> {
+  public async findPending(range?: OrderDateRange): Promise<PendingOrderListItem[]> {
     const orders = await this.prisma.order.findMany({
-      where: { status: 'PENDING' },
+      where: { status: 'PENDING', ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
       select: {
         id: true,
         customerName: true,
@@ -75,9 +76,9 @@ export class PrismaOrderQueries implements OrderQueries {
     return pendingOrders;
   }
 
-  public async findHistory(): Promise<OrderHistoryListItem[]> {
+  public async findHistory(range?: OrderDateRange): Promise<OrderHistoryListItem[]> {
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['COMPLETED', 'CANCELED'] } },
+      where: { status: { in: ['COMPLETED', 'CANCELED'] }, ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
       select: {
         id: true,
         customerName: true,
@@ -111,9 +112,9 @@ export class PrismaOrderQueries implements OrderQueries {
     }));
   }
 
-  public async findPreparing(): Promise<PreparingOrderListItem[]> {
+  public async findPreparing(range?: OrderDateRange): Promise<PreparingOrderListItem[]> {
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['CONFIRMED', 'PREPARING'] } },
+      where: { status: { in: ['CONFIRMED', 'PREPARING'] }, ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}) },
       select: {
         id: true,
         customerName: true,
