@@ -61,6 +61,8 @@ import { CreateTableController } from '../infrastructure/http/controllers/tables
 import { DeleteTableController } from '../infrastructure/http/controllers/tables/delete-table-controller.js';
 import { ListTablesController } from '../infrastructure/http/controllers/tables/list-tables-controller.js';
 import { ListTableOrdersController } from '../infrastructure/http/controllers/tables/list-table-orders-controller.js';
+import { ListClosedTableSessionsController } from '../infrastructure/http/controllers/tables/list-closed-table-sessions-controller.js';
+import { ListClosedTableSessions } from '../application/use-cases/tables/list-closed-table-sessions.js';
 import { ListTableSessionsController } from '../infrastructure/http/controllers/tables/list-table-sessions-controller.js';
 import { RemoveTableOrderController } from '../infrastructure/http/controllers/tables/remove-table-order-controller.js';
 import { ReleaseTableController } from '../infrastructure/http/controllers/tables/release-table-controller.js';
@@ -166,6 +168,8 @@ const providers = new AppConfig()
   .useClass(ListTableOrdersController)
   .useClass(ListTableSessions)
   .useClass(ListTableSessionsController)
+  .useClass(ListClosedTableSessions)
+  .useClass(ListClosedTableSessionsController)
   .useClass(RemoveTableOrder)
   .useClass(RemoveTableOrderController)
   .useClass(ReleaseTable)
