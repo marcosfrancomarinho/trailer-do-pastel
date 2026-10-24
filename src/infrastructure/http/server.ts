@@ -21,6 +21,7 @@ import { CreateTableController } from './controllers/tables/create-table-control
 import { DeleteTableController } from './controllers/tables/delete-table-controller.js';
 import { ListTablesController } from './controllers/tables/list-tables-controller.js';
 import { ListTableOrdersController } from './controllers/tables/list-table-orders-controller.js';
+import { ListClosedTableSessionsController } from './controllers/tables/list-closed-table-sessions-controller.js';
 import { ListTableSessionsController } from './controllers/tables/list-table-sessions-controller.js';
 import { RemoveTableOrderController } from './controllers/tables/remove-table-order-controller.js';
 import { ReleaseTableController } from './controllers/tables/release-table-controller.js';
@@ -62,6 +63,7 @@ export class Server {
     private readonly listTablesController: ListTablesController,
     private readonly listTableOrdersController: ListTableOrdersController,
     private readonly listTableSessionsController: ListTableSessionsController,
+    private readonly listClosedTableSessionsController: ListClosedTableSessionsController,
     private readonly removeTableOrderController: RemoveTableOrderController,
     private readonly releaseTableController: ReleaseTableController,
     private readonly storeController: StoreController,
@@ -208,6 +210,7 @@ export class Server {
     this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
     this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
     this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
+    this.app.get('/tables/sessions/history', authenticate, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
     this.app.get(
       '/tables/:tableId/orders',
       authenticate,
