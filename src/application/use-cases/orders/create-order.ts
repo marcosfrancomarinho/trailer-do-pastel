@@ -19,7 +19,7 @@ export class CreateOrder {
     const customerPhone = CustomerPhone.create(input.customerPhone);
     const observation = OrderObservation.create(input.observation);
     const tableId = input.tableId == null ? null : ReferenceId.create(input.tableId, 'tableId');
-    const userId = tableId === null ? null : ReferenceId.create(input.userId, 'userId');
+    const userId = tableId === null ? null : ReferenceId.create(input.userId as string, 'userId');
     const items: OrderItem[] = [];
 
     for (const item of input.items) {
