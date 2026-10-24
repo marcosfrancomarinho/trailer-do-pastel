@@ -18,7 +18,7 @@ describe('Order', () => {
 
   it('creates an order without a user account and rejects access to an unassigned ID', () => {
     const order = buildOrder();
-    assert.equal('userId' in order, false);
+    assert.equal(order.getUserId(), null);
     assert.throws(
       () => order.getId(),
       (error: unknown) => error instanceof DomainError && error.field === 'id' && error.code === 'REQUIRED',
