@@ -183,7 +183,7 @@ export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
       id: order.id,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
-      createdBy: order.user,
+      createdBy: order.user ?? null,
       observation: order.observation,
       tableId: order.tableId,
       status: order.status,
