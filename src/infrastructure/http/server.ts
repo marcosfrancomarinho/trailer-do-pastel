@@ -98,7 +98,7 @@ export class Server {
     this.registerProductRoutes(authenticate);
     this.registerAdditionRoutes(authenticate);
     this.registerCategoryRoutes(authenticate);
-    this.registerTableRoutes(authenticate);
+    this.registerTableRoutes(authenticate, authorizeAdmin);
     this.registerStoreRoutes(authenticate);
     this.registerOrderRoutes(authenticate);
   }
@@ -206,11 +206,11 @@ export class Server {
     );
   }
 
-  private registerTableRoutes(authenticate: RequestHandler): void {
+  private registerTableRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
     this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
     this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
     this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
-    this.app.get('/tables/sessions/history', authenticate, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
+    this.app.get('/tables/sessions/history', authenticate, authorizeAdmin, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
     this.app.get(
       '/tables/:tableId/orders',
       authenticate,
