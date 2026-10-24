@@ -57,6 +57,7 @@ describe('Server authentication', () => {
       ['GET', '/tables'],
       ['GET', '/tables/:tableId/orders'],
       ['GET', '/tables/:tableId/sessions'],
+      ['GET', '/tables/sessions/history'],
       ['DELETE', '/tables/:tableId/orders/:orderId'],
       ['PATCH', '/tables/:tableId/release'],
       ['POST', '/store/open'],
