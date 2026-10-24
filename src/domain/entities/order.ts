@@ -14,6 +14,7 @@ export class Order {
     private readonly observation: OrderObservation,
     private readonly tableId: ReferenceId | null,
     private readonly id: string | undefined,
+    private readonly userId: ReferenceId | null,
   ) {}
 
   public static create(
@@ -23,9 +24,10 @@ export class Order {
     observation: OrderObservation = OrderObservation.create(),
     tableId: ReferenceId | null = null,
     id?: string,
+    userId: ReferenceId | null = null,
   ): Order {
     Order.validateItems(items);
-    return new Order(customerName, customerPhone, [...items], observation, tableId, id);
+    return new Order(customerName, customerPhone, [...items], observation, tableId, id, userId);
   }
 
   public getId(): string {
@@ -49,6 +51,10 @@ export class Order {
 
   public getTableId(): string | null {
     return this.tableId?.getValue() ?? null;
+  }
+
+  public getUserId(): string | null {
+    return this.userId?.getValue() ?? null;
   }
 
   public getItems(): OrderItem[] {
