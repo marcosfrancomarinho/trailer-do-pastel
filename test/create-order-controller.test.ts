@@ -73,9 +73,11 @@ describe('CreateOrderController', () => {
       const create = context.mock.method(useCase, 'create');
       const controller = new CreateOrderController(useCase);
       const { response } = createResponse(context);
+      response.locals.userId = 'authenticated-user';
       const next = context.mock.fn();
 
-      await controller.execute({ body: { ...customer, tableId, items: [item] } } as Request, response, next);
+      await controller.execute({ body: { ...customer, tableId, userId: 'forged-user', items: [item] } } as Request, response, next);
+      assert.equal(create.mock.calls[0].arguments[0].userId, tableId === null ? undefined : 'authenticated-user');
 
       assert.equal(create.mock.calls[0].arguments[0].tableId, tableId);
       assert.equal(next.mock.callCount(), 0);
