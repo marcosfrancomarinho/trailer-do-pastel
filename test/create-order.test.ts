@@ -214,7 +214,7 @@ describe('CreateOrder', () => {
     });
     const useCase = createUseCase(repository);
 
-    assert.equal((await useCase.create({ ...input, tableId: ' table-1 ' })).tableId, 'table-1');
+    assert.equal((await useCase.create({ ...input, tableId: ' table-1 ', userId: 'employee-1' })).tableId, 'table-1');
     assert.equal((await useCase.create({ ...input, tableId: null })).tableId, null);
     assert.equal((await useCase.create(input)).tableId, null);
     assert.deepEqual(seenTableIds, ['table-1', null, null]);
