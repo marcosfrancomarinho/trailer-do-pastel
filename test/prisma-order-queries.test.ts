@@ -145,6 +145,7 @@ describe('PrismaOrderQueries', () => {
       customerPhone: '11999999999',
       observation: null,
       tableId: null,
+      tableNumber: null,
       status: 'CONFIRMED',
       total: '15.5',
       createdAt: '2026-10-19T10:00:00.000Z',
