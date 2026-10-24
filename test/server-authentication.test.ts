@@ -24,7 +24,7 @@ describe('Server authentication', () => {
     const controller = { execute() {}, getStatus() {}, open() {}, close() {} };
     const dependencies = [
       ...Array.from({ length: Server.length - 3 }, () => controller),
-      new RequireAuthentication(gateway, { findRoleById: async () => 'ADMIN' } as UserRepository),
+      new RequireAuthentication(gateway, { findRoleById: async () => 'EMPLOYEE' } as UserRepository),
       new RequireAdmin(),
       new ErrorHandler(),
     ] as unknown as ConstructorParameters<typeof Server>;
@@ -47,8 +47,6 @@ describe('Server authentication', () => {
       ['POST', '/categories'],
       ['PATCH', '/categories/:categoryId'],
       ['DELETE', '/categories/:categoryId'],
-      ['POST', '/tables'],
-      ['DELETE', '/tables/:tableId'],
       ['GET', '/tables/sessions/history'],
       ['POST', '/store/open'],
       ['POST', '/store/close'],
@@ -59,7 +57,8 @@ describe('Server authentication', () => {
     }
 
     const protectedRoutes = [
-
+      ['POST', '/tables'],
+      ['DELETE', '/tables/:tableId'],
       ['GET', '/tables'],
       ['GET', '/tables/:tableId/orders'],
       ['GET', '/tables/:tableId/sessions'],
@@ -107,7 +106,18 @@ describe('Server authentication', () => {
     const authorized = { header: () => `Bearer ${token}` } as unknown as Request;
     await middleware(authorized, response, next);
     assert.equal(response.locals.userId, 'user-1');
+    assert.equal(response.locals.userRole, 'EMPLOYEE');
     assert.deepEqual(next.mock.calls[1].arguments, []);
+
+    for (const [method, path] of [['POST', '/tables'], ['DELETE', '/tables/:tableId']] as const) {
+      const tableMiddleware = findRoute(method, path)?.route?.stack[0].handle;
+      assert.ok(tableMiddleware);
+      const tableNext = context.mock.fn();
+      const { response: tableResponse } = createResponse(context);
+      await tableMiddleware(authorized, tableResponse, tableNext);
+      assert.equal(tableResponse.locals.userRole, 'EMPLOYEE');
+      assert.deepEqual(tableNext.mock.calls[0].arguments, []);
+    }
 
     const orderGuard = findRoute('POST', '/orders')?.route?.stack[0].handle;
     assert.ok(orderGuard);

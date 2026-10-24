@@ -199,8 +199,8 @@ export class Server {
   }
 
   private registerTableRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post('/tables', authenticate, authorizeAdmin, this.createTableController.execute.bind(this.createTableController));
-    this.app.delete('/tables/:tableId', authenticate, authorizeAdmin, this.deleteTableController.execute.bind(this.deleteTableController));
+    this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
+    this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
     this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
     this.app.get('/tables/sessions/history', authenticate, authorizeAdmin, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
     this.app.get(

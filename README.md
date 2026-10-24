@@ -201,7 +201,7 @@ Enquanto a loja está `CLOSED`, `POST /orders` retorna `409 UNAVAILABLE` para pe
 
 ### Mesas
 
-Para cadastrar uma mesa, envie `POST /tables` com o token de acesso e um número inteiro positivo no corpo JSON:
+Um funcionário (`EMPLOYEE`) ou administrador (`ADMIN`) pode cadastrar e excluir mesas com seu token de acesso. Para cadastrar uma mesa, envie `POST /tables` com um número inteiro positivo no corpo JSON:
 
 ```json
 { "number": 12, "status": "FREE" }
