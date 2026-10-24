@@ -10,6 +10,7 @@ export interface PreparingOrderListItem {
   customerPhone: string;
   observation: string | null;
   tableId: string | null;
+  tableNumber: number | null;
   status: 'CONFIRMED' | 'PREPARING';
   total: string;
   createdAt: string;
