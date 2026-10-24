@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ApplicationError } from '../src/application/errors/application-error.js';
+import { DomainError } from '../src/domain/errors/domain-error.js';
 import { ListClosedTableSessions } from '../src/application/use-cases/tables/list-closed-table-sessions.js';
 
 describe('ListClosedTableSessions', () => {
@@ -22,7 +22,7 @@ describe('ListClosedTableSessions', () => {
     } as ConstructorParameters<typeof ListClosedTableSessions>[0]);
     for (const date of ['2026-02-30', '2026-13-01', '24/10/2026', '']) {
       await assert.rejects(useCase.list(date), (error: unknown) =>
-        error instanceof ApplicationError && error.field === 'date');
+        error instanceof DomainError && error.field === 'date');
     }
     assert.equal(calls, 0);
   });
