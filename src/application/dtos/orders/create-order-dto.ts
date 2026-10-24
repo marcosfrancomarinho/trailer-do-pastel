@@ -14,6 +14,7 @@ export interface CreateOrderInput {
   customerPhone: string;
   observation?: string | null;
   tableId?: string | null;
+  userId?: string | null;
   items: CreateOrderItemInput[];
 }
 
