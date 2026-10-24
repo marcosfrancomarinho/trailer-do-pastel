@@ -233,6 +233,7 @@ describe('PrismaOrderQueries', () => {
         observation: true,
         tableId: true,
         table: { select: { number: true } },
+        tableSession: { select: { table: { select: { number: true } } } },
         status: true,
         total: true,
         createdAt: true,
