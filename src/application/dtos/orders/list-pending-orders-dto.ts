@@ -23,6 +23,7 @@ export interface PendingOrderListItem {
   customerPhone: string;
   observation: string | null;
   tableId: string | null;
+  tableNumber: number | null;
   status: 'PENDING';
   total: string;
   createdAt: string;
