@@ -88,4 +88,31 @@ describe('PrismaOrderQueries table sessions', () => {
     assert.deepEqual(findUnique.mock.calls[0].arguments[0].select.sessions.orderBy,
       [{ openedAt: 'desc' }, { id: 'desc' }]);
   });
+  it('merges finalized online orders with closed table sessions without duplicating removed table orders', async (context) => {
+    const findSessions = context.mock.fn(async () => [{
+      id: 'session-1', tableId: 'table-1', table: { number: 4 },
+      openedAt: new Date('2026-10-24T12:00:00Z'), closedAt: new Date('2026-10-24T13:00:00Z'),
+      closedTotal: new Prisma.Decimal('20'), orders: [],
+    }]);
+    const findOnline = context.mock.fn(async () => [{
+      id: 'online-1', customerName: 'Ana', customerPhone: '11999999999',
+      observation: null, tableId: null, status: 'COMPLETED',
+      total: new Prisma.Decimal('15'), createdAt: new Date('2026-10-24T14:00:00Z'),
+      updatedAt: new Date('2026-10-24T14:30:00Z'), items: [],
+    }]);
+    const prisma = { tableSession: { findMany: findSessions }, order: { findMany: findOnline } } as unknown as PrismaClient;
+    const results = await new PrismaOrderQueries(prisma).findClosedSessions('2026-10-24');
+    assert.equal(results.length, 2);
+    assert.equal(results[0].origin, 'ONLINE');
+    assert.equal(results[0].tableNumber, null);
+    assert.equal(results[0].session.closedTotal, '15');
+    assert.equal(results[0].session.orders[0].id, 'online-1');
+    assert.equal(results[1].origin, 'TABLE');
+    assert.equal(results[1].tableNumber, 4);
+    assert.deepEqual(findOnline.mock.calls[0].arguments[0].where, {
+      tableId: null, tableSessionId: null, status: { in: ['COMPLETED', 'CANCELED'] },
+      updatedAt: { gte: new Date('2026-10-24T03:00:00.000Z'), lt: new Date('2026-10-25T03:00:00.000Z') },
+    });
+  });
+
 });
