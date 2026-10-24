@@ -34,6 +34,7 @@ export class CreateOrderController {
         customerPhone: request.body?.customerPhone,
         ...(request.body?.observation !== undefined ? { observation: request.body.observation } : {}),
         ...(request.body?.tableId !== undefined ? { tableId: request.body.tableId } : {}),
+        ...(request.body?.tableId != null ? { userId: response.locals.userId as string | undefined } : {}),
         items,
       };
 
