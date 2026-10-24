@@ -8,13 +8,13 @@ import { PrismaTableRepository } from '../src/infrastructure/repositories/prisma
 
 describe('PrismaTableRepository', () => {
   it('checks for an existing number and saves a table', async (context) => {
-    const findUnique = context.mock.fn(async () => null);
+    const findFirst = context.mock.fn(async () => null);
     const create = context.mock.fn(async () => ({ id: 'table-id' }));
-    const prisma = { table: { findUnique, create } } as unknown as PrismaClient;
+    const prisma = { table: { findFirst, create } } as unknown as PrismaClient;
     const repository = new PrismaTableRepository(prisma);
 
     assert.equal(await repository.existsByNumber(12), false);
-    assert.deepEqual(findUnique.mock.calls[0].arguments, [{ where: { number: 12 }, select: { id: true } }]);
+    assert.deepEqual(findFirst.mock.calls[0].arguments, [{ where: { number: 12, deletedAt: null }, select: { id: true } }]);
     assert.equal(await repository.save(Table.create(TableNumber.create(12))), 'table-id');
     assert.deepEqual(create.mock.calls[0].arguments, [{
       data: { number: 12, status: 'FREE', totalSpent: '0' }, select: { id: true },
@@ -39,6 +39,33 @@ describe('PrismaTableRepository', () => {
     const { TableStatus } = await import('../src/domain/value-objects/table/table-status.js');
     await new PrismaTableRepository(prisma).save(Table.create(TableNumber.create(12), TableStatus.create('OCCUPIED')));
     assert.deepEqual(create.mock.calls[0].arguments[0].data.sessions, { create: {} });
+  });
+
+  it('archives a free table without deleting its historical records', async (context) => {
+    const updateMany = context.mock.fn(async () => ({ count: 1 }));
+    const prisma = { table: { updateMany } } as unknown as PrismaClient;
+
+    await new PrismaTableRepository(prisma).archive('table-id');
+
+    const update = updateMany.mock.calls[0].arguments[0];
+    assert.deepEqual(update.where, { id: 'table-id', deletedAt: null, status: 'FREE' });
+    assert.ok(update.data.deletedAt instanceof Date);
+  });
+
+  it('rejects occupied and missing or previously archived tables', async () => {
+    for (const scenario of [
+      { table: { status: 'OCCUPIED', deletedAt: null }, code: 'IN_USE' },
+      { table: { status: 'FREE', deletedAt: new Date() }, code: 'NOT_FOUND' },
+      { table: null, code: 'NOT_FOUND' },
+    ]) {
+      const prisma = { table: {
+        updateMany: async () => ({ count: 0 }),
+        findUnique: async () => scenario.table,
+      } } as unknown as PrismaClient;
+      await assert.rejects(new PrismaTableRepository(prisma).archive('table-id'),
+        (error: unknown) => error instanceof ApplicationError && error.field === 'tableId'
+          && error.code === scenario.code);
+    }
   });
 
   it('locks the table, checks active orders, and resets the current total in one transaction', async (context) => {

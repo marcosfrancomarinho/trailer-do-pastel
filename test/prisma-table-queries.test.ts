@@ -16,6 +16,7 @@ describe('PrismaTableQueries', () => {
       { id: 'table-2', number: 2, status: 'FREE', totalSpent: '0' },
     ]);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
+      where: { deletedAt: null },
       select: { id: true, number: true, status: true, totalSpent: true },
       orderBy: [{ number: 'asc' }, { id: 'asc' }],
     }]);

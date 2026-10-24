@@ -74,6 +74,7 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | POST | `/categories` | Categoria | `{ "id": "..." }` |
 | POST | `/tables` | Mesa | `{ "id": "...", "status": "FREE", "totalSpent": "0" }` |
 | GET | `/tables` | Listar mesas | `[{ "id": "...", "number": 12, "status": "FREE", "totalSpent": "0" }]` |
+| DELETE | `/tables/:tableId` | Retirar mesa de uso | `204 No Content` |
 | GET | `/tables/:tableId/orders` | Pedidos da comanda aberta | `{ "tableId": "...", "number": 12, "status": "OCCUPIED", "totalSpent": "25.5", "sessionId": "...", "orders": [...] }` |
 | GET | `/tables/:tableId/sessions` | Histórico de comandas da mesa | `{ "tableId": "...", "sessions": [...] }` |
 | DELETE | `/tables/:tableId/orders/:orderId` | Cancelar e tirar pedido da mesa | `{ "orderId": "...", "tableId": null, "status": "CANCELED", "totalSpent": "13" }` |
@@ -206,9 +207,11 @@ Para cadastrar uma mesa, envie `POST /tables` com o token de acesso e um número
 { "number": 12, "status": "FREE" }
 ```
 
-O número deve ser único. O status aceita `FREE` (livre) ou `OCCUPIED` (ocupada) e assume `FREE` quando omitido. O valor `totalSpent` é armazenado como decimal, começa em `0` e aparece como string na resposta junto do ID e do status. Números repetidos retornam `409 ALREADY_EXISTS`. Ao criar um pedido com `tableId`, a mesa passa a `OCCUPIED`, abre uma comanda se necessário e soma o total do pedido a `totalSpent` na mesma transação. Criar uma mesa já `OCCUPIED` abre uma comanda vazia.
+O número deve ser único entre as mesas ativas. O status aceita `FREE` (livre) ou `OCCUPIED` (ocupada) e assume `FREE` quando omitido. O valor `totalSpent` é armazenado como decimal, começa em `0` e aparece como string na resposta junto do ID e do status. Números repetidos retornam `409 ALREADY_EXISTS`. Ao criar um pedido com `tableId`, a mesa passa a `OCCUPIED`, abre uma comanda se necessário e soma o total do pedido a `totalSpent` na mesma transação. Criar uma mesa já `OCCUPIED` abre uma comanda vazia.
 
-`GET /tables` lista todas as mesas por número, com ID, status e total acumulado da comanda atual. Retorna `[]` quando não há mesas cadastradas e exige token de `ADMIN` ou `EMPLOYEE`.
+`GET /tables` lista as mesas ativas por número, com ID, status e total acumulado da comanda atual. Retorna `[]` quando não há mesas ativas e exige token de `ADMIN` ou `EMPLOYEE`.
+
+`DELETE /tables/:tableId` retira uma mesa livre de uso e retorna `204`. Uma mesa ocupada retorna `409 IN_USE`: libere-a antes. ID inexistente ou mesa já retirada retorna `404 NOT_FOUND`. A exclusão preserva comandas e pedidos antigos, que continuam disponíveis em `GET /tables/:tableId/sessions`; a mesa deixa de aparecer em `GET /tables` e não aceita novos pedidos. Seu número pode ser usado em uma nova mesa.
 
 `GET /tables/:tableId/orders` retorna os pedidos da comanda aberta, em ordem de criação, com cliente, observação, status, total e itens com adicionais. Pedidos cancelados e pedidos retirados da mesa não entram nessa conta. A resposta inclui `sessionId`, número, status e `totalSpent`. Uma mesa livre retorna `sessionId: null` e `orders: []`; um ID desconhecido retorna `404 NOT_FOUND`.
 

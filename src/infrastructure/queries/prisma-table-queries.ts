@@ -7,6 +7,7 @@ export class PrismaTableQueries implements TableQueries {
 
   public async findAll(): Promise<ListTablesOutput> {
     const tables = await this.prisma.table.findMany({
+      where: { deletedAt: null },
       select: { id: true, number: true, status: true, totalSpent: true },
       orderBy: [{ number: 'asc' }, { id: 'asc' }],
     });

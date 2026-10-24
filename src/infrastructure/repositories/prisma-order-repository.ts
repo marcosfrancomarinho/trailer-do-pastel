@@ -104,16 +104,12 @@ export class PrismaOrderRepository implements OrderRepository {
 
         if (tableId === null) return create(tx, null);
 
-        try {
-          await tx.table.update({
-            where: { id: tableId },
-            data: { status: 'OCCUPIED', totalSpent: { increment: total } },
-          });
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-            throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
-          }
-          throw error;
+        const updatedTable = await tx.table.updateMany({
+          where: { id: tableId, deletedAt: null },
+          data: { status: 'OCCUPIED', totalSpent: { increment: total } },
+        });
+        if (updatedTable.count !== 1) {
+          throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
         }
 
         let session = await tx.tableSession.findFirst({

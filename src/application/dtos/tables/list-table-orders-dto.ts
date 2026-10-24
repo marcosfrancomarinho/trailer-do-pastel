@@ -27,16 +27,3 @@ export interface ListTableOrdersOutput {
   sessionId: string | null;
   orders: TableOrderListItem[];
 }
-
-export interface TableSessionListItem {
-  id: string;
-  openedAt: string;
-  closedAt: string | null;
-  closedTotal: string | null;
-  orders: TableOrderListItem[];
-}
-
-export interface ListTableSessionsOutput {
-  tableId: string;
-  sessions: TableSessionListItem[];
-}

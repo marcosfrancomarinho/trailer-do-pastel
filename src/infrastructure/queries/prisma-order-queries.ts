@@ -9,7 +9,8 @@ import type { OrderHistoryListItem } from '../../application/dtos/orders/list-or
 import type { PreparingOrderListItem } from '../../application/dtos/orders/list-preparing-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
 import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
-import type { ListTableOrdersOutput, ListTableSessionsOutput, TableOrderListItem } from '../../application/dtos/tables/list-table-orders-dto.js';
+import type { ListTableOrdersOutput, TableOrderListItem } from '../../application/dtos/tables/list-table-orders-dto.js';
+import type { ListTableSessionsOutput } from '../../application/dtos/tables/list-table-sessions-dto.js';
 import type { TableOrderQueries } from '../../application/queries/table-order-queries.js';
 
 const orderItemSelect = {

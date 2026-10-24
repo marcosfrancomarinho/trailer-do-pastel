@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { ListTableSessionsOutput } from '../../../../application/dtos/tables/list-table-orders-dto.js';
+import type { ListTableSessionsOutput } from '../../../../application/dtos/tables/list-table-sessions-dto.js';
 import { ListTableSessions } from '../../../../application/use-cases/tables/list-table-sessions.js';
 
 export class ListTableSessionsController {

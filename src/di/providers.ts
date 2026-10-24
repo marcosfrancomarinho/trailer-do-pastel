@@ -16,6 +16,7 @@ import { UpdateAddition } from '../application/use-cases/additions/update-additi
 import { DeleteAddition } from '../application/use-cases/additions/delete-addition.js';
 import { CreateCategory } from '../application/use-cases/categories/create-category.js';
 import { CreateTable } from '../application/use-cases/tables/create-table.js';
+import { DeleteTable } from '../application/use-cases/tables/delete-table.js';
 import { ListTables } from '../application/use-cases/tables/list-tables.js';
 import { ListTableOrders } from '../application/use-cases/tables/list-table-orders.js';
 import { ListTableSessions } from '../application/use-cases/tables/list-table-sessions.js';
@@ -57,6 +58,7 @@ import { UpdateAdditionController } from '../infrastructure/http/controllers/add
 import { DeleteAdditionController } from '../infrastructure/http/controllers/additions/delete-addition-controller.js';
 import { CreateCategoryController } from '../infrastructure/http/controllers/categories/create-category-controller.js';
 import { CreateTableController } from '../infrastructure/http/controllers/tables/create-table-controller.js';
+import { DeleteTableController } from '../infrastructure/http/controllers/tables/delete-table-controller.js';
 import { ListTablesController } from '../infrastructure/http/controllers/tables/list-tables-controller.js';
 import { ListTableOrdersController } from '../infrastructure/http/controllers/tables/list-table-orders-controller.js';
 import { ListTableSessionsController } from '../infrastructure/http/controllers/tables/list-table-sessions-controller.js';
@@ -156,6 +158,8 @@ const providers = new AppConfig()
   .useClass(CreateCategoryController)
   .useClass(CreateTable)
   .useClass(CreateTableController)
+  .useClass(DeleteTable)
+  .useClass(DeleteTableController)
   .useClass(ListTables)
   .useClass(ListTablesController)
   .useClass(ListTableOrders)

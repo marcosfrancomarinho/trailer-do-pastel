@@ -236,6 +236,10 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/sessions
 Authorization: Bearer {{accessToken}}
 
+### Excluir mesa livre, preservando comandas anteriores — 204
+DELETE {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}
+Authorization: Bearer {{accessToken}}
+
 ### Listar pedidos pendentes — 200
 # @name listarPedidosPendentes
 GET {{baseUrl}}/orders/pending

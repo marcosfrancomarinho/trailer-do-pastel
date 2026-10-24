@@ -53,6 +53,7 @@ describe('Server authentication', () => {
       ['DELETE', '/additions/:additionId'],
       ['POST', '/categories'],
       ['POST', '/tables'],
+      ['DELETE', '/tables/:tableId'],
       ['GET', '/tables'],
       ['GET', '/tables/:tableId/orders'],
       ['GET', '/tables/:tableId/sessions'],

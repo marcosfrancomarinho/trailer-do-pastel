@@ -7,11 +7,27 @@ export class PrismaTableRepository implements TableRepository {
   public constructor(private readonly prisma: PrismaClient) {}
 
   public async existsByNumber(number: number): Promise<boolean> {
-    const table = await this.prisma.table.findUnique({
-      where: { number },
+    const table = await this.prisma.table.findFirst({
+      where: { number, deletedAt: null },
       select: { id: true },
     });
     return table !== null;
+  }
+
+  public async archive(id: string): Promise<void> {
+    const archived = await this.prisma.table.updateMany({
+      where: { id, deletedAt: null, status: 'FREE' },
+      data: { deletedAt: new Date() },
+    });
+    if (archived.count === 1) return;
+
+    const table = await this.prisma.table.findUnique({
+      where: { id }, select: { status: true, deletedAt: true },
+    });
+    if (!table || table.deletedAt !== null) {
+      throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
+    }
+    throw new ApplicationError('tableId', 'IN_USE', 'Libere a mesa antes de excluí-la.');
   }
 
   public async save(table: Table): Promise<string> {

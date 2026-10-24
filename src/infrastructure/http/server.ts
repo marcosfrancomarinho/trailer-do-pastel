@@ -18,6 +18,7 @@ import { UpdateCategoryController } from './controllers/categories/update-catego
 import { DeleteCategoryController } from './controllers/categories/delete-category-controller.js';
 import { ListCategoriesController } from './controllers/categories/list-categories-controller.js';
 import { CreateTableController } from './controllers/tables/create-table-controller.js';
+import { DeleteTableController } from './controllers/tables/delete-table-controller.js';
 import { ListTablesController } from './controllers/tables/list-tables-controller.js';
 import { ListTableOrdersController } from './controllers/tables/list-table-orders-controller.js';
 import { ListTableSessionsController } from './controllers/tables/list-table-sessions-controller.js';
@@ -57,6 +58,7 @@ export class Server {
     private readonly deleteCategoryController: DeleteCategoryController,
     private readonly listCategoriesController: ListCategoriesController,
     private readonly createTableController: CreateTableController,
+    private readonly deleteTableController: DeleteTableController,
     private readonly listTablesController: ListTablesController,
     private readonly listTableOrdersController: ListTableOrdersController,
     private readonly listTableSessionsController: ListTableSessionsController,
@@ -204,6 +206,7 @@ export class Server {
 
   private registerTableRoutes(authenticate: RequestHandler): void {
     this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
+    this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
     this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
     this.app.get(
       '/tables/:tableId/orders',

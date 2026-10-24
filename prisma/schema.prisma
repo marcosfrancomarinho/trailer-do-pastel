@@ -68,10 +68,11 @@ model Category {
 
 model Table {
   id        String      @id @default(uuid())
-  number    Int         @unique
+  number    Int
   status    TableStatus @default(FREE)
   totalSpent Decimal     @default(0) @map("total_spent")
   createdAt DateTime    @default(now()) @map("created_at")
+  deletedAt DateTime?   @map("deleted_at")
 
   orders Order[]
   sessions TableSession[]

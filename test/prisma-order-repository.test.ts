@@ -121,12 +121,12 @@ describe('PrismaOrderRepository', () => {
   });
 
   it('adds consecutive table orders to the same open comanda', async (context) => {
-    const updateTable = context.mock.fn(async () => ({ id: 'table-1' }));
+    const updateTable = context.mock.fn(async () => ({ count: 1 }));
     const findSession = context.mock.fn(async () => ({ id: 'session-1' }));
     const createOrder = context.mock.fn(async () => ({ id: 'order-1', trackingToken: 'token-1' }));
     const tx = {
       $queryRaw: async () => [{ status: 'OPEN' }],
-      table: { update: updateTable }, tableSession: { findFirst: findSession }, order: { create: createOrder },
+      table: { updateMany: updateTable }, tableSession: { findFirst: findSession }, order: { create: createOrder },
     };
     const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
     const repository = new PrismaOrderRepository(prisma);
@@ -138,6 +138,8 @@ describe('PrismaOrderRepository', () => {
     assert.equal(createOrder.mock.calls[1].arguments[0].data.tableSessionId, 'session-1');
     assert.deepEqual(updateTable.mock.calls[0].arguments[0].data,
       { status: 'OCCUPIED', totalSpent: { increment: '10' } });
+    assert.deepEqual(updateTable.mock.calls[0].arguments[0].where,
+      { id: 'table-1', deletedAt: null });
   });
 
   it('opens a new comanda for a free table and rejects an unknown table', async (context) => {
@@ -145,7 +147,7 @@ describe('PrismaOrderRepository', () => {
     const createOrder = context.mock.fn(async () => ({ id: 'order-1', trackingToken: 'token-1' }));
     const tx = {
       $queryRaw: async () => [{ status: 'OPEN' }],
-      table: { update: async () => ({ id: 'table-1' }) },
+      table: { updateMany: async () => ({ count: 1 }) },
       tableSession: { findFirst: async () => null, create: createSession },
       order: { create: createOrder },
     };
@@ -154,23 +156,22 @@ describe('PrismaOrderRepository', () => {
     assert.deepEqual(createSession.mock.calls[0].arguments, [{ data: { tableId: 'table-1' }, select: { id: true } }]);
     assert.equal(createOrder.mock.calls[0].arguments[0].data.tableSessionId, 'session-new');
 
-    const missing = new Prisma.PrismaClientKnownRequestError('Missing table', { code: 'P2025', clientVersion: '6.19.3' });
     const invalidTx = {
       $queryRaw: async () => [{ status: 'OPEN' }],
-      table: { update: async () => { throw missing; } }, order: { create: createOrder },
+      table: { updateMany: async () => ({ count: 0 }) }, order: { create: createOrder },
     };
     const invalidPrisma = { $transaction: async (work: (client: typeof invalidTx) => Promise<unknown>) => work(invalidTx) } as unknown as PrismaClient;
-    await assert.rejects(new PrismaOrderRepository(invalidPrisma).save(sampleOrder('missing')),
+    await assert.rejects(new PrismaOrderRepository(invalidPrisma).save(sampleOrder('archived-or-missing')),
       (error: unknown) => error instanceof ApplicationError && error.field === 'tableId' && error.code === 'NOT_FOUND');
     assert.equal(createOrder.mock.callCount(), 1);
   });
 
   it('refuses app and table orders while the store is closed', async (context) => {
     const createOrder = context.mock.fn(async () => ({ id: 'unexpected' }));
-    const updateTable = context.mock.fn(async () => ({ id: 'table-1' }));
+    const updateTable = context.mock.fn(async () => ({ count: 1 }));
     const tx = {
       $queryRaw: async () => [{ status: 'CLOSED' }],
-      order: { create: createOrder }, table: { update: updateTable },
+      order: { create: createOrder }, table: { updateMany: updateTable },
     };
     const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
     const repository = new PrismaOrderRepository(prisma);
