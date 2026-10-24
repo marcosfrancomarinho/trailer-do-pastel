@@ -79,7 +79,7 @@ describe('PrismaOrderQueries table sessions', () => {
         id: 'session-old', openedAt: '2026-10-22T10:00:00.000Z',
         closedAt: '2026-10-22T11:00:00.000Z', closedTotal: '30',
         orders: [{
-          id: 'order-old', customerName: 'Maria', customerPhone: '11999999999', observation: null,
+          id: 'order-old', createdBy: null, customerName: 'Maria', customerPhone: '11999999999', observation: null,
           tableId: 'table-1', status: 'COMPLETED', total: '30',
           createdAt: '2026-10-22T10:05:00.000Z', updatedAt: '2026-10-22T10:30:00.000Z', items: [],
         }],
