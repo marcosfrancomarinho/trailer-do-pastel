@@ -4,7 +4,7 @@ import { ApplicationError } from '../../errors/application-error.js';
 import type { TableOrderQueries } from '../../queries/table-order-queries.js';
 
 export class ListTableSessions {
-  public constructor(private readonly tableOrderQueries: TableOrderQueries) {}
+  public constructor(private readonly tableOrderQueries: Pick<TableOrderQueries, 'findSessionsByTableId'>) {}
 
   public async list(input: ListTableSessionsInput): Promise<ListTableSessionsOutput> {
     const tableId = ReferenceId.create(input.tableId, 'tableId');
