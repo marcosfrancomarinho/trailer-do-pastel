@@ -19,6 +19,7 @@ export class CreateOrder {
     const customerPhone = CustomerPhone.create(input.customerPhone);
     const observation = OrderObservation.create(input.observation);
     const tableId = input.tableId == null ? null : ReferenceId.create(input.tableId, 'tableId');
+    const userId = tableId === null ? null : ReferenceId.create(input.userId, 'userId');
     const items: OrderItem[] = [];
 
     for (const item of input.items) {
@@ -26,7 +27,7 @@ export class CreateOrder {
       items.push(orderItem);
     }
 
-    const order = Order.create(customerName, customerPhone, items, observation, tableId);
+    const order = Order.create(customerName, customerPhone, items, observation, tableId, undefined, userId);
     const { id, trackingToken } = await this.orderRepository.save(order);
 
     return {
