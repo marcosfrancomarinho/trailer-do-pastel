@@ -30,11 +30,11 @@ describe('PrismaOrderQueries table sessions', () => {
     assert.deepEqual(await new PrismaOrderQueries(prisma).findByTableId('table-1'), {
       tableId: 'table-1', number: 1, status: 'OCCUPIED', totalSpent: '25.5', sessionId: 'session-current',
       orders: [
-        { id: 'order-1', customerName: 'Maria', customerPhone: '11999999999', observation: null,
+        { id: 'order-1', createdBy: null, customerName: 'Maria', customerPhone: '11999999999', observation: null,
           tableId: 'table-1', status: 'PENDING', total: '10',
           createdAt: '2026-10-23T10:00:00.000Z', updatedAt: '2026-10-23T10:00:00.000Z',
           items: [{ productId: 'product-1', productName: 'Pastel', quantity: 1, unitPrice: '10', additions: [] }] },
-        { id: 'order-2', customerName: 'João', customerPhone: '11988888888', observation: 'Sem cebola',
+        { id: 'order-2', createdBy: null, customerName: 'João', customerPhone: '11988888888', observation: 'Sem cebola',
           tableId: 'table-1', status: 'COMPLETED', total: '15.5',
           createdAt: '2026-10-23T11:00:00.000Z', updatedAt: '2026-10-23T11:30:00.000Z',
           items: [{ productId: 'product-2', productName: 'Pastel especial', quantity: 1, unitPrice: '13',
