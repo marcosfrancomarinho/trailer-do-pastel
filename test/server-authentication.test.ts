@@ -5,8 +5,10 @@ import { ApplicationError } from '../src/application/errors/application-error.js
 import { JwtAuthTokenGateway } from '../src/infrastructure/gateways/jwt-auth-token-gateway.js';
 import { ErrorHandler } from '../src/infrastructure/http/middlewares/error-handler.js';
 import { RequireAuthentication } from '../src/infrastructure/http/middlewares/require-authentication.js';
+import { RequireAdmin } from '../src/infrastructure/http/middlewares/require-admin.js';
 import { Server } from '../src/infrastructure/http/server.js';
 import { createResponse } from './helpers/http-fixtures.js';
+import type { UserRepository } from '../src/domain/repositories/user-repository.js';
 
 interface RouteLayer {
   route?: {
@@ -19,10 +21,11 @@ interface RouteLayer {
 describe('Server authentication', () => {
   it('requires a Bearer token for management routes and keeps customer routes public', async (context) => {
     const gateway = new JwtAuthTokenGateway('a'.repeat(32));
-    const controller = { execute() {} };
+    const controller = { execute() {}, getStatus() {}, open() {}, close() {} };
     const dependencies = [
-      ...Array.from({ length: Server.length - 2 }, () => controller),
-      new RequireAuthentication(gateway),
+      ...Array.from({ length: Server.length - 3 }, () => controller),
+      new RequireAuthentication(gateway, { findRoleById: async () => 'ADMIN' } as UserRepository),
+      new RequireAdmin(),
       new ErrorHandler(),
     ] as unknown as ConstructorParameters<typeof Server>;
     const server = new Server(...dependencies);
@@ -31,8 +34,17 @@ describe('Server authentication', () => {
     const findRoute = (method: string, path: string) => routes.find((layer) =>
       layer.route?.path === path && layer.route.methods[method.toLowerCase()]);
 
-    const protectedRoutes = [
+    const adminRoutes = [
       ['POST', '/users'],
+      ['GET', '/users'],
+      ['DELETE', '/users/:userId'],
+    ] as const;
+
+    for (const [method, path] of adminRoutes) {
+      assert.equal(findRoute(method, path)?.route?.stack.length, 3, `${method} ${path} deve exigir administrador`);
+    }
+
+    const protectedRoutes = [
       ['POST', '/products'],
       ['PATCH', '/products/:productId'],
       ['DELETE', '/products/:productId'],
@@ -40,6 +52,14 @@ describe('Server authentication', () => {
       ['PATCH', '/additions/:additionId'],
       ['DELETE', '/additions/:additionId'],
       ['POST', '/categories'],
+      ['POST', '/tables'],
+      ['GET', '/tables'],
+      ['GET', '/tables/:tableId/orders'],
+      ['GET', '/tables/:tableId/sessions'],
+      ['DELETE', '/tables/:tableId/orders/:orderId'],
+      ['PATCH', '/tables/:tableId/release'],
+      ['POST', '/store/open'],
+      ['POST', '/store/close'],
       ['PATCH', '/categories/:categoryId'],
       ['DELETE', '/categories/:categoryId'],
       ['PATCH', '/orders/:orderId/status'],
@@ -59,15 +79,16 @@ describe('Server authentication', () => {
       ['GET', '/additions'],
       ['GET', '/categories'],
       ['GET', '/categories/:categoryId/products'],
-      ['POST', '/orders'],
       ['GET', '/orders/tracking/:trackingToken'],
+      ['GET', '/store/status'],
     ] as const;
 
     for (const [method, path] of publicRoutes) {
       assert.equal(findRoute(method, path)?.route?.stack.length, 1, `${method} ${path} deve ser público`);
     }
 
-    assert.equal(routes.length, protectedRoutes.length + publicRoutes.length);
+    assert.equal(findRoute('POST', '/orders')?.route?.stack.length, 2);
+    assert.equal(routes.length, adminRoutes.length + protectedRoutes.length + publicRoutes.length + 1);
 
     const middleware = findRoute('GET', '/orders/pending')?.route?.stack[0].handle;
     assert.ok(middleware);
@@ -84,5 +105,23 @@ describe('Server authentication', () => {
     await middleware(authorized, response, next);
     assert.equal(response.locals.userId, 'user-1');
     assert.deepEqual(next.mock.calls[1].arguments, []);
+
+    const orderGuard = findRoute('POST', '/orders')?.route?.stack[0].handle;
+    assert.ok(orderGuard);
+    const orderNext = context.mock.fn();
+
+    await orderGuard({ body: {}, header: () => undefined } as unknown as Request, response, orderNext);
+    await orderGuard({ body: { tableId: null }, header: () => undefined } as unknown as Request, response, orderNext);
+    assert.deepEqual(orderNext.mock.calls[0].arguments, []);
+    assert.deepEqual(orderNext.mock.calls[1].arguments, []);
+
+    await orderGuard({ body: { tableId: 'table-1' }, header: () => undefined } as unknown as Request, response, orderNext);
+    const tableOrderError = orderNext.mock.calls[2].arguments[0];
+    assert.ok(tableOrderError instanceof ApplicationError);
+    assert.equal(tableOrderError.code, 'UNAUTHORIZED');
+
+    await orderGuard({ body: { tableId: 'table-1' }, header: () => `Bearer ${token}` } as unknown as Request,
+      response, orderNext);
+    assert.deepEqual(orderNext.mock.calls[3].arguments, []);
   });
 });

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { JwtAuthTokenGateway } from '../src/infrastructure/gateways/jwt-auth-token-gateway.js';
 
 describe('JwtAuthTokenGateway', () => {
-  it('issues an HS256 token for the user with a one-hour expiration', async () => {
+  it('issues an HS256 token for the user without an expiration time', async () => {
     const secret = 'a'.repeat(32);
     const gateway = new JwtAuthTokenGateway(secret);
 
@@ -13,8 +13,8 @@ describe('JwtAuthTokenGateway', () => {
 
     assert.equal(typeof payload, 'object');
     assert.equal(payload.sub, 'user-1');
-    assert.equal(payload.exp! - payload.iat!, 3600);
-    assert.deepEqual(Object.keys(payload).sort(), ['exp', 'iat', 'sub']);
+    assert.equal(payload.exp, undefined);
+    assert.deepEqual(Object.keys(payload).sort(), ['iat', 'sub']);
     assert.equal(await gateway.verify(token), 'user-1');
   });
 

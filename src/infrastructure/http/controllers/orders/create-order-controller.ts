@@ -32,6 +32,8 @@ export class CreateOrderController {
       const input: CreateOrderInput = {
         customerName: request.body?.customerName,
         customerPhone: request.body?.customerPhone,
+        ...(request.body?.observation !== undefined ? { observation: request.body.observation } : {}),
+        ...(request.body?.tableId !== undefined ? { tableId: request.body.tableId } : {}),
         items,
       };
 

@@ -29,6 +29,6 @@ export class LoginUser {
     }
 
     const accessToken = await this.authTokenGateway.issue(user.getId());
-    return { name: user.getName(), accessToken };
+    return { name: user.getName(), role: user.getRole(), accessToken };
   }
 }

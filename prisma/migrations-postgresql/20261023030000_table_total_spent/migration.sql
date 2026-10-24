@@ -1,0 +1,1 @@
+ALTER TABLE "tables" ADD COLUMN "total_spent" DECIMAL(65,30) NOT NULL DEFAULT 0;

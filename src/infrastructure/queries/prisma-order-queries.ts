@@ -9,6 +9,8 @@ import type { OrderHistoryListItem } from '../../application/dtos/orders/list-or
 import type { PreparingOrderListItem } from '../../application/dtos/orders/list-preparing-orders-dto.js';
 import type { OrderQueries } from '../../application/queries/order-queries.js';
 import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
+import type { ListTableOrdersOutput, ListTableSessionsOutput, TableOrderListItem } from '../../application/dtos/tables/list-table-orders-dto.js';
+import type { TableOrderQueries } from '../../application/queries/table-order-queries.js';
 
 const orderItemSelect = {
   productId: true,
@@ -27,8 +29,104 @@ const orderItemSelect = {
 
 type SelectedOrderItem = Prisma.OrderItemGetPayload<{ select: typeof orderItemSelect }>;
 
-export class PrismaOrderQueries implements OrderQueries {
+const tableOrderSelect = {
+  id: true,
+  customerName: true,
+  customerPhone: true,
+  observation: true,
+  tableId: true,
+  status: true,
+  total: true,
+  createdAt: true,
+  updatedAt: true,
+  items: { select: orderItemSelect },
+} satisfies Prisma.OrderSelect;
+
+type SelectedTableOrder = Prisma.OrderGetPayload<{ select: typeof tableOrderSelect }>;
+
+export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
   public constructor(private readonly prisma: PrismaClient) {}
+
+  public async findByTableId(tableId: string): Promise<ListTableOrdersOutput | null> {
+    const table = await this.prisma.table.findUnique({
+      where: { id: tableId },
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        totalSpent: true,
+        sessions: {
+          where: { closedAt: null },
+          take: 1,
+          select: {
+            id: true,
+            orders: {
+              where: { tableId, status: { not: 'CANCELED' } },
+              select: tableOrderSelect,
+              orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+            },
+          },
+        },
+      },
+    });
+
+    if (table === null) return null;
+
+    return {
+      tableId: table.id,
+      number: table.number,
+      status: table.status,
+      totalSpent: table.totalSpent.toString(),
+      sessionId: table.sessions[0]?.id ?? null,
+      orders: (table.sessions[0]?.orders ?? []).map((order) => this.mapTableOrder(order)),
+    };
+  }
+
+  public async findSessionsByTableId(tableId: string): Promise<ListTableSessionsOutput | null> {
+    const table = await this.prisma.table.findUnique({
+      where: { id: tableId },
+      select: {
+        id: true,
+        sessions: {
+          select: {
+            id: true,
+            openedAt: true,
+            closedAt: true,
+            closedTotal: true,
+            orders: { select: tableOrderSelect, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+          },
+          orderBy: [{ openedAt: 'desc' }, { id: 'desc' }],
+        },
+      },
+    });
+    if (table === null) return null;
+
+    return {
+      tableId: table.id,
+      sessions: table.sessions.map((session) => ({
+        id: session.id,
+        openedAt: session.openedAt.toISOString(),
+        closedAt: session.closedAt?.toISOString() ?? null,
+        closedTotal: session.closedTotal?.toString() ?? null,
+        orders: session.orders.map((order) => this.mapTableOrder(order)),
+      })),
+    };
+  }
+
+  private mapTableOrder(order: SelectedTableOrder): TableOrderListItem {
+    return {
+      id: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      observation: order.observation,
+      tableId: order.tableId,
+      status: order.status,
+      total: order.total.toString(),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      items: this.mapItems(order.items),
+    };
+  }
 
   public async findByTrackingToken(trackingToken: string): Promise<TrackOrderOutput | null> {
     const order = await this.prisma.order.findUnique({
@@ -52,6 +150,8 @@ export class PrismaOrderQueries implements OrderQueries {
         id: true,
         customerName: true,
         customerPhone: true,
+        observation: true,
+        tableId: true,
         status: true,
         total: true,
         createdAt: true,
@@ -67,6 +167,8 @@ export class PrismaOrderQueries implements OrderQueries {
         id: order.id,
         customerName: order.customerName,
         customerPhone: order.customerPhone,
+        observation: order.observation,
+        tableId: order.tableId,
         status: 'PENDING',
         total: order.total.toString(),
         createdAt: order.createdAt.toISOString(),
@@ -80,11 +182,16 @@ export class PrismaOrderQueries implements OrderQueries {
   public async findHistory(range?: OrderDateRange): Promise<OrderHistoryListItem[]> {
     const dateRange = range?.getValue();
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['COMPLETED', 'CANCELED'] }, ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}) },
+      where: {
+        status: { in: ['COMPLETED', 'CANCELED'] },
+        ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}),
+      },
       select: {
         id: true,
         customerName: true,
         customerPhone: true,
+        observation: true,
+        tableId: true,
         status: true,
         total: true,
         createdAt: true,
@@ -102,6 +209,8 @@ export class PrismaOrderQueries implements OrderQueries {
       id: order.id,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
+      observation: order.observation,
+      tableId: order.tableId,
       status: order.status as 'COMPLETED' | 'CANCELED',
       total: order.total.toString(),
       createdAt: order.createdAt.toISOString(),
@@ -117,11 +226,16 @@ export class PrismaOrderQueries implements OrderQueries {
   public async findPreparing(range?: OrderDateRange): Promise<PreparingOrderListItem[]> {
     const dateRange = range?.getValue();
     const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['CONFIRMED', 'PREPARING'] }, ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}) },
+      where: {
+        status: { in: ['CONFIRMED', 'PREPARING'] },
+        ...(dateRange ? { createdAt: { gte: dateRange.start, lt: dateRange.end } } : {}),
+      },
       select: {
         id: true,
         customerName: true,
         customerPhone: true,
+        observation: true,
+        tableId: true,
         status: true,
         total: true,
         createdAt: true,
@@ -135,6 +249,8 @@ export class PrismaOrderQueries implements OrderQueries {
       id: order.id,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
+      observation: order.observation,
+      tableId: order.tableId,
       status: order.status as 'CONFIRMED' | 'PREPARING',
       total: order.total.toString(),
       createdAt: order.createdAt.toISOString(),

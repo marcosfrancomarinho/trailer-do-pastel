@@ -15,6 +15,7 @@ import { CustomerName } from '../../src/domain/value-objects/customer/customer-n
 import { CustomerPhone } from '../../src/domain/value-objects/customer/customer-phone.js';
 import { DecimalValue } from '../../src/domain/value-objects/shared/decimal-value.js';
 import { OrderQuantity } from '../../src/domain/value-objects/order/order-quantity.js';
+import { OrderObservation } from '../../src/domain/value-objects/order/order-observation.js';
 import { OrderUnitPrice } from '../../src/domain/value-objects/order/order-unit-price.js';
 import { ProductName } from '../../src/domain/value-objects/product/product-name.js';
 import { ReferenceId } from '../../src/domain/value-objects/shared/reference-id.js';
@@ -46,6 +47,8 @@ export function buildOrder(items: OrderItem[] = [buildOrderItem()], id?: string)
     CustomerName.create(' Marcos '),
     CustomerPhone.create('(11) 99999-9999'),
     items,
+    OrderObservation.create(),
+    null,
     id,
   );
 }
@@ -56,6 +59,7 @@ export function createOrderRepository(overrides: Partial<OrderRepository> = {}):
       return { id: 'order-id', trackingToken: 'tracking-token' };
     },
     async updateStatus() {},
+    async removeFromTable() { return '0'; },
     ...overrides,
   };
 }

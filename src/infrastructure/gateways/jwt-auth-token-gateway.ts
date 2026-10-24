@@ -15,7 +15,6 @@ export class JwtAuthTokenGateway implements AuthTokenGateway {
     return jwt.sign({}, this.secret, {
       algorithm: 'HS256',
       subject: userId,
-      expiresIn: '1h',
     });
   }
 

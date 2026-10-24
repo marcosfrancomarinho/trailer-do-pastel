@@ -1,16 +1,18 @@
 import { DomainError } from '../errors/domain-error.js';
 import type { UserName } from '../value-objects/user/user-name.js';
 import { UserPassword } from '../value-objects/user/user-password.js';
+import type { UserRole } from '../value-objects/user/user-role.js';
 
 export class User {
   private constructor(
     private readonly name: UserName,
     private password: UserPassword,
     private readonly id: string | undefined,
+    private readonly role: UserRole,
   ) {}
 
-  public static create(name: UserName, password: UserPassword, id?: string): User {
-    return new User(name, password, id);
+  public static create(name: UserName, password: UserPassword, id?: string, role: UserRole = 'EMPLOYEE'): User {
+    return new User(name, password, id, role);
   }
 
   public getId(): string {
@@ -23,6 +25,10 @@ export class User {
 
   public getName(): string {
     return this.name.getValue();
+  }
+
+  public getRole(): UserRole {
+    return this.role;
   }
 
   public getPassword(): string {

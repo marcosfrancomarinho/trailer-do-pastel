@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml/badge.svg)](https://github.com/marcosfrancomarinho/trailer-do-pastel/actions/workflows/ci.yml)
 
-API para cadastrar usuários, categorias, produtos, adicionais e pedidos de uma pastelaria.
+API para cadastrar usuários, categorias, produtos, adicionais, mesas e pedidos de uma pastelaria.
 
 O cliente pode fazer um pedido sem criar uma conta. A API consulta os produtos e adicionais para verificar disponibilidade e registra no pedido o nome e os preços do catálogo naquele momento.
 
@@ -27,7 +27,6 @@ cp postgresql.env.example .env
 # Preencha JWT_SECRET no arquivo .env com uma chave aleatória; por exemplo, gere uma com: openssl rand -hex 32
 yarn install --frozen-lockfile
 yarn prisma generate
-touch prisma/database.sqlite
 yarn prisma migrate deploy
 yarn dev
 ```
@@ -55,9 +54,9 @@ JWT_SECRET=
 
 Crie o banco antes das migrations: `createdb -U postgres trailer_do_pastel`. As migrations PostgreSQL ficam em `prisma/migrations-postgresql`. O arquivo SQLite e suas migrations foram preservados. Os dados existentes precisam ser transferidos separadamente: `migrate deploy` cria a estrutura e nao copia dados.
 
-Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar e os tokens de login expiram em uma hora.
+Preencha `JWT_SECRET` com uma chave aleatória de pelo menos 32 bytes em cada ambiente. A API exige essa chave para iniciar. Novos tokens de login não têm prazo de expiração; tokens emitidos antes dessa mudança conservam sua expiração original.
 
-O primeiro usuário deve existir no banco antes de usar o login. O cadastro de novos usuários pela API exige o token de um usuário já autenticado.
+O administrador é a única conta criada manualmente no banco; veja as instruções em **Usuários**. Depois disso, ele cadastra funcionários pela API.
 
 ## Rotas
 
@@ -66,8 +65,19 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | Método | Rota | Operação | Resposta |
 | --- | --- | --- | --- |
 | POST | `/users` | Usuário | `{ "id": "..." }` |
-| POST | `/login` | Login de usuário | `{ "name": "marcos", "accessToken": "..." }` |
+| GET | `/users` | Listar usuários | `[{ "id": "...", "name": "marcos", "role": "ADMIN", "createdAt": "..." }]` |
+| DELETE | `/users/:userId` | Excluir usuário | `204 No Content` |
+| POST | `/login` | Login de usuário | `{ "name": "marcos", "role": "ADMIN", "accessToken": "..." }` |
+| GET | `/store/status` | Consultar disponibilidade da loja | `{ "status": "OPEN", "updatedAt": "..." }` |
+| POST | `/store/open` | Abrir a loja | `{ "status": "OPEN", "updatedAt": "..." }` |
+| POST | `/store/close` | Fechar a loja | `{ "status": "CLOSED", "updatedAt": "..." }` |
 | POST | `/categories` | Categoria | `{ "id": "..." }` |
+| POST | `/tables` | Mesa | `{ "id": "...", "status": "FREE", "totalSpent": "0" }` |
+| GET | `/tables` | Listar mesas | `[{ "id": "...", "number": 12, "status": "FREE", "totalSpent": "0" }]` |
+| GET | `/tables/:tableId/orders` | Pedidos da comanda aberta | `{ "tableId": "...", "number": 12, "status": "OCCUPIED", "totalSpent": "25.5", "sessionId": "...", "orders": [...] }` |
+| GET | `/tables/:tableId/sessions` | Histórico de comandas da mesa | `{ "tableId": "...", "sessions": [...] }` |
+| DELETE | `/tables/:tableId/orders/:orderId` | Cancelar e tirar pedido da mesa | `{ "orderId": "...", "tableId": null, "status": "CANCELED", "totalSpent": "13" }` |
+| PATCH | `/tables/:tableId/release` | Fechar comanda e liberar mesa | `{ "id": "...", "status": "FREE", "totalSpent": "0", "sessionId": "...", "closedTotal": "25.5" }` |
 | PATCH | `/categories/:categoryId` | Atualizar categoria | `{ "id": "..." }` |
 | DELETE | `/categories/:categoryId` | Excluir categoria | `204 No Content` |
 | GET | `/categories` | Listar categorias | `[{ "id": "...", "name": "Pastéis" }]` |
@@ -81,14 +91,14 @@ As rotas `POST` de cadastro recebem JSON e retornam `201 Created` em caso de suc
 | DELETE | `/additions/:additionId` | Excluir adicional | `204 No Content` |
 | GET | `/additions` | Listar todos os adicionais | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
 | GET | `/products/:productId/additions` | Listar adicionais do produto | `[{ "id": "...", "name": "Queijo extra", "price": "2.5", "available": true }]` |
-| POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30" }` |
+| POST | `/orders` | Pedido | `{ "id": "...", "trackingToken": "...", "status": "PENDING", "total": "30", "tableId": null }` |
 | GET | `/orders/tracking/:trackingToken` | Acompanhar pedido | `{ "status": "PREPARING", "updatedAt": "..." }` |
 | PATCH | `/orders/:orderId/status` | Atualizar status do pedido | `{ "status": "COMPLETED", "id": "..." }` |
-| GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
-| GET | `/orders/preparing` | Listar pedidos confirmados e em preparo | `[{ "id": "...", "status": "CONFIRMED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...] }]` |
-| GET | `/orders/history` | Histórico administrativo de pedidos concluídos e cancelados | `[{ "id": "...", "status": "COMPLETED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...], "histories": [...] }]` |
+| GET | `/orders/pending` | Listar pedidos pendentes | `[{ "id": "...", "customerName": "Maria Silva", "customerPhone": "...", "observation": "Sem cebola", "tableId": null, "status": "PENDING", "total": "30", "createdAt": "...", "items": [...] }]` |
+| GET | `/orders/preparing` | Listar pedidos confirmados e em preparo | `[{ "id": "...", "tableId": "...", "status": "CONFIRMED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...] }]` |
+| GET | `/orders/history` | Histórico administrativo de pedidos concluídos e cancelados | `[{ "id": "...", "tableId": "...", "status": "COMPLETED", "total": "30", "createdAt": "...", "updatedAt": "...", "items": [...], "histories": [...] }]` |
 
-O cadastro de usuários e as rotas de cadastro, atualização e exclusão de categorias, produtos e adicionais exigem `Authorization: Bearer <accessToken>`. Também exigem token `GET /orders/pending`, `GET /orders/preparing`, `GET /orders/history` e `PATCH /orders/:orderId/status`. Login, consultas do catálogo, criação de pedidos e acompanhamento por `trackingToken` são públicos. Um token ausente ou inválido retorna `401 UNAUTHORIZED`.
+O cadastro, a listagem e a exclusão de usuários exigem o token de um `ADMIN`; um `EMPLOYEE` recebe `403 FORBIDDEN`. As rotas de cadastro, atualização e exclusão de categorias, produtos e adicionais exigem `Authorization: Bearer <accessToken>`. Abrir e fechar a loja, cadastrar e gerenciar mesas, `GET /orders/pending`, `GET /orders/preparing`, `GET /orders/history` e `PATCH /orders/:orderId/status` também exigem token. `POST /orders` exige token somente quando `tableId` está preenchido. Login, consulta do status da loja, consultas do catálogo, pedidos sem mesa e acompanhamento por `trackingToken` são públicos. Um token ausente, inválido ou de usuário excluído retorna `401 UNAUTHORIZED`.
 
 ### Usuários
 
@@ -101,7 +111,35 @@ O cadastro de usuários e as rotas de cadastro, atualização e exclusão de cat
 
 O nome deve ser único. A senha deve conter pelo menos 8 caracteres, letras e números, respeitando o limite de 72 bytes do bcrypt. Somente o hash é persistido, e a resposta não inclui a senha.
 
-Para entrar, envie o mesmo `name` e `password` no JSON de `POST /login`. A resposta contém o nome cadastrado e um token JWT com o ID do usuário em `sub`. Envie esse token no cabeçalho `Authorization` das rotas protegidas. Se o usuário não existir ou a senha não conferir, a API retorna `401 INVALID_CREDENTIALS`; campos inválidos retornam `400`.
+Há dois papéis: `ADMIN` e `EMPLOYEE`. Somente o administrador pode usar `POST /users`, `GET /users` e `DELETE /users/:userId`. O cadastro pela API cria sempre `EMPLOYEE`, mesmo se o corpo trouxer `role`. A migração atribui `EMPLOYEE` aos usuários existentes e restringe o banco a um único `ADMIN`.
+
+Crie o primeiro administrador manualmente após aplicar as migrations. Para gerar um hash bcrypt com custo 12 sem colocar a senha no histórico do terminal, use Bash:
+
+```bash
+read -r -s -p 'Senha do administrador: ' admin_password
+printf '\n'
+printf '%s' "$admin_password" | node -e 'const bcrypt = require("bcrypt"); let password = ""; process.stdin.on("data", chunk => password += chunk); process.stdin.on("end", async () => console.log(await bcrypt.hash(password, 12)));'
+unset admin_password
+```
+
+Copie o hash retornado e execute no PostgreSQL, substituindo o nome e o hash:
+
+```sql
+INSERT INTO users (id, name, password, role)
+VALUES (gen_random_uuid()::text, 'seu_admin', '<HASH_BCRYPT>', 'ADMIN');
+```
+
+Se já existe um usuário que deve ser o administrador, promova-o manualmente em vez de criar outro:
+
+```sql
+UPDATE users SET role = 'ADMIN' WHERE name = 'seu_usuario_existente';
+```
+
+O banco só aceita uma conta `ADMIN`. Não use senha em texto puro na coluna `password`.
+
+Para entrar, envie o mesmo `name` e `password` no JSON de `POST /login`. A resposta contém o nome cadastrado, o papel e um token JWT com o ID do usuário em `sub`. Envie esse token no cabeçalho `Authorization` das rotas protegidas. Se o usuário não existir ou a senha não conferir, a API retorna `401 INVALID_CREDENTIALS`; campos inválidos retornam `400`.
+
+`GET /users` lista os usuários por nome, com ID, papel e data de cadastro em UTC. A senha e seu hash nunca aparecem na resposta. `DELETE /users/:userId` exclui outro usuário e retorna `204`; um ID desconhecido retorna `404 NOT_FOUND`. O usuário autenticado não pode excluir a própria conta (`409 IN_USE`). Após a exclusão, o token do usuário removido deixa de autorizar novas requisições. Registros históricos de mudança de status de pedidos preservam o status e a data, mas perdem a referência ao usuário excluído.
 
 ### Categorias
 
@@ -154,6 +192,32 @@ Para cadastrar um adicional, envie `POST /additions` com o nome, preço e dispon
 
 Os nomes de produtos e adicionais devem ser únicos em seus respectivos cadastros. Os preços são strings decimais e precisam ser maiores que zero. O campo `available` é opcional e assume `true` quando omitido. As datas `createdAt` são preenchidas pelo banco e não fazem parte dos payloads.
 
+### Funcionamento da loja
+
+`GET /store/status` informa `OPEN` ou `CLOSED` e a data da última atualização, sem cache. O funcionário usa `POST /store/open` ou `POST /store/close` com token de acesso; essas rotas não recebem corpo. A loja começa `OPEN` ao aplicar a migração, preservando o recebimento atual de pedidos. A abertura e o fechamento são manuais.
+
+Enquanto a loja está `CLOSED`, `POST /orders` retorna `409 UNAVAILABLE` para pedidos pelo aplicativo e pedidos presenciais. O catálogo e o acompanhamento continuam disponíveis. Pedidos já criados podem continuar sendo preparados, cancelados ou concluídos, e as mesas podem ser liberadas.
+
+### Mesas
+
+Para cadastrar uma mesa, envie `POST /tables` com o token de acesso e um número inteiro positivo no corpo JSON:
+
+```json
+{ "number": 12, "status": "FREE" }
+```
+
+O número deve ser único. O status aceita `FREE` (livre) ou `OCCUPIED` (ocupada) e assume `FREE` quando omitido. O valor `totalSpent` é armazenado como decimal, começa em `0` e aparece como string na resposta junto do ID e do status. Números repetidos retornam `409 ALREADY_EXISTS`. Ao criar um pedido com `tableId`, a mesa passa a `OCCUPIED`, abre uma comanda se necessário e soma o total do pedido a `totalSpent` na mesma transação. Criar uma mesa já `OCCUPIED` abre uma comanda vazia.
+
+`GET /tables` lista todas as mesas por número, com ID, status e total acumulado da comanda atual. Retorna `[]` quando não há mesas cadastradas e exige token de `ADMIN` ou `EMPLOYEE`.
+
+`GET /tables/:tableId/orders` retorna os pedidos da comanda aberta, em ordem de criação, com cliente, observação, status, total e itens com adicionais. Pedidos cancelados e pedidos retirados da mesa não entram nessa conta. A resposta inclui `sessionId`, número, status e `totalSpent`. Uma mesa livre retorna `sessionId: null` e `orders: []`; um ID desconhecido retorna `404 NOT_FOUND`.
+
+`GET /tables/:tableId/sessions` retorna as comandas da mesa, da mais recente para a mais antiga. Cada comanda inclui ID, abertura, fechamento, `closedTotal` e todos os seus pedidos, inclusive os cancelados. A comanda aberta tem `closedAt: null` e `closedTotal: null`. Na migração dos dados anteriores, os pedidos de cada mesa são agrupados em uma comanda legada, pois não há informação para reconstruir ocupações passadas; o total de fechamento dessa comanda legada fica `null` quando ela já estava fechada.
+
+`DELETE /tables/:tableId/orders/:orderId` cancela o pedido, retira seu vínculo atual com a mesa e desconta seu total de `totalSpent` na mesma transação. A retirada só é permitida enquanto o pedido está `PENDING`, `CONFIRMED` ou `PREPARING`; pedidos `COMPLETED` ou `CANCELED` retornam `409 UNAVAILABLE`. O pedido continua registrado na comanda de origem, com `status: CANCELED` e `tableId: null`; a operação não altera o status da mesa. A resposta informa o novo total da mesa. Mesa inexistente, pedido inexistente ou pedido de outra mesa retornam `404 NOT_FOUND`. Repetir a remoção não desconta o valor novamente.
+
+`PATCH /tables/:tableId/release` fecha a comanda, salva seu `closedTotal`, libera a mesa e zera `totalSpent` para o próximo atendimento. Exige token e não recebe corpo. Só é permitido quando todos os pedidos ainda vinculados à mesa estão `COMPLETED` ou `CANCELED`; pedidos `PENDING`, `CONFIRMED` ou `PREPARING` retornam `409 IN_USE`. Mesa já livre retorna `409 UNAVAILABLE` e ID desconhecido retorna `404 NOT_FOUND`. Os pedidos da comanda fechada passam a ser consultados em `GET /tables/:tableId/sessions`.
+
 ### Pedidos
 
 Crie o produto e o adicional primeiro e use os IDs retornados:
@@ -162,6 +226,8 @@ Crie o produto e o adicional primeiro e use os IDs retornados:
 {
   "customerName": "Maria Silva",
   "customerPhone": "11999999999",
+  "observation": "Sem cebola, por favor",
+  "tableId": null,
   "items": [
     {
       "productId": "ID_DO_PRODUTO",
@@ -176,6 +242,10 @@ Crie o produto e o adicional primeiro e use os IDs retornados:
   ]
 }
 ```
+
+O campo `observation` é opcional, pertence ao pedido inteiro e aceita até 500 caracteres. Espaços nas pontas são removidos; texto vazio é salvo como `null`. Um valor que não seja texto retorna `400 INVALID_TYPE`, e texto acima do limite retorna `400 TOO_LONG`. A observação aparece nas listagens administrativas de pedidos pendentes, em preparo e no histórico, inclusive como `null` quando ausente.
+
+O campo `tableId` é opcional. Para pedidos pelo aplicativo, use `null` ou omita o campo; a resposta e as listagens administrativas mostram `tableId: null`. Para atendimento presencial, envie o ID de uma mesa existente e um token de funcionário. O ID aparece no pedido criado e nas listagens; uma mesa desconhecida retorna `404 NOT_FOUND`. O total da mesa acumula os valores dos pedidos criados para ela.
 
 O pedido recebe apenas IDs e quantidades dos produtos e adicionais. A API busca o nome e os preços cadastrados e os salva no pedido, preservando os valores usados no cálculo mesmo que o catálogo mude depois. O pedido precisa ter pelo menos um item, e as quantidades devem ser inteiros positivos. Os adicionais são opcionais; quando omitidos, o controller envia um array vazio. Um mesmo adicional não pode se repetir no item: informe sua quantidade em `quantity`.
 
@@ -196,7 +266,7 @@ O cliente pode consultar `GET /orders/tracking/:trackingToken` com o token receb
 
 `GET /orders/history` retorna pedidos cujo status atual é `COMPLETED` ou `CANCELED`, do mais recentemente atualizado para o mais antigo, ou `[]` quando não há nenhum. A resposta inclui os mesmos dados de cliente e itens da listagem de pendentes, além de `updatedAt` e `histories`, uma lista cronológica de `{ "status": "...", "changedAt": "..." }`. As datas são UTC. O histórico registra os status pelos quais o pedido passou; não inclui o usuário responsável pela mudança.
 
-Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "COMPLETED" }` e o token de acesso. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `COMPLETED` e `CANCELED`. Marcar como `COMPLETED` indica que o pedido está pronto e encerra o fluxo; ele passa a aparecer em `GET /orders/history`. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`.
+Para atualizar o status, envie `PATCH /orders/:orderId/status` com `{ "status": "COMPLETED" }` e o token de acesso. Os valores aceitos são `PENDING`, `CONFIRMED`, `PREPARING`, `COMPLETED` e `CANCELED`. Marcar como `COMPLETED` indica que o pedido está pronto e encerra o fluxo; ele passa a aparecer em `GET /orders/history`. Cancelar um pedido vinculado a uma mesa desconta seu valor de `totalSpent`. Pedidos `COMPLETED` ou `CANCELED` não podem mudar de status novamente. A atualização também cria um registro no histórico do pedido. Pedidos que deixam de estar pendentes não aparecem em `GET /orders/pending`.
 
 ## Testar as requisições
 
@@ -212,6 +282,7 @@ Os controllers encaminham os erros para o middleware `ErrorHandler`.
 | --- | --- |
 | 400 | Erro de validação do domínio |
 | 401 | Nome ou senha incorretos no login |
+| 403 | Usuário autenticado sem permissão para a ação |
 | 404 | Produto ou adicional não encontrado |
 | 409 | Nome já cadastrado ou item indisponível |
 | 500 | Erro interno inesperado |

@@ -75,7 +75,7 @@ describe('CreateOrder', () => {
     };
 
     assert.deepEqual(await useCase.create(payload), {
-      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '67',
+      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '67', tableId: null,
     });
     assert.equal(save.mock.callCount(), 1);
   });
@@ -202,6 +202,57 @@ describe('CreateOrder', () => {
     });
 
     assert.equal(output.total, '0.9');
+  });
+
+  it('links a table when provided and keeps app orders without one', async () => {
+    const seenTableIds: (string | null)[] = [];
+    const repository = createOrderRepository({
+      async save(order) {
+        seenTableIds.push(order.getTableId());
+        return { id: 'order-id', trackingToken: 'tracking-token' };
+      },
+    });
+    const useCase = createUseCase(repository);
+
+    assert.equal((await useCase.create({ ...input, tableId: ' table-1 ' })).tableId, 'table-1');
+    assert.equal((await useCase.create({ ...input, tableId: null })).tableId, null);
+    assert.equal((await useCase.create(input)).tableId, null);
+    assert.deepEqual(seenTableIds, ['table-1', null, null]);
+  });
+
+  it('rejects invalid table IDs before saving', async (context) => {
+    const repository = createOrderRepository();
+    const save = context.mock.method(repository, 'save');
+
+    await assert.rejects(
+      createUseCase(repository).create({ ...input, tableId: '  ' }),
+      (error: unknown) => error instanceof DomainError && error.field === 'tableId' && error.code === 'EMPTY',
+    );
+    assert.equal(save.mock.callCount(), 0);
+  });
+
+  it('saves a trimmed observation and rejects invalid observations before saving', async (context) => {
+    const repository = createOrderRepository({
+      async save(order) {
+        assert.equal(order.getObservation(), 'Sem cebola');
+        return { id: 'order-id', trackingToken: 'tracking-token' };
+      },
+    });
+    const save = context.mock.method(repository, 'save');
+    const useCase = createUseCase(repository);
+
+    await useCase.create({ ...input, observation: '  Sem cebola  ' });
+    assert.equal(save.mock.callCount(), 1);
+
+    for (const observation of [42, 'x'.repeat(501)]) {
+      await assert.rejects(
+        useCase.create({ ...input, observation: observation as string }),
+        (error: unknown) => error instanceof DomainError
+          && error.field === 'observation'
+          && error.code === (typeof observation === 'string' ? 'TOO_LONG' : 'INVALID_TYPE'),
+      );
+    }
+    assert.equal(save.mock.callCount(), 1);
   });
 
   it('propagates lookup failures without saving and preserves save errors', async (context) => {

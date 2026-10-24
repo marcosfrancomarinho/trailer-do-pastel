@@ -13,7 +13,7 @@
 @adminPassword = SUA_SENHA
 @accessToken = {{loginUsuario.response.body.$.accessToken}}
 
-### Login de usuário — 200; retorna name e accessToken
+### Login de usuário — 200; retorna name, role e accessToken
 # @name loginUsuario
 POST {{baseUrl}}/login
 Content-Type: application/json
@@ -23,7 +23,7 @@ Content-Type: application/json
   "password": "{{adminPassword}}"
 }
 
-### Cadastrar outro usuário — 201
+### Cadastrar funcionário (somente ADMIN) — 201
 # @name criarUsuario
 POST {{baseUrl}}/users
 Content-Type: application/json
@@ -33,6 +33,25 @@ Authorization: Bearer {{accessToken}}
   "name": "marcosfranco{{testId}}",
   "password": "Pastel123!"
 }
+
+### Listar usuários com papel, sem expor senhas (somente ADMIN) — 200
+GET {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+
+### Excluir funcionário (somente ADMIN) — 204
+DELETE {{baseUrl}}/users/{{criarUsuario.response.body.$.id}}
+Authorization: Bearer {{accessToken}}
+
+### Consultar se a loja aceita pedidos — 200
+GET {{baseUrl}}/store/status
+
+### Fechar a loja e impedir novos pedidos — 200
+POST {{baseUrl}}/store/close
+Authorization: Bearer {{accessToken}}
+
+### Abrir a loja e aceitar pedidos novamente — 200
+POST {{baseUrl}}/store/open
+Authorization: Bearer {{accessToken}}
 
 ### Cadastrar categoria — 201
 # @name criarCategoria
@@ -47,6 +66,21 @@ Authorization: Bearer {{accessToken}}
 ### Listar categorias — 200
 # @name listarCategorias
 GET {{baseUrl}}/categories
+
+### Cadastrar mesa — 201
+# @name criarMesa
+POST {{baseUrl}}/tables
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "number": 1,
+  "status": "FREE"
+}
+
+### Listar mesas com status e total acumulado — 200
+GET {{baseUrl}}/tables
+Authorization: Bearer {{accessToken}}
 
 ### Cadastrar produto sem adicionais — 201
 # @name criarProduto
@@ -135,6 +169,7 @@ Content-Type: application/json
 {
   "customerName": "Maria Silva",
   "customerPhone": "(11) 99999-9999",
+  "observation": "Sem cebola, por favor",
   "items": [
     {
       "productId": "{{criarProduto.response.body.$.id}}",
@@ -157,6 +192,7 @@ Content-Type: application/json
 {
   "customerName": "João Santos",
   "customerPhone": "11988887777",
+  "tableId": null,
   "items": [
     {
       "productId": "{{criarProduto.response.body.$.id}}",
@@ -164,6 +200,41 @@ Content-Type: application/json
     }
   ]
 }
+
+### Cadastrar pedido presencial vinculado à mesa — 201
+# @name criarPedidoMesa
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "customerName": "Cliente da mesa 1",
+  "customerPhone": "11999999999",
+  "tableId": "{{criarMesa.response.body.$.id}}",
+  "items": [
+    {
+      "productId": "{{criarProduto.response.body.$.id}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### Consultar pedidos da comanda aberta e o gasto atual da mesa — 200
+GET {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/orders
+Authorization: Bearer {{accessToken}}
+
+### Cancelar e tirar um pedido da mesa, descontando seu valor — 200
+# Permitido apenas enquanto estiver PENDING, CONFIRMED ou PREPARING.
+DELETE {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/orders/{{criarPedidoMesa.response.body.$.id}}
+Authorization: Bearer {{accessToken}}
+
+### Liberar a mesa depois de concluir ou cancelar todos os pedidos vinculados — 200
+PATCH {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/release
+Authorization: Bearer {{accessToken}}
+
+### Consultar comandas atuais e anteriores, incluindo pedidos cancelados — 200
+GET {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/sessions
+Authorization: Bearer {{accessToken}}
 
 ### Listar pedidos pendentes — 200
 # @name listarPedidosPendentes

@@ -2,6 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
 import { User } from '../../domain/entities/user.js';
 import type { UserRepository } from '../../domain/repositories/user-repository.js';
+import type { UserRole } from '../../domain/value-objects/user/user-role.js';
 import { UserName } from '../../domain/value-objects/user/user-name.js';
 import { UserPassword } from '../../domain/value-objects/user/user-password.js';
 
@@ -11,12 +12,12 @@ export class PrismaUserRepository implements UserRepository {
   public async findByName(name: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { name },
-      select: { id: true, name: true, password: true },
+      select: { id: true, name: true, password: true, role: true },
     });
 
     if (!user) return null;
 
-    return User.create(UserName.create(user.name), UserPassword.fromHash(user.password), user.id);
+    return User.create(UserName.create(user.name), UserPassword.fromHash(user.password), user.id, user.role);
   }
 
   public async existsByName(name: string): Promise<boolean> {
@@ -28,12 +29,18 @@ export class PrismaUserRepository implements UserRepository {
     return user !== null;
   }
 
+  public async findRoleById(id: string): Promise<UserRole | null> {
+    const user = await this.prisma.user.findUnique({ where: { id }, select: { role: true } });
+    return user?.role ?? null;
+  }
+
   public async save(user: User): Promise<string> {
     try {
       const savedUser = await this.prisma.user.create({
         data: {
           name: user.getName(),
           password: user.getPassword(),
+          role: 'EMPLOYEE',
         },
         select: { id: true },
       });
@@ -44,6 +51,17 @@ export class PrismaUserRepository implements UserRepository {
         throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um usuário cadastrado com esse nome.');
       }
 
+      throw error;
+    }
+  }
+
+  public async deleteById(id: string): Promise<void> {
+    try {
+      await this.prisma.user.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new ApplicationError('userId', 'NOT_FOUND', 'O usuário informado não foi encontrado.');
+      }
       throw error;
     }
   }

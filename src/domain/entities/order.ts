@@ -3,12 +3,16 @@ import { DecimalValue } from '../value-objects/shared/decimal-value.js';
 import { OrderItem } from './order-item.js';
 import type { CustomerName } from '../value-objects/customer/customer-name.js';
 import type { CustomerPhone } from '../value-objects/customer/customer-phone.js';
+import { OrderObservation } from '../value-objects/order/order-observation.js';
+import type { ReferenceId } from '../value-objects/shared/reference-id.js';
 
 export class Order {
   private constructor(
     private readonly customerName: CustomerName,
     private readonly customerPhone: CustomerPhone,
     private readonly items: OrderItem[],
+    private readonly observation: OrderObservation,
+    private readonly tableId: ReferenceId | null,
     private readonly id: string | undefined,
   ) {}
 
@@ -16,10 +20,12 @@ export class Order {
     customerName: CustomerName,
     customerPhone: CustomerPhone,
     items: OrderItem[] = [],
+    observation: OrderObservation = OrderObservation.create(),
+    tableId: ReferenceId | null = null,
     id?: string,
   ): Order {
     Order.validateItems(items);
-    return new Order(customerName, customerPhone, [...items], id);
+    return new Order(customerName, customerPhone, [...items], observation, tableId, id);
   }
 
   public getId(): string {
@@ -35,6 +41,14 @@ export class Order {
 
   public getCustomerPhone(): string {
     return this.customerPhone.getValue();
+  }
+
+  public getObservation(): string | null {
+    return this.observation.getValue();
+  }
+
+  public getTableId(): string | null {
+    return this.tableId?.getValue() ?? null;
   }
 
   public getItems(): OrderItem[] {

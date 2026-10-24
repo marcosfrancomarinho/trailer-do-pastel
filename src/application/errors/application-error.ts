@@ -5,7 +5,8 @@ export type ApplicationErrorCode =
   | 'NOT_ASSOCIATED'
   | 'IN_USE'
   | 'INVALID_CREDENTIALS'
-  | 'UNAUTHORIZED';
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN';
 
 export class ApplicationError extends Error {
   public constructor(

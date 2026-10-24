@@ -2,6 +2,8 @@ import express, { type RequestHandler } from 'express';
 import cors from 'cors';
 import type { Server as HttpServer } from 'node:http';
 import { CreateUserController } from './controllers/users/create-user-controller.js';
+import { ListUsersController } from './controllers/users/list-users-controller.js';
+import { DeleteUserController } from './controllers/users/delete-user-controller.js';
 import { LoginUserController } from './controllers/users/login-user-controller.js';
 import { CreateProductController } from './controllers/products/create-product-controller.js';
 import { UpdateProductController } from './controllers/products/update-product-controller.js';
@@ -15,6 +17,13 @@ import { CreateCategoryController } from './controllers/categories/create-catego
 import { UpdateCategoryController } from './controllers/categories/update-category-controller.js';
 import { DeleteCategoryController } from './controllers/categories/delete-category-controller.js';
 import { ListCategoriesController } from './controllers/categories/list-categories-controller.js';
+import { CreateTableController } from './controllers/tables/create-table-controller.js';
+import { ListTablesController } from './controllers/tables/list-tables-controller.js';
+import { ListTableOrdersController } from './controllers/tables/list-table-orders-controller.js';
+import { ListTableSessionsController } from './controllers/tables/list-table-sessions-controller.js';
+import { RemoveTableOrderController } from './controllers/tables/remove-table-order-controller.js';
+import { ReleaseTableController } from './controllers/tables/release-table-controller.js';
+import { StoreController } from './controllers/store/store-controller.js';
 import { ListProductsByCategoryController } from './controllers/products/list-products-by-category-controller.js';
 import { ListProductsController } from './controllers/products/list-products-controller.js';
 import { CreateOrderController } from './controllers/orders/create-order-controller.js';
@@ -25,12 +34,15 @@ import { ListPreparingOrdersController } from './controllers/orders/list-prepari
 import { ListOrderHistoryController } from './controllers/orders/list-order-history-controller.js';
 import { ErrorHandler } from './middlewares/error-handler.js';
 import { RequireAuthentication } from './middlewares/require-authentication.js';
+import { RequireAdmin } from './middlewares/require-admin.js';
 
 export class Server {
   private readonly app = express();
 
   public constructor(
     private readonly createUserController: CreateUserController,
+    private readonly listUsersController: ListUsersController,
+    private readonly deleteUserController: DeleteUserController,
     private readonly loginUserController: LoginUserController,
     private readonly createProductController: CreateProductController,
     private readonly updateProductController: UpdateProductController,
@@ -44,6 +56,13 @@ export class Server {
     private readonly updateCategoryController: UpdateCategoryController,
     private readonly deleteCategoryController: DeleteCategoryController,
     private readonly listCategoriesController: ListCategoriesController,
+    private readonly createTableController: CreateTableController,
+    private readonly listTablesController: ListTablesController,
+    private readonly listTableOrdersController: ListTableOrdersController,
+    private readonly listTableSessionsController: ListTableSessionsController,
+    private readonly removeTableOrderController: RemoveTableOrderController,
+    private readonly releaseTableController: ReleaseTableController,
+    private readonly storeController: StoreController,
     private readonly listProductsByCategoryController: ListProductsByCategoryController,
     private readonly listProductsController: ListProductsController,
     private readonly createOrderController: CreateOrderController,
@@ -53,6 +72,7 @@ export class Server {
     private readonly listPreparingOrdersController: ListPreparingOrdersController,
     private readonly listOrderHistoryController: ListOrderHistoryController,
     private readonly requireAuthentication: RequireAuthentication,
+    private readonly requireAdmin: RequireAdmin,
     private readonly errorHandler: ErrorHandler,
   ) {
     this.app.use(express.json(), cors());
@@ -68,16 +88,21 @@ export class Server {
 
   private routes(): void {
     const authenticate = this.requireAuthentication.execute.bind(this.requireAuthentication);
+    const authorizeAdmin = this.requireAdmin.execute.bind(this.requireAdmin);
 
-    this.registerUserRoutes(authenticate);
+    this.registerUserRoutes(authenticate, authorizeAdmin);
     this.registerProductRoutes(authenticate);
     this.registerAdditionRoutes(authenticate);
     this.registerCategoryRoutes(authenticate);
+    this.registerTableRoutes(authenticate);
+    this.registerStoreRoutes(authenticate);
     this.registerOrderRoutes(authenticate);
   }
 
-  private registerUserRoutes(authenticate: RequestHandler): void {
-    this.app.post('/users', authenticate, this.createUserController.execute.bind(this.createUserController));
+  private registerUserRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
+    this.app.post('/users', authenticate, authorizeAdmin, this.createUserController.execute.bind(this.createUserController));
+    this.app.get('/users', authenticate, authorizeAdmin, this.listUsersController.execute.bind(this.listUsersController));
+    this.app.delete('/users/:userId', authenticate, authorizeAdmin, this.deleteUserController.execute.bind(this.deleteUserController));
     this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
   }
 
@@ -143,7 +168,14 @@ export class Server {
   }
 
   private registerOrderRoutes(authenticate: RequestHandler): void {
-    this.app.post('/orders', this.createOrderController.execute.bind(this.createOrderController));
+    const authenticateTableOrder: RequestHandler = (request, response, next) => {
+      if (request.body?.tableId == null) {
+        next();
+        return;
+      }
+      return authenticate(request, response, next);
+    };
+    this.app.post('/orders', authenticateTableOrder, this.createOrderController.execute.bind(this.createOrderController));
     this.app.patch(
       '/orders/:orderId/status',
       authenticate,
@@ -168,5 +200,36 @@ export class Server {
       '/orders/tracking/:trackingToken',
       this.trackOrderController.execute.bind(this.trackOrderController),
     );
+  }
+
+  private registerTableRoutes(authenticate: RequestHandler): void {
+    this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
+    this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
+    this.app.get(
+      '/tables/:tableId/orders',
+      authenticate,
+      this.listTableOrdersController.execute.bind(this.listTableOrdersController),
+    );
+    this.app.get(
+      '/tables/:tableId/sessions',
+      authenticate,
+      this.listTableSessionsController.execute.bind(this.listTableSessionsController),
+    );
+    this.app.delete(
+      '/tables/:tableId/orders/:orderId',
+      authenticate,
+      this.removeTableOrderController.execute.bind(this.removeTableOrderController),
+    );
+    this.app.patch(
+      '/tables/:tableId/release',
+      authenticate,
+      this.releaseTableController.execute.bind(this.releaseTableController),
+    );
+  }
+
+  private registerStoreRoutes(authenticate: RequestHandler): void {
+    this.app.get('/store/status', this.storeController.getStatus.bind(this.storeController));
+    this.app.post('/store/open', authenticate, this.storeController.open.bind(this.storeController));
+    this.app.post('/store/close', authenticate, this.storeController.close.bind(this.storeController));
   }
 }

@@ -11,6 +11,7 @@ describe('Order', () => {
     assert.equal(order.getId(), 'order-id');
     assert.equal(order.getCustomerName(), 'Marcos');
     assert.equal(order.getCustomerPhone(), '11999999999');
+    assert.equal(order.getObservation(), null);
     assert.equal(order.getStatus(), 'PENDING');
     assert.equal(order.getTotal(), '62.5');
   });

@@ -21,10 +21,34 @@ enum OrderStatus {
   CANCELED
 }
 
+enum TableStatus {
+  FREE
+  OCCUPIED
+}
+
+enum StoreStatus {
+  OPEN
+  CLOSED
+}
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+}
+
+model Store {
+  id        Int         @id
+  status    StoreStatus @default(OPEN)
+  updatedAt DateTime    @default(now()) @updatedAt @map("updated_at")
+
+  @@map("store")
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String   @unique
   password  String
+  role      UserRole @default(EMPLOYEE)
   createdAt DateTime @default(now()) @map("created_at")
 
   histories OrderStatusHistory[]
@@ -40,6 +64,33 @@ model Category {
   products Product[]
 
   @@map("categories")
+}
+
+model Table {
+  id        String      @id @default(uuid())
+  number    Int         @unique
+  status    TableStatus @default(FREE)
+  totalSpent Decimal     @default(0) @map("total_spent")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  orders Order[]
+  sessions TableSession[]
+
+  @@map("tables")
+}
+
+model TableSession {
+  id          String    @id @default(uuid())
+  tableId     String    @map("table_id")
+  openedAt    DateTime  @default(now()) @map("opened_at")
+  closedAt    DateTime? @map("closed_at")
+  closedTotal Decimal?  @map("closed_total")
+
+  table  Table   @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  orders Order[]
+
+  @@index([tableId, openedAt])
+  @@map("table_sessions")
 }
 
 model Product {
@@ -62,8 +113,11 @@ model Product {
 
 model Order {
   id            String      @id @default(uuid())
+  tableId       String?     @map("table_id")
+  tableSessionId String?    @map("table_session_id")
   customerName  String      @map("customer_name")
   customerPhone String      @map("customer_phone")
+  observation   String?
   status        OrderStatus @default(PENDING)
   total         Decimal
   trackingToken String      @unique @default(uuid()) @map("tracking_token")
@@ -72,10 +126,14 @@ model Order {
 
   items     OrderItem[]
   histories OrderStatusHistory[]
+  table     Table? @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  tableSession TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
 
   @@index([status])
   @@index([createdAt])
   @@index([status, createdAt])
+  @@index([tableId])
+  @@index([tableSessionId])
   @@map("orders")
 }
 

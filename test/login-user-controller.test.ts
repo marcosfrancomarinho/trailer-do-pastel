@@ -15,9 +15,9 @@ function createUseCase(): LoginUser {
 }
 
 describe('LoginUserController', () => {
-  it('passes the credentials to the use case and returns the name and access token with status 200', async (context) => {
+  it('passes the credentials to the use case and returns the name, role and token with status 200', async (context) => {
     const useCase = createUseCase();
-    const login = context.mock.method(useCase, 'login', async () => ({ name: 'Marcos', accessToken: 'signed-token' }));
+    const login = context.mock.method(useCase, 'login', async () => ({ name: 'Marcos', role: 'ADMIN', accessToken: 'signed-token' }));
     const controller = new LoginUserController(useCase);
     const request = { body: { name: 'Marcos', password: 'Senha1234', admin: true } } as Request;
     const { response, status, json } = createResponse(context);
@@ -27,7 +27,7 @@ describe('LoginUserController', () => {
 
     assert.deepEqual(login.mock.calls[0].arguments, [{ name: 'Marcos', password: 'Senha1234' }]);
     assert.deepEqual(status.mock.calls[0].arguments, [200]);
-    assert.deepEqual(json.mock.calls[0].arguments, [{ name: 'Marcos', accessToken: 'signed-token' }]);
+    assert.deepEqual(json.mock.calls[0].arguments, [{ name: 'Marcos', role: 'ADMIN', accessToken: 'signed-token' }]);
     assert.equal(next.mock.callCount(), 0);
   });
 

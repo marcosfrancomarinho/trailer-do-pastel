@@ -9,7 +9,7 @@ import { UserPassword } from '../src/domain/value-objects/user/user-password.js'
 
 describe('LoginUser', () => {
   const hash = '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-  const user = User.create(UserName.create('Marcos'), UserPassword.fromHash(hash), 'user-1');
+  const user = User.create(UserName.create('Marcos'), UserPassword.fromHash(hash), 'user-1', 'ADMIN');
   const input = { name: ' Marcos ', password: '  Senha de teste1!  ' };
   const unusedRepositoryMethods = {
     existsByName: async () => false,
@@ -41,7 +41,7 @@ describe('LoginUser', () => {
       { issue, verify: unusedVerify },
     );
 
-    assert.deepEqual(await useCase.login(input), { name: 'Marcos', accessToken: 'signed-token' });
+    assert.deepEqual(await useCase.login(input), { name: 'Marcos', role: 'ADMIN', accessToken: 'signed-token' });
     assert.deepEqual(calls, ['find', 'match', 'issue']);
   });
 

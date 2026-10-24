@@ -5,5 +5,6 @@ export interface LoginUserInput {
 
 export interface LoginUserOutput {
   name: string;
+  role: 'ADMIN' | 'EMPLOYEE';
   accessToken: string;
 }

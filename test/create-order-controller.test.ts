@@ -49,9 +49,37 @@ describe('CreateOrderController', () => {
     }]);
     assert.deepEqual(status.mock.calls[0].arguments, [201]);
     assert.deepEqual(json.mock.calls[0].arguments, [{
-      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '35',
+      id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '35', tableId: null,
     }]);
     assert.equal(next.mock.callCount(), 0);
+  });
+
+  it('passes the order observation to the use case', async (context) => {
+    const useCase = createUseCase();
+    const create = context.mock.method(useCase, 'create');
+    const controller = new CreateOrderController(useCase);
+    const { response } = createResponse(context);
+    const next = context.mock.fn();
+
+    await controller.execute({ body: { ...customer, observation: 'Sem cebola', items: [item] } } as Request, response, next);
+
+    assert.equal(create.mock.calls[0].arguments[0].observation, 'Sem cebola');
+    assert.equal(next.mock.callCount(), 0);
+  });
+
+  it('passes a table ID or explicit null to the use case', async (context) => {
+    for (const tableId of ['table-1', null]) {
+      const useCase = createUseCase();
+      const create = context.mock.method(useCase, 'create');
+      const controller = new CreateOrderController(useCase);
+      const { response } = createResponse(context);
+      const next = context.mock.fn();
+
+      await controller.execute({ body: { ...customer, tableId, items: [item] } } as Request, response, next);
+
+      assert.equal(create.mock.calls[0].arguments[0].tableId, tableId);
+      assert.equal(next.mock.callCount(), 0);
+    }
   });
 
   it('passes an empty item list to the use case when items are not informed', async (context) => {
@@ -87,7 +115,7 @@ describe('CreateOrderController', () => {
       assert.deepEqual(create.mock.calls[0].arguments, [{ ...customer, items: [{ ...item, additions: [] }] }]);
       assert.deepEqual(status.mock.calls[0].arguments, [201]);
       assert.deepEqual(json.mock.calls[0].arguments, [{
-        id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '20',
+        id: 'order-id', trackingToken: 'tracking-token', status: 'PENDING', total: '20', tableId: null,
       }]);
       assert.equal(next.mock.callCount(), 0);
     }

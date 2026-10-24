@@ -18,6 +18,7 @@ describe('ErrorHandler', () => {
       { error: new ApplicationError('additionId', 'NOT_ASSOCIATED', 'Adicional não pertence ao produto.'), expectedStatus: 400 },
       { error: new ApplicationError('credentials', 'INVALID_CREDENTIALS', 'Nome ou senha inválidos.'), expectedStatus: 401 },
       { error: new ApplicationError('authorization', 'UNAUTHORIZED', 'Token inválido.'), expectedStatus: 401 },
+      { error: new ApplicationError('authorization', 'FORBIDDEN', 'Exige admin.'), expectedStatus: 403 },
     ];
 
     for (const { error, expectedStatus } of cases) {

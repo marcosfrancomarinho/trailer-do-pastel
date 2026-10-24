@@ -12,6 +12,8 @@ export interface CreateOrderItemInput {
 export interface CreateOrderInput {
   customerName: string;
   customerPhone: string;
+  observation?: string | null;
+  tableId?: string | null;
   items: CreateOrderItemInput[];
 }
 
@@ -20,4 +22,5 @@ export interface CreateOrderOutput {
   trackingToken: string;
   status: 'PENDING';
   total: string;
+  tableId: string | null;
 }

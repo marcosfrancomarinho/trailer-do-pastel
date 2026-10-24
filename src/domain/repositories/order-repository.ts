@@ -9,4 +9,5 @@ export interface SavedOrder {
 export interface OrderRepository {
   save(order: Order): Promise<SavedOrder>;
   updateStatus(id: string, status: OrderStatus): Promise<void>;
+  removeFromTable(tableId: string, orderId: string): Promise<string>;
 }

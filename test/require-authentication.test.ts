@@ -6,10 +6,12 @@ import { ApplicationError } from '../src/application/errors/application-error.js
 import { JwtAuthTokenGateway } from '../src/infrastructure/gateways/jwt-auth-token-gateway.js';
 import { RequireAuthentication } from '../src/infrastructure/http/middlewares/require-authentication.js';
 import { createResponse } from './helpers/http-fixtures.js';
+import type { UserRepository } from '../src/domain/repositories/user-repository.js';
 
 describe('RequireAuthentication', () => {
   const gateway = new JwtAuthTokenGateway('a'.repeat(32));
-  const middleware = new RequireAuthentication(gateway);
+  const users = { findRoleById: async (id: string) => id === 'user-1' ? 'EMPLOYEE' : null } as UserRepository;
+  const middleware = new RequireAuthentication(gateway, users);
 
   it('allows a valid Bearer token from login', async (context) => {
     const token = await gateway.issue('user-1');
@@ -20,6 +22,7 @@ describe('RequireAuthentication', () => {
     await middleware.execute(request, response, next);
 
     assert.equal(response.locals.userId, 'user-1');
+    assert.equal(response.locals.userRole, 'EMPLOYEE');
     assert.deepEqual(next.mock.calls[0].arguments, []);
   });
 
@@ -39,6 +42,22 @@ describe('RequireAuthentication', () => {
       assert.equal(error.code, 'UNAUTHORIZED');
       assert.equal(error.field, 'authorization');
       assert.equal(response.locals.userId, undefined);
+      assert.equal(response.locals.userRole, undefined);
     }
+  });
+
+  it('rejects a valid token after the user has been deleted', async (context) => {
+    const token = await gateway.issue('deleted-user');
+    const request = { header: () => `Bearer ${token}` } as unknown as Request;
+    const { response } = createResponse(context);
+    const next = context.mock.fn();
+
+    await middleware.execute(request, response, next);
+
+    const error = next.mock.calls[0].arguments[0];
+    assert.ok(error instanceof ApplicationError);
+    assert.equal(error.code, 'UNAUTHORIZED');
+    assert.equal(response.locals.userId, undefined);
+    assert.equal(response.locals.userRole, undefined);
   });
 });
