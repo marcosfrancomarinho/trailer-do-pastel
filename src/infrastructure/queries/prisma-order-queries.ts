@@ -121,7 +121,6 @@ export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
       customerPhone: order.customerPhone,
       observation: order.observation,
       tableId: order.tableId,
-      tableNumber: order.table?.number ?? null,
       status: order.status,
       total: order.total.toString(),
       createdAt: order.createdAt.toISOString(),
