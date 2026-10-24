@@ -3,7 +3,7 @@ import type { ListClosedTableSessionsOutput } from '../../dtos/tables/list-close
 import { DomainError } from '../../../domain/errors/domain-error.js';
 
 export class ListClosedTableSessions {
-  public constructor(private readonly queries: TableOrderQueries) {}
+  public constructor(private readonly tableOrderQueries: TableOrderQueries) {}
 
   public async list(date?: string): Promise<ListClosedTableSessionsOutput> {
     if (date !== undefined) {
@@ -12,6 +12,6 @@ export class ListClosedTableSessions {
         throw new DomainError('date', 'INVALID_DATE', 'Informe uma data válida no formato AAAA-MM-DD.');
       }
     }
-    return { comandas: await this.queries.findClosedSessions(date) };
+    return { comandas: await this.tableOrderQueries.findClosedSessions(date) };
   }
 }
