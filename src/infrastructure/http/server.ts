@@ -95,11 +95,11 @@ export class Server {
     const authorizeAdmin = this.requireAdmin.execute.bind(this.requireAdmin);
 
     this.registerUserRoutes(authenticate, authorizeAdmin);
-    this.registerProductRoutes(authenticate);
-    this.registerAdditionRoutes(authenticate);
-    this.registerCategoryRoutes(authenticate);
+    this.registerProductRoutes(authenticate, authorizeAdmin);
+    this.registerAdditionRoutes(authenticate, authorizeAdmin);
+    this.registerCategoryRoutes(authenticate, authorizeAdmin);
     this.registerTableRoutes(authenticate, authorizeAdmin);
-    this.registerStoreRoutes(authenticate);
+    this.registerStoreRoutes(authenticate, authorizeAdmin);
     this.registerOrderRoutes(authenticate);
   }
 
@@ -110,17 +110,15 @@ export class Server {
     this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
   }
 
-  private registerProductRoutes(authenticate: RequestHandler): void {
-    this.app.post('/products', authenticate, this.createProductController.execute.bind(this.createProductController));
+  private registerProductRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
+    this.app.post('/products', authenticate, authorizeAdmin, this.createProductController.execute.bind(this.createProductController));
     this.app.patch(
       '/products/:productId',
-      authenticate,
-      this.updateProductController.execute.bind(this.updateProductController),
+      authenticate, authorizeAdmin, this.updateProductController.execute.bind(this.updateProductController),
     );
     this.app.delete(
       '/products/:productId',
-      authenticate,
-      this.deleteProductController.execute.bind(this.deleteProductController),
+      authenticate, authorizeAdmin, this.deleteProductController.execute.bind(this.deleteProductController),
     );
     this.app.get('/products', this.listProductsController.execute.bind(this.listProductsController));
     this.app.get(
@@ -129,40 +127,34 @@ export class Server {
     );
   }
 
-  private registerAdditionRoutes(authenticate: RequestHandler): void {
+  private registerAdditionRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
     this.app.post(
       '/additions',
-      authenticate,
-      this.createAdditionController.execute.bind(this.createAdditionController),
+      authenticate, authorizeAdmin, this.createAdditionController.execute.bind(this.createAdditionController),
     );
     this.app.patch(
       '/additions/:additionId',
-      authenticate,
-      this.updateAdditionController.execute.bind(this.updateAdditionController),
+      authenticate, authorizeAdmin, this.updateAdditionController.execute.bind(this.updateAdditionController),
     );
     this.app.delete(
       '/additions/:additionId',
-      authenticate,
-      this.deleteAdditionController.execute.bind(this.deleteAdditionController),
+      authenticate, authorizeAdmin, this.deleteAdditionController.execute.bind(this.deleteAdditionController),
     );
     this.app.get('/additions', this.listAdditionsController.execute.bind(this.listAdditionsController));
   }
 
-  private registerCategoryRoutes(authenticate: RequestHandler): void {
+  private registerCategoryRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
     this.app.post(
       '/categories',
-      authenticate,
-      this.createCategoryController.execute.bind(this.createCategoryController),
+      authenticate, authorizeAdmin, this.createCategoryController.execute.bind(this.createCategoryController),
     );
     this.app.patch(
       '/categories/:categoryId',
-      authenticate,
-      this.updateCategoryController.execute.bind(this.updateCategoryController),
+      authenticate, authorizeAdmin, this.updateCategoryController.execute.bind(this.updateCategoryController),
     );
     this.app.delete(
       '/categories/:categoryId',
-      authenticate,
-      this.deleteCategoryController.execute.bind(this.deleteCategoryController),
+      authenticate, authorizeAdmin, this.deleteCategoryController.execute.bind(this.deleteCategoryController),
     );
     this.app.get('/categories', this.listCategoriesController.execute.bind(this.listCategoriesController));
     this.app.get(
@@ -207,8 +199,8 @@ export class Server {
   }
 
   private registerTableRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
-    this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
+    this.app.post('/tables', authenticate, authorizeAdmin, this.createTableController.execute.bind(this.createTableController));
+    this.app.delete('/tables/:tableId', authenticate, authorizeAdmin, this.deleteTableController.execute.bind(this.deleteTableController));
     this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
     this.app.get('/tables/sessions/history', authenticate, authorizeAdmin, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
     this.app.get(
@@ -233,9 +225,9 @@ export class Server {
     );
   }
 
-  private registerStoreRoutes(authenticate: RequestHandler): void {
+  private registerStoreRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
     this.app.get('/store/status', this.storeController.getStatus.bind(this.storeController));
-    this.app.post('/store/open', authenticate, this.storeController.open.bind(this.storeController));
-    this.app.post('/store/close', authenticate, this.storeController.close.bind(this.storeController));
+    this.app.post('/store/open', authenticate, authorizeAdmin, this.storeController.open.bind(this.storeController));
+    this.app.post('/store/close', authenticate, authorizeAdmin, this.storeController.close.bind(this.storeController));
   }
 }
