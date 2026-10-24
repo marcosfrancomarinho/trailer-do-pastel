@@ -69,9 +69,21 @@ export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
       orderBy: [{ closedAt: 'desc' }, { id: 'desc' }],
     });
 
-    return sessions.map(session => ({
+    const onlineOrders = await this.prisma.order.findMany({
+      where: {
+        tableId: null,
+        tableSessionId: null,
+        status: { in: ['COMPLETED', 'CANCELED'] },
+        ...(start && end ? { updatedAt: { gte: start, lt: end } } : {}),
+      },
+      select: tableOrderSelect,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    });
+
+    const tableComandas: ClosedTableSessionListItem[] = sessions.map(session => ({
       tableId: session.tableId,
       tableNumber: session.table.number,
+      origin: 'TABLE',
       session: {
         id: session.id,
         openedAt: session.openedAt.toISOString(),
@@ -80,6 +92,23 @@ export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
         orders: session.orders.map(order => this.mapTableOrder(order)),
       },
     }));
+
+    const onlineComandas: ClosedTableSessionListItem[] = onlineOrders.map(order => ({
+      tableId: null,
+      tableNumber: null,
+      origin: 'ONLINE',
+      session: {
+        id: order.id,
+        openedAt: order.createdAt.toISOString(),
+        closedAt: order.updatedAt.toISOString(),
+        closedTotal: order.status === 'COMPLETED' ? order.total.toString() : '0',
+        orders: [this.mapTableOrder(order)],
+      },
+    }));
+
+    return [...tableComandas, ...onlineComandas].sort((a, b) =>
+      (b.session.closedAt ?? '').localeCompare(a.session.closedAt ?? '') ||
+      b.session.id.localeCompare(a.session.id));
   }
 
   public async findByTableId(tableId: string): Promise<ListTableOrdersOutput | null> {
