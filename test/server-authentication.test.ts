@@ -38,13 +38,6 @@ describe('Server authentication', () => {
       ['POST', '/users'],
       ['GET', '/users'],
       ['DELETE', '/users/:userId'],
-    ] as const;
-
-    for (const [method, path] of adminRoutes) {
-      assert.equal(findRoute(method, path)?.route?.stack.length, 3, `${method} ${path} deve exigir administrador`);
-    }
-
-    const protectedRoutes = [
       ['POST', '/products'],
       ['PATCH', '/products/:productId'],
       ['DELETE', '/products/:productId'],
@@ -52,18 +45,26 @@ describe('Server authentication', () => {
       ['PATCH', '/additions/:additionId'],
       ['DELETE', '/additions/:additionId'],
       ['POST', '/categories'],
+      ['PATCH', '/categories/:categoryId'],
+      ['DELETE', '/categories/:categoryId'],
       ['POST', '/tables'],
       ['DELETE', '/tables/:tableId'],
+      ['GET', '/tables/sessions/history'],
+      ['POST', '/store/open'],
+      ['POST', '/store/close'],
+    ] as const;
+
+    for (const [method, path] of adminRoutes) {
+      assert.equal(findRoute(method, path)?.route?.stack.length, 3, `${method} ${path} deve exigir administrador`);
+    }
+
+    const protectedRoutes = [
+
       ['GET', '/tables'],
       ['GET', '/tables/:tableId/orders'],
       ['GET', '/tables/:tableId/sessions'],
-      ['GET', '/tables/sessions/history'],
       ['DELETE', '/tables/:tableId/orders/:orderId'],
       ['PATCH', '/tables/:tableId/release'],
-      ['POST', '/store/open'],
-      ['POST', '/store/close'],
-      ['PATCH', '/categories/:categoryId'],
-      ['DELETE', '/categories/:categoryId'],
       ['PATCH', '/orders/:orderId/status'],
       ['GET', '/orders/pending'],
       ['GET', '/orders/preparing'],
