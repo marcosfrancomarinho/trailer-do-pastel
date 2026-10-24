@@ -65,6 +65,7 @@ export class PrismaOrderRepository implements OrderRepository {
     const total = order.getTotal();
     const data: Prisma.OrderUncheckedCreateInput = {
       tableId,
+      userId: order.getUserId(),
       customerName: order.getCustomerName(),
       customerPhone: order.getCustomerPhone(),
       observation: order.getObservation(),
