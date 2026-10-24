@@ -10,6 +10,7 @@ import type { PreparingOrderListItem } from '../../application/dtos/orders/list-
 import type { OrderQueries } from '../../application/queries/order-queries.js';
 import type { TrackOrderOutput } from '../../application/dtos/orders/track-order-dto.js';
 import type { ListTableOrdersOutput, TableOrderListItem } from '../../application/dtos/tables/list-table-orders-dto.js';
+import type { ClosedTableSessionListItem } from '../../application/dtos/tables/list-closed-table-sessions-dto.js';
 import type { ListTableSessionsOutput } from '../../application/dtos/tables/list-table-sessions-dto.js';
 import type { TableOrderQueries } from '../../application/queries/table-order-queries.js';
 
@@ -47,6 +48,39 @@ type SelectedTableOrder = Prisma.OrderGetPayload<{ select: typeof tableOrderSele
 
 export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
   public constructor(private readonly prisma: PrismaClient) {}
+
+  public async findClosedSessions(date?: string): Promise<ClosedTableSessionListItem[]> {
+    // Horário comercial de Imperatriz/MA (UTC-03:00), com limite superior exclusivo.
+    const start = date ? new Date(date + 'T03:00:00.000Z') : undefined;
+    const end = start ? new Date(start.getTime() + 86_400_000) : undefined;
+    const sessions = await this.prisma.tableSession.findMany({
+      where: {
+        closedAt: { not: null, ...(start && end ? { gte: start, lt: end } : {}) },
+      },
+      select: {
+        id: true,
+        openedAt: true,
+        closedAt: true,
+        closedTotal: true,
+        tableId: true,
+        table: { select: { number: true } },
+        orders: { select: tableOrderSelect, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+      },
+      orderBy: [{ closedAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return sessions.map(session => ({
+      tableId: session.tableId,
+      tableNumber: session.table.number,
+      session: {
+        id: session.id,
+        openedAt: session.openedAt.toISOString(),
+        closedAt: session.closedAt?.toISOString() ?? null,
+        closedTotal: session.closedTotal?.toString() ?? null,
+        orders: session.orders.map(order => this.mapTableOrder(order)),
+      },
+    }));
+  }
 
   public async findByTableId(tableId: string): Promise<ListTableOrdersOutput | null> {
     const table = await this.prisma.table.findUnique({
