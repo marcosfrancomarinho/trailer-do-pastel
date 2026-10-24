@@ -16,6 +16,7 @@ export interface OrderHistoryListItem {
   customerPhone: string;
   observation: string | null;
   tableId: string | null;
+  tableNumber: number | null;
   status: 'COMPLETED' | 'CANCELED';
   total: string;
   createdAt: string;
