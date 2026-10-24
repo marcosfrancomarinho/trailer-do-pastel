@@ -9,6 +9,7 @@ export interface ListTableOrdersInput {
 export interface TableOrderListItem {
   id: string;
   customerName: string;
+  createdBy: { name: string; role: 'ADMIN' | 'EMPLOYEE' } | null;
   customerPhone: string;
   observation: string | null;
   tableId: string | null;
