@@ -10,8 +10,8 @@ import { CreateOrderItemService } from '../../services/create-order-item-service
 
 export class CreateOrder {
   public constructor(
-    private readonly orderRepository: OrderRepository,
-    private readonly createOrderItemService: CreateOrderItemService,
+    private orderRepository: OrderRepository,
+    private createOrderItemService: CreateOrderItemService,
   ) {}
 
   public async create(input: CreateOrderInput): Promise<CreateOrderOutput> {

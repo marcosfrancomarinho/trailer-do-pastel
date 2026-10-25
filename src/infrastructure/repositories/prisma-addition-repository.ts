@@ -7,7 +7,7 @@ import { AdditionPrice } from '../../domain/value-objects/addition/addition-pric
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 
 export class PrismaAdditionRepository implements AdditionRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAdditionById(id: string): Promise<Addition | null> {
     const addition = await this.prisma.addition.findUnique({ where: { id } });

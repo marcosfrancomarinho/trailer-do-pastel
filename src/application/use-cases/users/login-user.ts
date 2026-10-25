@@ -8,9 +8,9 @@ import type { PasswordHasher } from '../../gateways/password-hasher.js';
 
 export class LoginUser {
   public constructor(
-    private readonly userRepository: UserRepository,
-    private readonly passwordHasher: PasswordHasher,
-    private readonly authTokenGateway: AuthTokenGateway,
+    private userRepository: UserRepository,
+    private passwordHasher: PasswordHasher,
+    private authTokenGateway: AuthTokenGateway,
   ) {}
 
   public async login(input: LoginUserInput): Promise<LoginUserOutput> {

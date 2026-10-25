@@ -3,7 +3,7 @@ import type { ListPreparingOrdersInput, ListPreparingOrdersOutput } from '../../
 import { ListPreparingOrders } from '../../../../application/use-cases/orders/list-preparing-orders.js';
 
 export class ListPreparingOrdersController {
-  public constructor(private readonly listPreparingOrders: ListPreparingOrders) {}
+  public constructor(private listPreparingOrders: ListPreparingOrders) {}
 
   public async execute(request: Request, response: Response<ListPreparingOrdersOutput>, next: NextFunction): Promise<void> {
     try {

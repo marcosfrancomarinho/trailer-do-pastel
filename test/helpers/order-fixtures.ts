@@ -71,6 +71,9 @@ export function createProductRepository(overrides: Partial<ProductRepository> = 
       if (id === 'product-2') return buildCatalogProduct(id, '12.50', true, 'Pastel de carne');
       return null;
     },
+    async existsById(id) {
+      return id === 'product-1' || id === 'product-2';
+    },
     async existsByName() {
       return false;
     },

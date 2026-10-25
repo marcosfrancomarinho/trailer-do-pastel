@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer';
 import { DomainError } from '../../errors/domain-error.js';
 
 export class UserPassword {
-  private constructor(private readonly password: string) {}
+  private constructor(private password: string) {}
 
   public static create(password: string): UserPassword {
     UserPassword.validate(password);

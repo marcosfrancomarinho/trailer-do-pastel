@@ -3,7 +3,7 @@ import type { ListTablesOutput } from '../../application/dtos/tables/list-tables
 import type { TableQueries } from '../../application/queries/table-queries.js';
 
 export class PrismaTableQueries implements TableQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAll(): Promise<ListTablesOutput> {
     const tables = await this.prisma.table.findMany({

@@ -3,7 +3,7 @@ import type { ListPreparingOrdersInput, ListPreparingOrdersOutput } from '../../
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class ListPreparingOrders {
-  public constructor(private readonly orderQueries: OrderQueries) {}
+  public constructor(private orderQueries: OrderQueries) {}
 
   public async list(input: ListPreparingOrdersInput): Promise<ListPreparingOrdersOutput> {
     return this.orderQueries.findPreparing(OrderDateRange.create(input.date));

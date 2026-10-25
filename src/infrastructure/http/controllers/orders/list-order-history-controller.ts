@@ -3,7 +3,7 @@ import type { ListOrderHistoryInput, ListOrderHistoryOutput } from '../../../../
 import { ListOrderHistory } from '../../../../application/use-cases/orders/list-order-history.js';
 
 export class ListOrderHistoryController {
-  public constructor(private readonly listOrderHistory: ListOrderHistory) {}
+  public constructor(private listOrderHistory: ListOrderHistory) {}
 
   public async execute(request: Request, response: Response<ListOrderHistoryOutput>, next: NextFunction): Promise<void> {
     try {

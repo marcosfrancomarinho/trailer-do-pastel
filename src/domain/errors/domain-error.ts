@@ -18,8 +18,8 @@ export type DomainErrorCode =
 
 export class DomainError extends Error {
   public constructor(
-    public readonly field: string,
-    public readonly code: DomainErrorCode,
+    public field: string,
+    public code: DomainErrorCode,
     message: string,
   ) {
     super(message);

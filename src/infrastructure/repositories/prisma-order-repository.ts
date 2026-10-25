@@ -5,7 +5,7 @@ import type { OrderRepository, SavedOrder } from '../../domain/repositories/orde
 import type { OrderStatus } from '../../domain/value-objects/order/order-status.js';
 
 export class PrismaOrderRepository implements OrderRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async removeFromTable(tableId: string, orderId: string): Promise<string> {
     return this.prisma.$transaction(async (tx) => {

@@ -12,8 +12,8 @@ import { CreateOrderItemAdditionService } from './create-order-item-addition-ser
 
 export class CreateOrderItemService {
   public constructor(
-    private readonly productRepository: ProductRepository,
-    private readonly createOrderItemAdditionService: CreateOrderItemAdditionService,
+    private productRepository: ProductRepository,
+    private createOrderItemAdditionService: CreateOrderItemAdditionService,
   ) {}
 
   public async create(input: CreateOrderItemInput): Promise<OrderItem> {

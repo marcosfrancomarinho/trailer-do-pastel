@@ -3,7 +3,7 @@ import type { TrackOrderInput, TrackOrderOutput } from '../../../../application/
 import { TrackOrder } from '../../../../application/use-cases/orders/track-order.js';
 
 export class TrackOrderController {
-  public constructor(private readonly trackOrder: TrackOrder) {}
+  public constructor(private trackOrder: TrackOrder) {}
 
   public async execute(request: Request, response: Response<TrackOrderOutput>, next: NextFunction): Promise<void> {
     try {

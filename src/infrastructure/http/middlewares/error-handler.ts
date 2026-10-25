@@ -3,7 +3,7 @@ import { ApplicationError } from '../../../application/errors/application-error.
 import { DomainError } from '../../../domain/errors/domain-error.js';
 
 export class ErrorHandler {
-  private static readonly applicationStatus = {
+  private static applicationStatus = {
     ALREADY_EXISTS: 409,
     NOT_FOUND: 404,
     UNAVAILABLE: 409,

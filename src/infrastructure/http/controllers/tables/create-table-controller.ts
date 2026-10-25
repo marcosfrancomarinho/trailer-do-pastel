@@ -3,7 +3,7 @@ import type { CreateTableInput, CreateTableOutput } from '../../../../applicatio
 import { CreateTable } from '../../../../application/use-cases/tables/create-table.js';
 
 export class CreateTableController {
-  public constructor(private readonly createTable: CreateTable) {}
+  public constructor(private createTable: CreateTable) {}
 
   public async execute(request: Request, response: Response<CreateTableOutput>, next: NextFunction): Promise<void> {
     try {

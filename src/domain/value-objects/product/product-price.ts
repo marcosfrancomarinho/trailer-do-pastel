@@ -2,7 +2,7 @@ import { DomainError } from '../../errors/domain-error.js';
 import { DecimalValue } from '../shared/decimal-value.js';
 
 export class ProductPrice {
-  private constructor(private readonly price: DecimalValue) {}
+  private constructor(private price: DecimalValue) {}
 
   public static create(price: DecimalValue): ProductPrice {
     ProductPrice.validate(price);

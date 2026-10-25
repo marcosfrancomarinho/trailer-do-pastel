@@ -3,7 +3,7 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { DeleteAdditionInput } from '../../dtos/additions/delete-addition-dto.js';
 
 export class DeleteAddition {
-  public constructor(private readonly additionRepository: AdditionRepository) {}
+  public constructor(private additionRepository: AdditionRepository) {}
 
   public async delete(input: DeleteAdditionInput): Promise<void> {
     const additionId = ReferenceId.create(input.additionId, 'additionId');

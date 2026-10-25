@@ -3,7 +3,7 @@ import type { ListAdditionsByProductInput, ListAdditionsByProductOutput } from '
 import type { AdditionQueries } from '../../queries/addition-queries.js';
 
 export class ListAdditionsByProduct {
-  public constructor(private readonly additionQueries: AdditionQueries) {}
+  public constructor(private additionQueries: AdditionQueries) {}
 
   public async list(input: ListAdditionsByProductInput): Promise<ListAdditionsByProductOutput> {
     const productId = ReferenceId.create(input.productId, 'productId');

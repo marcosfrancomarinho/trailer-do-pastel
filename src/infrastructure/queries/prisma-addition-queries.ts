@@ -3,7 +3,7 @@ import type { AdditionListItem } from '../../application/dtos/additions/list-add
 import type { AdditionQueries } from '../../application/queries/addition-queries.js';
 
 export class PrismaAdditionQueries implements AdditionQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAll(): Promise<AdditionListItem[]> {
     const additions = await this.prisma.addition.findMany({

@@ -1,23 +1,23 @@
-import { Product } from '../../../domain/entities/product.js';
 import type { Addition } from '../../../domain/entities/addition.js';
-import { DecimalValue } from '../../../domain/value-objects/shared/decimal-value.js';
-import type { ProductRepository } from '../../../domain/repositories/product-repository.js';
+import { Product } from '../../../domain/entities/product.js';
+import { DomainError } from '../../../domain/errors/domain-error.js';
 import type { AdditionRepository } from '../../../domain/repositories/addition-repository.js';
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
-import { DomainError } from '../../../domain/errors/domain-error.js';
+import type { ProductRepository } from '../../../domain/repositories/product-repository.js';
 import { ProductDescription } from '../../../domain/value-objects/product/product-description.js';
 import { ProductImageUrl } from '../../../domain/value-objects/product/product-image-url.js';
 import { ProductName } from '../../../domain/value-objects/product/product-name.js';
 import { ProductPrice } from '../../../domain/value-objects/product/product-price.js';
+import { DecimalValue } from '../../../domain/value-objects/shared/decimal-value.js';
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 import type { CreateProductInput, CreateProductOutput } from '../../dtos/products/create-product-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateProduct {
   public constructor(
-    private readonly productRepository: ProductRepository,
-    private readonly additionRepository: AdditionRepository,
-    private readonly categoryRepository: CategoryRepository,
+    private productRepository: ProductRepository,
+    private additionRepository: AdditionRepository,
+    private categoryRepository: CategoryRepository,
   ) {}
 
   public async create(input: CreateProductInput): Promise<CreateProductOutput> {
@@ -37,7 +37,8 @@ export class CreateProduct {
 
     const price = ProductPrice.create(DecimalValue.create(input.price));
     const description = ProductDescription.create(input.description);
-    const imageUrl = input.imageUrl == null ? null : ProductImageUrl.create(input.imageUrl);
+    const imageUrl = input.imageUrl != null ? ProductImageUrl.create(input.imageUrl) : null;
+
     const product = Product.create(name, price, description, categoryId, input.available, imageUrl);
 
     const additionIds = this.validateAdditionIds(input.additionIds);
@@ -69,8 +70,8 @@ export class CreateProduct {
       return additionId.getValue();
     });
 
-    const hasDuplicateIds = new Set(additionIds).size !== additionIds.length;
-    if (hasDuplicateIds) {
+    const uniqueAdditionIds = new Set(additionIds);
+    if (uniqueAdditionIds.size < additionIds.length) {
       throw new DomainError('additionIds', 'DUPLICATE', 'O mesmo adicional não pode ser informado mais de uma vez.');
     }
 

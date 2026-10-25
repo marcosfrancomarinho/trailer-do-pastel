@@ -3,7 +3,7 @@ import type { ReleaseTableOutput } from '../../../../application/dtos/tables/rel
 import { ReleaseTable } from '../../../../application/use-cases/tables/release-table.js';
 
 export class ReleaseTableController {
-  public constructor(private readonly releaseTable: ReleaseTable) {}
+  public constructor(private releaseTable: ReleaseTable) {}
 
   public async execute(request: Request, response: Response<ReleaseTableOutput>, next: NextFunction): Promise<void> {
     try {

@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class OrderStatus {
-  public static readonly VALID_STATUSES = [
+  public static VALID_STATUSES = [
     'PENDING',
     'CONFIRMED',
     'PREPARING',
@@ -9,7 +9,7 @@ export class OrderStatus {
     'CANCELED',
   ] as const;
 
-  private constructor(private readonly status: OrderStatusValue) {}
+  private constructor(private status: OrderStatusValue) {}
 
   public static create(status: string): OrderStatus {
     OrderStatus.validate(status);

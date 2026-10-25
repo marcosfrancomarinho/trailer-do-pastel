@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js';
 import { DomainError } from '../../errors/domain-error.js';
 
 export class DecimalValue {
-  private constructor(private readonly decimal: Decimal) {}
+  private constructor(private decimal: Decimal) {}
 
   public static create(decimal: string): DecimalValue {
     return new DecimalValue(DecimalValue.validate(decimal));

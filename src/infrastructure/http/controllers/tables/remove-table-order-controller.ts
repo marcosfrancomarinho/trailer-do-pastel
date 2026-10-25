@@ -3,7 +3,7 @@ import type { RemoveTableOrderOutput } from '../../../../application/dtos/tables
 import { RemoveTableOrder } from '../../../../application/use-cases/tables/remove-table-order.js';
 
 export class RemoveTableOrderController {
-  public constructor(private readonly removeTableOrder: RemoveTableOrder) {}
+  public constructor(private removeTableOrder: RemoveTableOrder) {}
 
   public async execute(request: Request, response: Response<RemoveTableOrderOutput>, next: NextFunction): Promise<void> {
     try {

@@ -3,8 +3,8 @@ import type { CategoryName } from '../value-objects/category/category-name.js';
 
 export class Category {
   private constructor(
-    private readonly name: CategoryName,
-    private readonly id: string | undefined,
+    private name: CategoryName,
+    private id: string | undefined,
   ) {}
 
   public static create(name: CategoryName, id?: string): Category {

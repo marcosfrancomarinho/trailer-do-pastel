@@ -7,13 +7,13 @@ import type { ReferenceId } from '../value-objects/shared/reference-id.js';
 
 export class Product {
   private constructor(
-    private readonly name: ProductName,
-    private readonly price: ProductPrice,
-    private readonly description: ProductDescription,
-    private readonly categoryId: ReferenceId,
-    private readonly available: boolean,
-    private readonly imageUrl: ProductImageUrl | null,
-    private readonly id: string | undefined,
+    private name: ProductName,
+    private price: ProductPrice,
+    private description: ProductDescription,
+    private categoryId: ReferenceId,
+    private available: boolean,
+    private imageUrl: ProductImageUrl | null,
+    private id: string | undefined,
   ) {}
 
   public static create(

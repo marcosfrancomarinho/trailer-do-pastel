@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import type { StoreRepository, StoreState, StoreStatus } from '../../domain/repositories/store-repository.js';
 
 export class PrismaStoreRepository implements StoreRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async getStatus(): Promise<StoreState> {
     const store = await this.prisma.store.findUnique({

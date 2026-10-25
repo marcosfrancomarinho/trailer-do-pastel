@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { DeleteAddition } from '../../../../application/use-cases/additions/delete-addition.js';
 
 export class DeleteAdditionController {
-  public constructor(private readonly deleteAddition: DeleteAddition) {}
+  public constructor(private deleteAddition: DeleteAddition) {}
 
   public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {

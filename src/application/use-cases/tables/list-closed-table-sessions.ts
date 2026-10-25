@@ -3,7 +3,7 @@ import type { ListClosedTableSessionsOutput } from '../../dtos/tables/list-close
 import { DomainError } from '../../../domain/errors/domain-error.js';
 
 export class ListClosedTableSessions {
-  public constructor(private readonly tableOrderQueries: TableOrderQueries) {}
+  public constructor(private tableOrderQueries: TableOrderQueries) {}
 
   public async list(date?: string): Promise<ListClosedTableSessionsOutput> {
     if (date !== undefined) {

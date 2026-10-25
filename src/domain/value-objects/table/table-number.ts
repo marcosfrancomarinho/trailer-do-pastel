@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class TableNumber {
-  private constructor(private readonly value: number) {}
+  private constructor(private value: number) {}
 
   public static create(value: unknown): TableNumber {
     if (value === undefined || value === null) {

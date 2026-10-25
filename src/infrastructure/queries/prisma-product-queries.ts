@@ -3,7 +3,7 @@ import type { ProductListItem } from '../../application/dtos/products/list-produ
 import type { ProductQueries } from '../../application/queries/product-queries.js';
 
 export class PrismaProductQueries implements ProductQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAll(): Promise<ProductListItem[]> {
     const products = await this.prisma.product.findMany({

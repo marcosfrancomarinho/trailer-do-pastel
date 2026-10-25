@@ -9,7 +9,7 @@ import type { UpdateAdditionInput, UpdateAdditionOutput } from '../../dtos/addit
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class UpdateAddition {
-  public constructor(private readonly additionRepository: AdditionRepository) {}
+  public constructor(private additionRepository: AdditionRepository) {}
 
   public async update(input: UpdateAdditionInput): Promise<UpdateAdditionOutput> {
     const additionId = ReferenceId.create(input.additionId, 'additionId');

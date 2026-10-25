@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class OrderObservation {
-  private constructor(private readonly value: string | null) {}
+  private constructor(private value: string | null) {}
 
   public static create(value?: unknown): OrderObservation {
     if (value === undefined || value === null) return new OrderObservation(null);

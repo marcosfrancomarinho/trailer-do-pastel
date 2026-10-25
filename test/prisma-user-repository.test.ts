@@ -32,6 +32,18 @@ describe('PrismaUserRepository.findByName', () => {
 });
 
 describe('PrismaUserRepository deletion', () => {
+  it('checks whether a user ID exists', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) => {
+      return where.id === 'user-2' ? { id: 'user-2' } : null;
+    });
+    const prisma = { user: { findUnique } } as unknown as PrismaClient;
+    const repository = new PrismaUserRepository(prisma);
+
+    assert.equal(await repository.existsById('user-2'), true);
+    assert.equal(await repository.existsById('missing'), false);
+    assert.deepEqual(findUnique.mock.calls[0].arguments, [{ where: { id: 'user-2' }, select: { id: true } }]);
+  });
+
   it('checks an ID and deletes an existing user', async (context) => {
     const findUnique = context.mock.fn(async () => ({ role: 'EMPLOYEE' }));
     const remove = context.mock.fn(async () => ({ id: 'user-2' }));

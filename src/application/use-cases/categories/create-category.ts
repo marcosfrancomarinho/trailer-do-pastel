@@ -5,7 +5,7 @@ import type { CreateCategoryInput, CreateCategoryOutput } from '../../dtos/categ
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateCategory {
-  public constructor(private readonly categoryRepository: CategoryRepository) {}
+  public constructor(private categoryRepository: CategoryRepository) {}
 
   public async create(input: CreateCategoryInput): Promise<CreateCategoryOutput> {
     const name = CategoryName.create(input.name);

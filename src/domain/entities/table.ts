@@ -5,10 +5,10 @@ import { DecimalValue } from '../value-objects/shared/decimal-value.js';
 
 export class Table {
   private constructor(
-    private readonly number: TableNumber,
-    private readonly status: TableStatus,
-    private readonly totalSpent: DecimalValue,
-    private readonly id: string | undefined,
+    private number: TableNumber,
+    private status: TableStatus,
+    private totalSpent: DecimalValue,
+    private id: string | undefined,
   ) {}
 
   public static create(

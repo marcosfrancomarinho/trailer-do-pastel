@@ -3,7 +3,7 @@ import type { ListProductsOutput } from '../../../../application/dtos/products/l
 import { ListProducts } from '../../../../application/use-cases/products/list-products.js';
 
 export class ListProductsController {
-  public constructor(private readonly listProducts: ListProducts) {}
+  public constructor(private listProducts: ListProducts) {}
 
   public async execute(_request: Request, response: Response<ListProductsOutput>, next: NextFunction): Promise<void> {
     try {

@@ -3,7 +3,7 @@ import type { OrderRepository } from '../../../domain/repositories/order-reposit
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 
 export class RemoveTableOrder {
-  public constructor(private readonly orderRepository: OrderRepository) {}
+  public constructor(private orderRepository: OrderRepository) {}
 
   public async remove(input: RemoveTableOrderInput): Promise<RemoveTableOrderOutput> {
     const tableId = ReferenceId.create(input.tableId, 'tableId').getValue();

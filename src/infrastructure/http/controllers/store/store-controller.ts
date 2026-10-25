@@ -5,8 +5,8 @@ import { SetStoreStatus } from '../../../../application/use-cases/store/set-stor
 
 export class StoreController {
   public constructor(
-    private readonly getStoreStatus: GetStoreStatus,
-    private readonly setStoreStatus: SetStoreStatus,
+    private getStoreStatus: GetStoreStatus,
+    private setStoreStatus: SetStoreStatus,
   ) {}
 
   public async getStatus(_request: Request, response: Response<StoreStatusOutput>, next: NextFunction): Promise<void> {

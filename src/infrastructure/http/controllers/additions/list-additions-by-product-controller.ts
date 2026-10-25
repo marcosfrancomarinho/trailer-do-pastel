@@ -6,7 +6,7 @@ import type {
 import { ListAdditionsByProduct } from '../../../../application/use-cases/additions/list-additions-by-product.js';
 
 export class ListAdditionsByProductController {
-  public constructor(private readonly listAdditionsByProduct: ListAdditionsByProduct) {}
+  public constructor(private listAdditionsByProduct: ListAdditionsByProduct) {}
 
   public async execute(
     request: Request<{ productId: string }>,

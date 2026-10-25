@@ -8,11 +8,11 @@ import { OrderItemAddition } from './order-item-addition.js';
 
 export class OrderItem {
   private constructor(
-    private readonly productId: ReferenceId,
-    private readonly productName: ProductName,
-    private readonly quantity: OrderQuantity,
-    private readonly unitPrice: OrderUnitPrice,
-    private readonly additions: OrderItemAddition[],
+    private productId: ReferenceId,
+    private productName: ProductName,
+    private quantity: OrderQuantity,
+    private unitPrice: OrderUnitPrice,
+    private additions: OrderItemAddition[],
   ) {}
 
   public static create(

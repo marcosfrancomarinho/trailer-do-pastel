@@ -3,7 +3,7 @@ import type { ListTableSessionsOutput } from '../../../../application/dtos/table
 import { ListTableSessions } from '../../../../application/use-cases/tables/list-table-sessions.js';
 
 export class ListTableSessionsController {
-  public constructor(private readonly listTableSessions: ListTableSessions) {}
+  public constructor(private listTableSessions: ListTableSessions) {}
 
   public async execute(request: Request, response: Response<ListTableSessionsOutput>, next: NextFunction): Promise<void> {
     try {

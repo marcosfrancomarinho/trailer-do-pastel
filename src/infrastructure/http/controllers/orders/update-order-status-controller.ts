@@ -3,7 +3,7 @@ import type { UpdateOrderStatusInput, UpdateOrderStatusOutput } from '../../../.
 import { UpdateOrderStatus } from '../../../../application/use-cases/orders/update-order-status.js';
 
 export class UpdateOrderStatusController {
-  public constructor(private readonly updateOrderStatus: UpdateOrderStatus) {}
+  public constructor(private updateOrderStatus: UpdateOrderStatus) {}
 
   public async execute(request: Request, response: Response<UpdateOrderStatusOutput>, next: NextFunction): Promise<void> {
     try {

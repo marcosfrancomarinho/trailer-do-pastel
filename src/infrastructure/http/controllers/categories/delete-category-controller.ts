@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { DeleteCategory } from '../../../../application/use-cases/categories/delete-category.js';
 
 export class DeleteCategoryController {
-  public constructor(private readonly deleteCategory: DeleteCategory) {}
+  public constructor(private deleteCategory: DeleteCategory) {}
 
   public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
     try {

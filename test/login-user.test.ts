@@ -9,7 +9,7 @@ import { UserPassword } from '../src/domain/value-objects/user/user-password.js'
 
 describe('LoginUser', () => {
   const hash = '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-  const user = User.create(UserName.create('Marcos'), UserPassword.fromHash(hash), 'user-1', 'ADMIN');
+  const user = User.create(UserName.create('Marcos'), UserPassword.fromHash(hash), 'ADMIN', 'user-1');
   const input = { name: ' Marcos ', password: '  Senha de teste1!  ' };
   const unusedRepositoryMethods = {
     existsByName: async () => false,

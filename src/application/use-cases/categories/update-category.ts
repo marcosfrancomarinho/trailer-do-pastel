@@ -5,7 +5,7 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { UpdateCategoryInput, UpdateCategoryOutput } from '../../dtos/categories/update-category-dto.js';
 
 export class UpdateCategory {
-  public constructor(private readonly categoryRepository: CategoryRepository) {}
+  public constructor(private categoryRepository: CategoryRepository) {}
 
   public async update(input: UpdateCategoryInput): Promise<UpdateCategoryOutput> {
     const categoryId = ReferenceId.create(input.categoryId, 'categoryId');

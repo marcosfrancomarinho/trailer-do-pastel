@@ -4,7 +4,7 @@ import { ApplicationError } from '../../errors/application-error.js';
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class TrackOrder {
-  public constructor(private readonly orderQueries: OrderQueries) {}
+  public constructor(private orderQueries: OrderQueries) {}
 
   public async track(input: TrackOrderInput): Promise<TrackOrderOutput> {
     const trackingToken = ReferenceId.create(input.trackingToken, 'trackingToken');

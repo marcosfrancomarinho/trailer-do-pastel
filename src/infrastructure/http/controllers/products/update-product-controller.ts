@@ -3,7 +3,7 @@ import type { UpdateProductInput, UpdateProductOutput } from '../../../../applic
 import { UpdateProduct } from '../../../../application/use-cases/products/update-product.js';
 
 export class UpdateProductController {
-  public constructor(private readonly updateProduct: UpdateProduct) {}
+  public constructor(private updateProduct: UpdateProduct) {}
 
   public async execute(request: Request, response: Response<UpdateProductOutput>, next: NextFunction): Promise<void> {
     try {

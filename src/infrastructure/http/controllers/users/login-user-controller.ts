@@ -3,7 +3,7 @@ import type { LoginUserInput, LoginUserOutput } from '../../../../application/dt
 import { LoginUser } from '../../../../application/use-cases/users/login-user.js';
 
 export class LoginUserController {
-  public constructor(private readonly loginUser: LoginUser) {}
+  public constructor(private loginUser: LoginUser) {}
 
   public async execute(request: Request, response: Response<LoginUserOutput>, next: NextFunction): Promise<void> {
     try {
@@ -13,8 +13,7 @@ export class LoginUserController {
       };
       const output = await this.loginUser.login(input);
 
-      response.status(200);
-      response.json(output);
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

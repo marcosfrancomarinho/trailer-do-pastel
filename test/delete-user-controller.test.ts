@@ -9,7 +9,7 @@ import { createResponse } from './helpers/http-fixtures.js';
 describe('DeleteUserController', () => {
   it('uses the authenticated user ID and responds with 204', async (context) => {
     const deleteById = context.mock.fn(async (_id: string) => {});
-    const useCase = new DeleteUser({ deleteById } as unknown as UserRepository);
+    const useCase = new DeleteUser({ existsById: async () => true, deleteById } as unknown as UserRepository);
     const controller = new DeleteUserController(useCase);
     const { response, status, json } = createResponse(context);
     response.locals.userId = 'user-1';

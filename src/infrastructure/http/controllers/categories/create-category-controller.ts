@@ -3,7 +3,7 @@ import type { CreateCategoryInput, CreateCategoryOutput } from '../../../../appl
 import { CreateCategory } from '../../../../application/use-cases/categories/create-category.js';
 
 export class CreateCategoryController {
-  public constructor(private readonly createCategory: CreateCategory) {}
+  public constructor(private createCategory: CreateCategory) {}
 
   public async execute(request: Request, response: Response<CreateCategoryOutput>, next: NextFunction): Promise<void> {
     try {

@@ -7,22 +7,36 @@ import { UserName } from '../../domain/value-objects/user/user-name.js';
 import { UserPassword } from '../../domain/value-objects/user/user-password.js';
 
 export class PrismaUserRepository implements UserRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findByName(name: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
+    const storedUser = await this.prisma.user.findUnique({
       where: { name },
       select: { id: true, name: true, password: true, role: true },
     });
 
-    if (!user) return null;
+    if (storedUser === null) {
+      return null;
+    }
 
-    return User.create(UserName.create(user.name), UserPassword.fromHash(user.password), user.id, user.role);
+    const userName = UserName.create(storedUser.name);
+    const password = UserPassword.fromHash(storedUser.password);
+
+    return User.create(userName, password, storedUser.role, storedUser.id);
   }
 
   public async existsByName(name: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { name },
+      select: { id: true },
+    });
+
+    return user !== null;
+  }
+
+  public async existsById(id: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
       select: { id: true },
     });
 

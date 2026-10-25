@@ -3,7 +3,7 @@ import { ListClosedTableSessions } from '../../../../application/use-cases/table
 import type { ListClosedTableSessionsOutput } from '../../../../application/dtos/tables/list-closed-table-sessions-dto.js';
 
 export class ListClosedTableSessionsController {
-  public constructor(private readonly useCase: ListClosedTableSessions) {}
+  public constructor(private useCase: ListClosedTableSessions) {}
 
   public async execute(request: Request, response: Response<ListClosedTableSessionsOutput>, next: NextFunction): Promise<void> {
     try {

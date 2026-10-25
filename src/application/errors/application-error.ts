@@ -10,8 +10,8 @@ export type ApplicationErrorCode =
 
 export class ApplicationError extends Error {
   public constructor(
-    public readonly field: string,
-    public readonly code: ApplicationErrorCode,
+    public field: string,
+    public code: ApplicationErrorCode,
     message: string,
   ) {
     super(message);

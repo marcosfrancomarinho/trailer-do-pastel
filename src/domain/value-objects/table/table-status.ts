@@ -1,9 +1,9 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class TableStatus {
-  public static readonly VALID_STATUSES = ['FREE', 'OCCUPIED'] as const;
+  public static VALID_STATUSES = ['FREE', 'OCCUPIED'] as const;
 
-  private constructor(private readonly value: TableStatusValue) {}
+  private constructor(private value: TableStatusValue) {}
 
   public static create(value: unknown): TableStatus {
     if (value === undefined || value === null) {

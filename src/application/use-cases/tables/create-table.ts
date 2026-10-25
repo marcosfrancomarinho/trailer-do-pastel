@@ -6,7 +6,7 @@ import { TableNumber } from '../../../domain/value-objects/table/table-number.js
 import { TableStatus } from '../../../domain/value-objects/table/table-status.js';
 
 export class CreateTable {
-  public constructor(private readonly tableRepository: TableRepository) {}
+  public constructor(private tableRepository: TableRepository) {}
 
   public async create(input: CreateTableInput): Promise<CreateTableOutput> {
     const number = TableNumber.create(input.number);

@@ -4,10 +4,10 @@ import type { AdditionPrice } from '../value-objects/addition/addition-price.js'
 
 export class Addition {
   private constructor(
-    private readonly name: AdditionName,
-    private readonly price: AdditionPrice,
-    private readonly available: boolean,
-    private readonly id: string | undefined,
+    private name: AdditionName,
+    private price: AdditionPrice,
+    private available: boolean,
+    private id: string | undefined,
   ) {}
 
   public static create(

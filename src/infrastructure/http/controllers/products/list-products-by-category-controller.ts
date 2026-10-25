@@ -6,7 +6,7 @@ import type {
 import { ListProductsByCategory } from '../../../../application/use-cases/products/list-products-by-category.js';
 
 export class ListProductsByCategoryController {
-  public constructor(private readonly listProductsByCategory: ListProductsByCategory) {}
+  public constructor(private listProductsByCategory: ListProductsByCategory) {}
 
   public async execute(
     request: Request<{ categoryId: string }>,

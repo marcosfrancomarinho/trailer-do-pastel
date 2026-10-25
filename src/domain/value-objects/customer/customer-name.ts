@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class CustomerName {
-  private constructor(private readonly name: string) {}
+  private constructor(private name: string) {}
 
   public static create(name: string): CustomerName {
     CustomerName.validate(name);

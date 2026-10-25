@@ -3,7 +3,7 @@ import type { CreateProductInput, CreateProductOutput } from '../../../../applic
 import { CreateProduct } from '../../../../application/use-cases/products/create-product.js';
 
 export class CreateProductController {
-  public constructor(private readonly createProduct: CreateProduct) {}
+  public constructor(private createProduct: CreateProduct) {}
 
   public async execute(request: Request, response: Response<CreateProductOutput>, next: NextFunction): Promise<void> {
     try {
@@ -19,8 +19,7 @@ export class CreateProductController {
 
       const output = await this.createProduct.create(input);
 
-      response.status(201);
-      response.json(output);
+      response.status(201).json(output);
     } catch (error) {
       next(error);
     }

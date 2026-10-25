@@ -7,7 +7,7 @@ import type { CreateAdditionInput, CreateAdditionOutput } from '../../dtos/addit
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateAddition {
-  public constructor(private readonly additionRepository: AdditionRepository) {}
+  public constructor(private additionRepository: AdditionRepository) {}
 
   public async create(input: CreateAdditionInput): Promise<CreateAdditionOutput> {
     const name = AdditionName.create(input.name);

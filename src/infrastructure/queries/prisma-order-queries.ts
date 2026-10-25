@@ -48,7 +48,7 @@ const tableOrderSelect = {
 type SelectedTableOrder = Prisma.OrderGetPayload<{ select: typeof tableOrderSelect }>;
 
 export class PrismaOrderQueries implements OrderQueries, TableOrderQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findClosedSessions(date?: string): Promise<ClosedTableSessionListItem[]> {
     // Horário comercial de Imperatriz/MA (UTC-03:00), com limite superior exclusivo.

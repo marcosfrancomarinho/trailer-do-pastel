@@ -3,7 +3,7 @@ import type { TableRepository } from '../../../domain/repositories/table-reposit
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 
 export class ReleaseTable {
-  public constructor(private readonly tableRepository: TableRepository) {}
+  public constructor(private tableRepository: TableRepository) {}
 
   public async release(input: ReleaseTableInput): Promise<ReleaseTableOutput> {
     const tableId = ReferenceId.create(input.tableId, 'tableId').getValue();

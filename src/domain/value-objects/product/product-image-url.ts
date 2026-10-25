@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class ProductImageUrl {
-  private constructor(private readonly value: string) {}
+  private constructor(private value: string) {}
 
   public static create(value: string): ProductImageUrl {
     if (typeof value !== 'string') {
@@ -17,7 +17,8 @@ export class ProductImageUrl {
       throw new DomainError('imageUrl', 'INVALID_FORMAT', 'Informe uma URL válida para a imagem.');
     }
 
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    const usesHttpOrHttps = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    if (!usesHttpOrHttps) {
       throw new DomainError('imageUrl', 'INVALID_FORMAT', 'A URL da imagem deve usar HTTP ou HTTPS.');
     }
 

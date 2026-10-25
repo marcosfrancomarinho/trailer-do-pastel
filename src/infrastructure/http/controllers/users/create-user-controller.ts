@@ -3,7 +3,7 @@ import type { CreateUserInput, CreateUserOutput } from '../../../../application/
 import { CreateUser } from '../../../../application/use-cases/users/create-user.js';
 
 export class CreateUserController {
-  public constructor(private readonly createUser: CreateUser) {}
+  public constructor(private createUser: CreateUser) {}
 
   public async execute(request: Request, response: Response<CreateUserOutput>, next: NextFunction): Promise<void> {
     try {
@@ -14,8 +14,7 @@ export class CreateUserController {
 
       const output = await this.createUser.create(input);
 
-      response.status(201);
-      response.json(output);
+      response.status(201).json(output);
     } catch (error) {
       next(error);
     }

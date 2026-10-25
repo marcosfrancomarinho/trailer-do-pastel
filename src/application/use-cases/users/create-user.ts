@@ -8,8 +8,8 @@ import type { PasswordHasher } from '../../gateways/password-hasher.js';
 
 export class CreateUser {
   public constructor(
-    private readonly userRepository: UserRepository,
-    private readonly passwordHasher: PasswordHasher,
+    private userRepository: UserRepository,
+    private passwordHasher: PasswordHasher,
   ) {}
 
   public async create(input: CreateUserInput): Promise<CreateUserOutput> {

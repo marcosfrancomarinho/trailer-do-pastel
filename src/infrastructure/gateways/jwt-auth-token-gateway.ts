@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import type { AuthTokenGateway } from '../../application/gateways/auth-token-gateway.js';
 
 export class JwtAuthTokenGateway implements AuthTokenGateway {
-  private readonly secret: string;
+  private secret: string;
 
   public constructor(secret: string | undefined) {
     if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {

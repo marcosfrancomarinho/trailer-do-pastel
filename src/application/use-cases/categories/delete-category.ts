@@ -3,7 +3,7 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { DeleteCategoryInput } from '../../dtos/categories/delete-category-dto.js';
 
 export class DeleteCategory {
-  public constructor(private readonly categoryRepository: CategoryRepository) {}
+  public constructor(private categoryRepository: CategoryRepository) {}
 
   public async delete(input: DeleteCategoryInput): Promise<void> {
     const categoryId = ReferenceId.create(input.categoryId, 'categoryId');

@@ -4,7 +4,7 @@ import type { Table } from '../../domain/entities/table.js';
 import type { TableRepository } from '../../domain/repositories/table-repository.js';
 
 export class PrismaTableRepository implements TableRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async existsByNumber(number: number): Promise<boolean> {
     const table = await this.prisma.table.findFirst({

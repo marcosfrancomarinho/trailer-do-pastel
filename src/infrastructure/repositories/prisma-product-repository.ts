@@ -11,7 +11,7 @@ import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js
 import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
 
 export class PrismaProductRepository implements ProductRepository {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findProductById(id: string): Promise<Product | null> {
     const product = await this.prisma.product.findUnique({ where: { id } });
@@ -24,6 +24,15 @@ export class PrismaProductRepository implements ProductRepository {
     const categoryId = ReferenceId.create(product.categoryId, 'categoryId');
     const imageUrl = product.imageUrl === null ? null : ProductImageUrl.create(product.imageUrl);
     return Product.create(name, price, description, categoryId, product.available, imageUrl, product.id);
+  }
+
+  public async existsById(id: string): Promise<boolean> {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    return product !== null;
   }
 
   public async existsByName(name: string): Promise<boolean> {
@@ -43,7 +52,7 @@ export class PrismaProductRepository implements ProductRepository {
         categoryId: product.getCategoryId(),
         price: product.getPrice(),
         imageUrl: product.getImageUrl(),
-        available: product.isAvailable(),
+        available: product.isAvailable()
       };
 
       if (additions.length > 0) {
@@ -113,14 +122,8 @@ export class PrismaProductRepository implements ProductRepository {
     try {
       await this.prisma.product.delete({ where: { id } });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
-        }
-
-        if (error.code === 'P2003') {
-          throw new ApplicationError('productId', 'IN_USE', 'O produto não pode ser excluído porque já está em um pedido.');
-        }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new ApplicationError('productId', 'IN_USE', 'O produto não pode ser excluído porque já está em um pedido.');
       }
 
       throw error;

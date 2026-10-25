@@ -3,7 +3,7 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { DeleteTableInput } from '../../dtos/tables/delete-table-dto.js';
 
 export class DeleteTable {
-  public constructor(private readonly tableRepository: TableRepository) {}
+  public constructor(private tableRepository: TableRepository) {}
 
   public async delete(input: DeleteTableInput): Promise<void> {
     const tableId = ReferenceId.create(input.tableId, 'tableId');

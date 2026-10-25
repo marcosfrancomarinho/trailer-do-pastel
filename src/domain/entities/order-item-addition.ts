@@ -5,9 +5,9 @@ import type { ReferenceId } from '../value-objects/shared/reference-id.js';
 
 export class OrderItemAddition {
   private constructor(
-    private readonly additionId: ReferenceId,
-    private readonly quantity: OrderQuantity,
-    private readonly unitPrice: OrderUnitPrice,
+    private additionId: ReferenceId,
+    private quantity: OrderQuantity,
+    private unitPrice: OrderUnitPrice,
   ) {}
 
   public static create(additionId: ReferenceId, quantity: OrderQuantity, unitPrice: OrderUnitPrice): OrderItemAddition {

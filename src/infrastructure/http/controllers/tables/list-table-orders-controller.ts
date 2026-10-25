@@ -3,7 +3,7 @@ import type { ListTableOrdersOutput } from '../../../../application/dtos/tables/
 import { ListTableOrders } from '../../../../application/use-cases/tables/list-table-orders.js';
 
 export class ListTableOrdersController {
-  public constructor(private readonly listTableOrders: ListTableOrders) {}
+  public constructor(private listTableOrders: ListTableOrders) {}
 
   public async execute(request: Request, response: Response<ListTableOrdersOutput>, next: NextFunction): Promise<void> {
     try {

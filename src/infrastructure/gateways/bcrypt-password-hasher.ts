@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import type { PasswordHasher } from '../../application/gateways/password-hasher.js';
 
 export class BcryptPasswordHasher implements PasswordHasher {
-  private static readonly rounds = 12;
+  private static rounds = 12;
 
   public async hash(password: string): Promise<string> {
     return bcrypt.hash(password, BcryptPasswordHasher.rounds);

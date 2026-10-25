@@ -3,7 +3,7 @@ import type { CategoryListItem } from '../../application/dtos/categories/list-ca
 import type { CategoryQueries } from '../../application/queries/category-queries.js';
 
 export class PrismaCategoryQueries implements CategoryQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAll(): Promise<CategoryListItem[]> {
     return this.prisma.category.findMany({

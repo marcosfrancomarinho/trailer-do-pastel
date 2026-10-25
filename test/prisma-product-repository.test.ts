@@ -6,6 +6,20 @@ import { PrismaProductRepository } from '../src/infrastructure/repositories/pris
 import { buildCatalogAddition, buildCatalogProduct } from './helpers/order-fixtures.js';
 
 describe('PrismaProductRepository', () => {
+  it('checks whether a product ID exists', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) => {
+      return where.id === 'product-1' ? { id: 'product-1' } : null;
+    });
+    const prisma = { product: { findUnique } } as unknown as PrismaClient;
+    const repository = new PrismaProductRepository(prisma);
+
+    assert.equal(await repository.existsById('product-1'), true);
+    assert.equal(await repository.existsById('missing'), false);
+    assert.deepEqual(findUnique.mock.calls[0].arguments, [
+      { where: { id: 'product-1' }, select: { id: true } },
+    ]);
+  });
+
   it('loads the image URL from a stored product', async () => {
     const prisma = {
       product: {
@@ -119,27 +133,20 @@ describe('PrismaProductRepository', () => {
     assert.deepEqual(remove.mock.calls[0].arguments, [{ where: { id: 'product-1' } }]);
   });
 
-  it('reports missing products and products used in orders', async () => {
-    const cases = [
-      { prismaCode: 'P2025', applicationCode: 'NOT_FOUND' },
-      { prismaCode: 'P2003', applicationCode: 'IN_USE' },
-    ];
+  it('reports a product used in orders', async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Deletion failed', {
+      code: 'P2003',
+      clientVersion: '6.19.3',
+    });
+    const prisma = {
+      product: { delete: async () => { throw prismaError; } },
+    } as unknown as PrismaClient;
 
-    for (const { prismaCode, applicationCode } of cases) {
-      const prismaError = new Prisma.PrismaClientKnownRequestError('Deletion failed', {
-        code: prismaCode,
-        clientVersion: '6.19.3',
-      });
-      const prisma = {
-        product: { delete: async () => { throw prismaError; } },
-      } as unknown as PrismaClient;
-
-      await assert.rejects(
-        new PrismaProductRepository(prisma).deleteById('product-1'),
-        (error: unknown) => error instanceof ApplicationError
-          && error.field === 'productId'
-          && error.code === applicationCode,
-      );
-    }
+    await assert.rejects(
+      new PrismaProductRepository(prisma).deleteById('product-1'),
+      (error: unknown) => error instanceof ApplicationError
+        && error.field === 'productId'
+        && error.code === 'IN_USE',
+    );
   });
 });

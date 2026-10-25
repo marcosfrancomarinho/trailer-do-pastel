@@ -3,7 +3,7 @@ import type { ListAdditionsOutput } from '../../../../application/dtos/additions
 import { ListAdditions } from '../../../../application/use-cases/additions/list-additions.js';
 
 export class ListAdditionsController {
-  public constructor(private readonly listAdditions: ListAdditions) {}
+  public constructor(private listAdditions: ListAdditions) {}
 
   public async execute(_request: Request, response: Response<ListAdditionsOutput>, next: NextFunction): Promise<void> {
     try {

@@ -5,14 +5,14 @@ import type { UserRole } from '../value-objects/user/user-role.js';
 
 export class User {
   private constructor(
-    private readonly name: UserName,
+    private name: UserName,
     private password: UserPassword,
-    private readonly id: string | undefined,
-    private readonly role: UserRole,
+    private role: UserRole,
+    private id: string | undefined,
   ) {}
 
-  public static create(name: UserName, password: UserPassword, id?: string, role: UserRole = 'EMPLOYEE'): User {
-    return new User(name, password, id, role);
+  public static create(name: UserName, password: UserPassword, role: UserRole = 'EMPLOYEE', id?: string): User {
+    return new User(name, password, role, id);
   }
 
   public getId(): string {

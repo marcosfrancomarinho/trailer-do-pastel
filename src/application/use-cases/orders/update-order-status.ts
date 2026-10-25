@@ -4,7 +4,7 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { UpdateOrderStatusInput, UpdateOrderStatusOutput } from '../../dtos/orders/update-order-status-dto.js';
 
 export class UpdateOrderStatus {
-  public constructor(private readonly orderRepository: OrderRepository) {}
+  public constructor(private orderRepository: OrderRepository) {}
 
   public async update(input: UpdateOrderStatusInput): Promise<UpdateOrderStatusOutput> {
     const orderId = ReferenceId.create(input.orderId, 'orderId');

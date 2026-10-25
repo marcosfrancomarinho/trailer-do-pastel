@@ -5,8 +5,8 @@ const OFFSET_HOURS = 3;
 
 export class OrderDateRange {
   private constructor(
-    private readonly start: Date,
-    private readonly end: Date,
+    private start: Date,
+    private end: Date,
   ) {}
 
   /** Returns the UTC interval for a calendar day in Imperatriz (UTC-03:00). */

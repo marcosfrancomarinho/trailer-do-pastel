@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class OrderQuantity {
-  private constructor(private readonly quantity: number) {}
+  private constructor(private quantity: number) {}
 
   public static create(quantity: number): OrderQuantity {
     OrderQuantity.validate(quantity);

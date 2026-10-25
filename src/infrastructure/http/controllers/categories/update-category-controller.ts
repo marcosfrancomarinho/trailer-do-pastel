@@ -3,7 +3,7 @@ import type { UpdateCategoryInput, UpdateCategoryOutput } from '../../../../appl
 import { UpdateCategory } from '../../../../application/use-cases/categories/update-category.js';
 
 export class UpdateCategoryController {
-  public constructor(private readonly updateCategory: UpdateCategory) {}
+  public constructor(private updateCategory: UpdateCategory) {}
 
   public async execute(request: Request, response: Response<UpdateCategoryOutput>, next: NextFunction): Promise<void> {
     try {

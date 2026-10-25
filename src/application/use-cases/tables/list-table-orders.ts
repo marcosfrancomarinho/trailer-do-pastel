@@ -4,7 +4,7 @@ import { ApplicationError } from '../../errors/application-error.js';
 import type { TableOrderQueries } from '../../queries/table-order-queries.js';
 
 export class ListTableOrders {
-  public constructor(private readonly tableOrderQueries: TableOrderQueries) {}
+  public constructor(private tableOrderQueries: TableOrderQueries) {}
 
   public async list(input: ListTableOrdersInput): Promise<ListTableOrdersOutput> {
     const tableId = ReferenceId.create(input.tableId, 'tableId').getValue();

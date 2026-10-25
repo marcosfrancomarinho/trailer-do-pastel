@@ -8,7 +8,7 @@ import type { CreateOrderAdditionInput } from '../dtos/orders/create-order-dto.j
 import { ApplicationError } from '../errors/application-error.js';
 
 export class CreateOrderItemAdditionService {
-  public constructor(private readonly additionRepository: AdditionRepository) {}
+  public constructor(private additionRepository: AdditionRepository) {}
 
   public async create(input: CreateOrderAdditionInput, productId: string): Promise<OrderItemAddition> {
     const additionId = ReferenceId.create(input.additionId, 'additionId');

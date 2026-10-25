@@ -1,7 +1,7 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class ReferenceId {
-  private constructor(private readonly id: string) {}
+  private constructor(private id: string) {}
 
   public static create(id: string, field: string = 'id'): ReferenceId {
     ReferenceId.validate(id, field);

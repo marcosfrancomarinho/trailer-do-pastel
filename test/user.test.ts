@@ -10,6 +10,7 @@ function createUser(id?: string): User {
   return User.create(
     UserName.create(' Marcos '),
     UserPassword.create('SenhaDeTeste123'),
+    'EMPLOYEE',
     id,
   );
 }

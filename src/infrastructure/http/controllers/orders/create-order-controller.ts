@@ -8,7 +8,7 @@ import type {
 import { CreateOrder } from '../../../../application/use-cases/orders/create-order.js';
 
 export class CreateOrderController {
-  public constructor(private readonly createOrder: CreateOrder) {}
+  public constructor(private createOrder: CreateOrder) {}
 
   public async execute(request: Request, response: Response<CreateOrderOutput>, next: NextFunction): Promise<void> {
     try {

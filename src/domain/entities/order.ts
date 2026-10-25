@@ -8,13 +8,13 @@ import type { ReferenceId } from '../value-objects/shared/reference-id.js';
 
 export class Order {
   private constructor(
-    private readonly customerName: CustomerName,
-    private readonly customerPhone: CustomerPhone,
-    private readonly items: OrderItem[],
-    private readonly observation: OrderObservation,
-    private readonly tableId: ReferenceId | null,
-    private readonly id: string | undefined,
-    private readonly userId: ReferenceId | null,
+    private customerName: CustomerName,
+    private customerPhone: CustomerPhone,
+    private items: OrderItem[],
+    private observation: OrderObservation,
+    private tableId: ReferenceId | null,
+    private id: string | undefined,
+    private userId: ReferenceId | null,
   ) {}
 
   public static create(
@@ -74,7 +74,7 @@ export class Order {
     return total.getValue();
   }
 
-  private static validateItems(items: readonly OrderItem[]): void {
+  private static validateItems(items: OrderItem[]): void {
     if (items === undefined || items === null) {
       throw new DomainError('items', 'REQUIRED', 'Os itens do pedido não podem ser nulos ou indefinidos.');
     }

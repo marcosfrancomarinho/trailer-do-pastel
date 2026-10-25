@@ -15,9 +15,9 @@ import { ApplicationError } from '../../errors/application-error.js';
 
 export class UpdateProduct {
   public constructor(
-    private readonly productRepository: ProductRepository,
-    private readonly additionRepository: AdditionRepository,
-    private readonly categoryRepository: CategoryRepository,
+    private productRepository: ProductRepository,
+    private additionRepository: AdditionRepository,
+    private categoryRepository: CategoryRepository,
   ) {}
 
   public async update(input: UpdateProductInput): Promise<UpdateProductOutput> {

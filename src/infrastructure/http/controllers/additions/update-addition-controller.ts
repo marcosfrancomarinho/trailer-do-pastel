@@ -3,7 +3,7 @@ import type { UpdateAdditionInput, UpdateAdditionOutput } from '../../../../appl
 import { UpdateAddition } from '../../../../application/use-cases/additions/update-addition.js';
 
 export class UpdateAdditionController {
-  public constructor(private readonly updateAddition: UpdateAddition) {}
+  public constructor(private updateAddition: UpdateAddition) {}
 
   public async execute(request: Request, response: Response<UpdateAdditionOutput>, next: NextFunction): Promise<void> {
     try {

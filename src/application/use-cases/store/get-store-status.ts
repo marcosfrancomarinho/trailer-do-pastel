@@ -2,7 +2,7 @@ import type { StoreRepository } from '../../../domain/repositories/store-reposit
 import type { StoreStatusOutput } from '../../dtos/store/store-status-dto.js';
 
 export class GetStoreStatus {
-  public constructor(private readonly storeRepository: StoreRepository) {}
+  public constructor(private storeRepository: StoreRepository) {}
 
   public get(): Promise<StoreStatusOutput> {
     return this.storeRepository.getStatus();

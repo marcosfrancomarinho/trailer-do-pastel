@@ -5,8 +5,8 @@ import type { UserRepository } from '../../../domain/repositories/user-repositor
 
 export class RequireAuthentication {
   public constructor(
-    private readonly authTokenGateway: AuthTokenGateway,
-    private readonly userRepository: UserRepository,
+    private authTokenGateway: AuthTokenGateway,
+    private userRepository: UserRepository,
   ) {}
 
   public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {

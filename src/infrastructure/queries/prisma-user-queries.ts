@@ -3,7 +3,7 @@ import type { ListUsersOutput } from '../../application/dtos/users/list-users-dt
 import type { UserQueries } from '../../application/queries/user-queries.js';
 
 export class PrismaUserQueries implements UserQueries {
-  public constructor(private readonly prisma: PrismaClient) {}
+  public constructor(private prisma: PrismaClient) {}
 
   public async findAll(): Promise<ListUsersOutput> {
     const users = await this.prisma.user.findMany({

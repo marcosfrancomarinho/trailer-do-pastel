@@ -3,7 +3,7 @@ import type { CreateAdditionInput, CreateAdditionOutput } from '../../../../appl
 import { CreateAddition } from '../../../../application/use-cases/additions/create-addition.js';
 
 export class CreateAdditionController {
-  public constructor(private readonly createAddition: CreateAddition) {}
+  public constructor(private createAddition: CreateAddition) {}
 
   public async execute(request: Request, response: Response<CreateAdditionOutput>, next: NextFunction): Promise<void> {
     try {
