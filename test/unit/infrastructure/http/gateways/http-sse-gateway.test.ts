@@ -77,4 +77,20 @@ describe('HttpSseGateway', () => {
     assert.equal(response.destroy.mock.callCount(), 1);
     assert.equal(response.write.mock.callCount(), 2);
   });
+  it('sends customer notifications exclusively to the matching order stream', context => {
+    const gateway = new HttpSseGateway();
+    const staff = createClient(context);
+    const customerOne = createClient(context);
+    const customerTwo = createClient(context);
+    gateway.connect(staff.client);
+    gateway.connect(customerOne.client, 'order-1');
+    gateway.connect(customerTwo.client, 'order-2');
+
+    gateway.send({ orderId: 'order-1', status: 'COMPLETED' });
+
+    assert.equal(staff.response.write.mock.callCount(), 2);
+    assert.equal(customerOne.response.write.mock.callCount(), 2);
+    assert.equal(customerTwo.response.write.mock.callCount(), 1);
+  });
+
 });
