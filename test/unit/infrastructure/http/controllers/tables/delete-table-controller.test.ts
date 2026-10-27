@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
@@ -9,7 +10,7 @@ import type { TableRepository } from '../../../../../../src/domain/repositories/
 describe('DeleteTableController', () => {
   it('returns 204 after archiving the table', async (context) => {
     const archive = context.mock.fn(async () => {});
-    const controller = new DeleteTableController(new DeleteTable({ archive } as unknown as TableRepository));
+    const controller = new DeleteTableController(new DeleteTable({ archive } as unknown as TableRepository, new EventObserver()));
     const request = { params: { tableId: 'table-1' } } as unknown as Request;
     const { response, status } = createResponse(context);
     const send = context.mock.fn();
