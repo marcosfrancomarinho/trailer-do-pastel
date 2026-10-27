@@ -3,6 +3,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { createTestDatabase, resetTestDatabase, seedCatalog } from '../helpers/database.js';
 import { CreateOrder } from '../../src/application/use-cases/orders/create-order.js';
+import { EventObserver } from '../../src/application/observer/event-observer.js';
 import { CreateOrderItemService } from '../../src/application/services/create-order-item-service.js';
 import { CreateOrderItemAdditionService } from '../../src/application/services/create-order-item-addition-service.js';
 import { PrismaOrderRepository } from '../../src/infrastructure/repositories/prisma-order-repository.js';
@@ -39,7 +40,7 @@ describe('PostgreSQL integration: migrations, repositories, use cases and transa
     db = await createTestDatabase('integration');
     orders = new PrismaOrderRepository(db.prisma);
     createOrder = new CreateOrder(orders, new CreateOrderItemService(new PrismaProductRepository(db.prisma),
-      new CreateOrderItemAdditionService(new PrismaAdditionRepository(db.prisma))));
+      new CreateOrderItemAdditionService(new PrismaAdditionRepository(db.prisma))), new EventObserver());
   });
   after(async () => { await db?.close(); });
   beforeEach(async () => {

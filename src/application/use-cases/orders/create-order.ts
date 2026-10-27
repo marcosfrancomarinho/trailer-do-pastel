@@ -7,11 +7,13 @@ import { OrderObservation } from '../../../domain/value-objects/order/order-obse
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 import type { CreateOrderInput, CreateOrderOutput } from '../../dtos/orders/create-order-dto.js';
 import { CreateOrderItemService } from '../../services/create-order-item-service.js';
+import { EventObserver } from '../../observer/event-observer.js';
 
 export class CreateOrder {
   public constructor(
     private orderRepository: OrderRepository,
     private createOrderItemService: CreateOrderItemService,
+    private eventObserver: EventObserver,
   ) {}
 
   public async create(input: CreateOrderInput): Promise<CreateOrderOutput> {
@@ -29,6 +31,12 @@ export class CreateOrder {
 
     const order = Order.create(customerName, customerPhone, items, observation, tableId, undefined, userId);
     const { id, trackingToken } = await this.orderRepository.save(order);
+
+    await this.eventObserver.notify({
+      orderId: id,
+      status: order.getStatus(),
+      tableId: order.getTableId(),
+    });
 
     return {
       id,

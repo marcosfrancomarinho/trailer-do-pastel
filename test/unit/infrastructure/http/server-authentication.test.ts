@@ -7,6 +7,7 @@ import { ErrorHandler } from '../../../../src/infrastructure/http/middlewares/er
 import { RequireAuthentication } from '../../../../src/infrastructure/http/middlewares/require-authentication.js';
 import { RequireAdmin } from '../../../../src/infrastructure/http/middlewares/require-admin.js';
 import { Server } from '../../../../src/infrastructure/http/server.js';
+import { HttpSseGateway } from '../../../../src/infrastructure/http/gateways/http-sse-gateway.js';
 import { createResponse } from '../../../helpers/http-fixtures.js';
 import type { UserRepository } from '../../../../src/domain/repositories/user-repository.js';
 
@@ -23,7 +24,8 @@ describe('Server authentication', () => {
     const gateway = new JwtAuthTokenGateway('a'.repeat(32));
     const controller = { execute() {}, getStatus() {}, open() {}, close() {} };
     const dependencies = [
-      ...Array.from({ length: Server.length - 3 }, () => controller),
+      ...Array.from({ length: Server.length - 4 }, () => controller),
+      new HttpSseGateway(),
       new RequireAuthentication(gateway, { findRoleById: async () => 'EMPLOYEE' } as UserRepository),
       new RequireAdmin(),
       new ErrorHandler(),
@@ -57,6 +59,7 @@ describe('Server authentication', () => {
     }
 
     const protectedRoutes = [
+      ['GET', '/orders/events'],
       ['POST', '/tables'],
       ['DELETE', '/tables/:tableId'],
       ['GET', '/tables'],

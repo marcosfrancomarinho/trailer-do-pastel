@@ -58,6 +58,57 @@ describe('E2E: production bundle → HTTP → authentication → use cases → P
       categoryId, price: '0.10', additionIds: [additionId] }, adminToken)).id;
   });
 
+  it('streams order creation, status changes and table removals through the authenticated SSE route', async () => {
+    await request('GET', '/orders/events', 401);
+    const table = await request('POST', '/tables', 201, { number: 1 }, employeeToken);
+    const abort = new AbortController();
+    const timeout = setTimeout(() => abort.abort(), 15_000);
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
+    try {
+      const response = await fetch(`${api.baseUrl}/orders/events`, {
+        headers: { Authorization: `Bearer ${employeeToken}` }, signal: abort.signal,
+      });
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get('content-type') ?? '', /^text\/event-stream/);
+      assert.ok(response.body);
+      reader = response.body.getReader();
+      const stream = reader;
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const nextEvent = async (): Promise<unknown> => {
+        while (true) {
+          let boundary = buffer.indexOf('\n\n');
+          while (boundary !== -1) {
+            const frame = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+            const data = frame.split('\n').find(line => line.startsWith('data: '));
+            if (data) return JSON.parse(data.slice(6));
+            boundary = buffer.indexOf('\n\n');
+          }
+          const { value, done } = await stream.read();
+          assert.equal(done, false, 'SSE stream closed before the expected event');
+          buffer += decoder.decode(value, { stream: true });
+        }
+      };
+
+      const online = await request<CreateOrderOutput>('POST', '/orders', 201, orderBody());
+      assert.deepEqual(await nextEvent(), { orderId: online.id, status: 'PENDING', tableId: null });
+      await request('PATCH', `/orders/${online.id}/status`, 200, { status: 'CANCELED' }, employeeToken);
+      assert.deepEqual(await nextEvent(), { orderId: online.id, status: 'CANCELED' });
+
+      const tableOrder = await request<CreateOrderOutput>('POST', '/orders', 201,
+        { ...orderBody(), tableId: table.id }, employeeToken);
+      assert.deepEqual(await nextEvent(), { orderId: tableOrder.id, status: 'PENDING', tableId: table.id });
+      await request('DELETE', `/tables/${table.id}/orders/${tableOrder.id}`, 200, undefined, employeeToken);
+      assert.deepEqual(await nextEvent(), { orderId: tableOrder.id, status: 'CANCELED', tableId: table.id });
+    } finally {
+      clearTimeout(timeout);
+      abort.abort();
+      await reader?.cancel().catch(() => {});
+    }
+  });
+
   it('authenticates real password hashes and enforces roles, self-deletion and token revocation', async () => {
     await request('POST', '/login', 401, { name: 'Atendente', password: 'Errada123' });
     await request('GET', '/users', 401);

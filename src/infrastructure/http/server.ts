@@ -37,6 +37,7 @@ import { ListOrderHistoryController } from './controllers/orders/list-order-hist
 import { ErrorHandler } from './middlewares/error-handler.js';
 import { RequireAuthentication } from './middlewares/require-authentication.js';
 import { RequireAdmin } from './middlewares/require-admin.js';
+import { HttpSseGateway } from './gateways/http-sse-gateway.js';
 
 export class Server {
   private app = express();
@@ -75,6 +76,7 @@ export class Server {
     private listPendingOrdersController: ListPendingOrdersController,
     private listPreparingOrdersController: ListPreparingOrdersController,
     private listOrderHistoryController: ListOrderHistoryController,
+    private sseGateway: HttpSseGateway,
     private requireAuthentication: RequireAuthentication,
     private requireAdmin: RequireAdmin,
     private errorHandler: ErrorHandler,
@@ -164,6 +166,10 @@ export class Server {
   }
 
   private registerOrderRoutes(authenticate: RequestHandler): void {
+    this.app.get('/orders/events', authenticate, (_request, response) => {
+      this.sseGateway.connect(response);
+    });
+
     const authenticateTableOrder: RequestHandler = (request, response, next) => {
       if (request.body?.tableId == null) {
         next();

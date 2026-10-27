@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { AppConfig, createApplicationContext } from '../../kit-dev/di/container.js';
+import { EventObserver } from '../application/observer/event-observer.js';
 import type { AuthTokenGateway } from '../application/gateways/auth-token-gateway.js';
 import type { PasswordHasher } from '../application/gateways/password-hasher.js';
+import { SseListener } from '../application/listeners/sse-listener.js';
 import type { AdditionQueries } from '../application/queries/addition-queries.js';
 import type { CategoryQueries } from '../application/queries/category-queries.js';
 import type { OrderQueries } from '../application/queries/order-queries.js';
@@ -54,6 +56,7 @@ import type { TableRepository } from '../domain/repositories/table-repository.js
 import type { UserRepository } from '../domain/repositories/user-repository.js';
 import { BcryptPasswordHasher } from '../infrastructure/gateways/bcrypt-password-hasher.js';
 import { JwtAuthTokenGateway } from '../infrastructure/gateways/jwt-auth-token-gateway.js';
+import { HttpSseGateway } from '../infrastructure/http/gateways/http-sse-gateway.js';
 import { CreateAdditionController } from '../infrastructure/http/controllers/additions/create-addition-controller.js';
 import { DeleteAdditionController } from '../infrastructure/http/controllers/additions/delete-addition-controller.js';
 import { ListAdditionsByProductController } from '../infrastructure/http/controllers/additions/list-additions-by-product-controller.js';
@@ -110,9 +113,16 @@ import { JWT_SECRET_TOKEN } from './tokens.js';
 const providers = new AppConfig()
   .useFactory(PrismaClient, () => new PrismaClient())
   .useValue(JWT_SECRET_TOKEN, process.env.JWT_SECRET)
+  .useFactory(EventObserver, (context) => {
+    const observer = new EventObserver();
+    observer.register(context.get(SseListener));
+    return observer;
+  })
   .useClass<OrderRepository>(PrismaOrderRepository)
   .useClass<PasswordHasher>(BcryptPasswordHasher)
   .useClass<AuthTokenGateway>(JwtAuthTokenGateway, [JWT_SECRET_TOKEN])
+  .useClass(HttpSseGateway)
+  .useFactory(SseListener, (context) => new SseListener(context.get(HttpSseGateway)))
   .useClass<UserRepository>(PrismaUserRepository)
   .useClass<AdditionRepository>(PrismaAdditionRepository)
   .useClass<CategoryRepository>(PrismaCategoryRepository)

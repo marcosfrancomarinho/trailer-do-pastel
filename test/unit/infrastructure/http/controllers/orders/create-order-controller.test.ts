@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import { CreateOrder } from '../../../../../../src/application/use-cases/orders/create-order.js';
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import { CreateOrderItemService } from '../../../../../../src/application/services/create-order-item-service.js';
 import { CreateOrderItemAdditionService } from '../../../../../../src/application/services/create-order-item-addition-service.js';
 import { ApplicationError } from '../../../../../../src/application/errors/application-error.js';
@@ -13,7 +14,7 @@ import { createOrderRepository, createProductRepository, createAdditionRepositor
 function createUseCase(): CreateOrder {
   const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
   const itemService = new CreateOrderItemService(createProductRepository(), additionService);
-  return new CreateOrder(createOrderRepository(), itemService);
+  return new CreateOrder(createOrderRepository(), itemService, new EventObserver());
 }
 
 describe('CreateOrderController', () => {

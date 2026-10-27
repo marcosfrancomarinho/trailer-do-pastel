@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import { UpdateOrderStatus } from '../../../../../../src/application/use-cases/orders/update-order-status.js';
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import { UpdateOrderStatusController } from '../../../../../../src/infrastructure/http/controllers/orders/update-order-status-controller.js';
 import { createOrderRepository } from '../../../../../helpers/order-fixtures.js';
 import { createResponse } from '../../../../../helpers/http-fixtures.js';
 
 describe('UpdateOrderStatusController', () => {
   it('reads the order ID from the route and responds with the new status', async (context) => {
-    const useCase = new UpdateOrderStatus(createOrderRepository());
+    const useCase = new UpdateOrderStatus(createOrderRepository(), new EventObserver());
     const update = context.mock.method(useCase, 'update', async () => ({ id: 'order-1', status: 'COMPLETED' as const }));
     const controller = new UpdateOrderStatusController(useCase);
     const request = {
@@ -28,7 +29,7 @@ describe('UpdateOrderStatusController', () => {
 
   it('forwards errors without writing a response', async (context) => {
     const failure = new Error('Database unavailable');
-    const useCase = new UpdateOrderStatus(createOrderRepository({ updateStatus: async () => { throw failure; } }));
+    const useCase = new UpdateOrderStatus(createOrderRepository({ updateStatus: async () => { throw failure; } }), new EventObserver());
     const controller = new UpdateOrderStatusController(useCase);
     const { response, status, json } = createResponse(context);
     const next = context.mock.fn();

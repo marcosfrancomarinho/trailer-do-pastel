@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import type { CreateOrderInput } from '../../../../../src/application/dtos/orders/create-order-dto.js';
 import { ApplicationError } from '../../../../../src/application/errors/application-error.js';
 import { CreateOrder } from '../../../../../src/application/use-cases/orders/create-order.js';
+import { EventObserver } from '../../../../../src/application/observer/event-observer.js';
 import { CreateOrderItemService } from '../../../../../src/application/services/create-order-item-service.js';
 import { CreateOrderItemAdditionService } from '../../../../../src/application/services/create-order-item-addition-service.js';
 import { DomainError } from '../../../../../src/domain/errors/domain-error.js';
@@ -23,15 +24,62 @@ describe('CreateOrder', () => {
     orderRepository: OrderRepository,
     productRepository: ProductRepository = createProductRepository(),
     additionRepository: AdditionRepository = createAdditionRepository(),
+    eventObserver: EventObserver = new EventObserver(),
   ) => new CreateOrder(
     orderRepository,
     new CreateOrderItemService(productRepository, new CreateOrderItemAdditionService(additionRepository)),
+    eventObserver,
   );
   const input: CreateOrderInput = {
     customerName: ' Marcos ',
     customerPhone: '(11) 99999-9999',
     items: [{ productId: 'product-1', quantity: 2, additions: [] }],
   };
+
+  it('notifies listeners with saved order details after persistence and awaits their completion', async () => {
+    const calls: string[] = [];
+    const observer = new EventObserver();
+    observer.register<{ orderId: string; status: string; tableId: string | null }>({
+      async handle(event) {
+        assert.deepEqual(event, { orderId: 'saved-order-id', status: 'PENDING', tableId: null });
+        assert.deepEqual(calls, ['saved']);
+        await Promise.resolve();
+        calls.push('notified');
+      },
+    });
+    const repository = createOrderRepository({
+      async save() {
+        await Promise.resolve();
+        calls.push('saved');
+        return { id: 'saved-order-id', trackingToken: 'tracking-token' };
+      },
+    });
+    const output = await createUseCase(repository, undefined, undefined, observer).create(input);
+    assert.equal(output.id, 'saved-order-id');
+    assert.deepEqual(calls, ['saved', 'notified']);
+  });
+
+  it('includes the normalized table ID when notifying a table order', async () => {
+    const events: unknown[] = [];
+    const observer = new EventObserver();
+    observer.register({ handle(event) { events.push(event); } });
+    await createUseCase(createOrderRepository(), undefined, undefined, observer).create({
+      ...input, tableId: ' table-1 ', userId: 'employee-1',
+    });
+    assert.deepEqual(events, [{ orderId: 'order-id', status: 'PENDING', tableId: 'table-1' }]);
+  });
+
+  it('does not notify listeners when validation or persistence fails', async () => {
+    const events: unknown[] = [];
+    const observer = new EventObserver();
+    observer.register({ handle(event) { events.push(event); } });
+    const failure = new Error('Save failed');
+    const repository = createOrderRepository({ save: async () => { throw failure; } });
+    const useCase = createUseCase(repository, undefined, undefined, observer);
+    await assert.rejects(useCase.create({ ...input, customerName: ' ' }), DomainError);
+    await assert.rejects(useCase.create(input), (error: unknown) => error === failure);
+    assert.deepEqual(events, []);
+  });
 
   it('uses catalog names and prices, applies additions per unit, and returns the saved ID and tracking token', async (context) => {
     const save = context.mock.fn(async (order: Order) => {
