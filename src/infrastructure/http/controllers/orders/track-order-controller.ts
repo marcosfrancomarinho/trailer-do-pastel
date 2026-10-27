@@ -5,6 +5,10 @@ import { TrackOrder } from '../../../../application/use-cases/orders/track-order
 export class TrackOrderController {
   public constructor(private trackOrder: TrackOrder) {}
 
+  public resolveOrderId(trackingToken: string): Promise<string> {
+    return this.trackOrder.resolveOrderId(trackingToken);
+  }
+
   public async execute(
     request: Request<{ trackingToken: string }>,
     response: Response<TrackOrderOutput>,
