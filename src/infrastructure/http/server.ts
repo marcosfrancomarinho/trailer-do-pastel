@@ -169,6 +169,15 @@ export class Server {
     this.app.get('/orders/events', authenticate, (_request, response) => {
       this.sseGateway.connect(response);
     });
+    // Canal público limitado ao pedido autorizado pelo token de acompanhamento.
+    this.app.get('/orders/tracking/:trackingToken/events', async (request, response, next) => {
+      try {
+        const orderId = await this.trackOrderController.resolveOrderId(request.params.trackingToken as string);
+        this.sseGateway.connect(response, orderId);
+      } catch (error) {
+        next(error);
+      }
+    });
 
     const authenticateTableOrder: RequestHandler = (request, response, next) => {
       if (request.body?.tableId == null) {
