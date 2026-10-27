@@ -9,4 +9,5 @@ export interface OrderQueries {
   findPreparing(range?: OrderDateRange): Promise<PreparingOrderListItem[]>;
   findHistory(range?: OrderDateRange): Promise<OrderHistoryListItem[]>;
   findByTrackingToken(trackingToken: string): Promise<TrackOrderOutput | null>;
+  findOrderIdByTrackingToken(trackingToken: string): Promise<string | null>;
 }
