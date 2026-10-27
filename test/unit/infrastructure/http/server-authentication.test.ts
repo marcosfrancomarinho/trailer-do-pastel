@@ -88,6 +88,9 @@ describe('Server authentication', () => {
       ['GET', '/orders/tracking/:trackingToken/events'],
       ['GET', '/store/status'],
       ['GET', '/store/events'],
+      ['GET', '/push/vapid-public-key'],
+      ['POST', '/orders/tracking/:trackingToken/push'],
+      ['DELETE', '/orders/tracking/:trackingToken/push'],
     ] as const;
 
     for (const [method, path] of publicRoutes) {
