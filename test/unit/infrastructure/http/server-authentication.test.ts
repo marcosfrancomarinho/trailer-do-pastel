@@ -85,6 +85,7 @@ describe('Server authentication', () => {
       ['GET', '/categories'],
       ['GET', '/categories/:categoryId/products'],
       ['GET', '/orders/tracking/:trackingToken'],
+      ['GET', '/orders/tracking/:trackingToken/events'],
       ['GET', '/store/status'],
     ] as const;
 
