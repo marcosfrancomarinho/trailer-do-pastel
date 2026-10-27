@@ -10,6 +10,11 @@ import { OrderItemMap } from '../map/order-item-map.js';
 export class PrismaOrderQueries implements OrderQueries {
   public constructor(private prisma: PrismaClient) {}
 
+  public async findOrderIdByTrackingToken(trackingToken: string): Promise<string | null> {
+    const order = await this.prisma.order.findUnique({ where: { trackingToken }, select: { id: true } });
+    return order?.id ?? null;
+  }
+
   public async findByTrackingToken(trackingToken: string): Promise<TrackOrderOutput | null> {
     const order = await this.prisma.order.findUnique({
       where: { trackingToken },
