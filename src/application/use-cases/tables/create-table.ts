@@ -1,3 +1,4 @@
+import { EventObserver } from '../../observer/event-observer.js';
 import { Table } from '../../../domain/entities/table.js';
 import type { TableRepository } from '../../../domain/repositories/table-repository.js';
 import { TableNumber } from '../../../domain/value-objects/table/table-number.js';
@@ -6,7 +7,7 @@ import type { CreateTableInput, CreateTableOutput } from '../../dtos/tables/crea
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateTable {
-  public constructor(private tableRepository: TableRepository) {}
+  public constructor(private tableRepository: TableRepository, private eventObserver: EventObserver) {}
 
   public async create(input: CreateTableInput): Promise<CreateTableOutput> {
     const number = TableNumber.create(input.number);
@@ -20,6 +21,7 @@ export class CreateTable {
 
     const table = Table.create(number, status);
     const id = await this.tableRepository.save(table);
+    await this.eventObserver.notify({ type: 'TABLE_CREATED', tableId: id });
 
     return {
       id,
