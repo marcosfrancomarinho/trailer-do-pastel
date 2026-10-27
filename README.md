@@ -41,6 +41,22 @@ Comandos principais:
 
 Execute `npm run test:unit`, `npm run test:integration` e `npm run test:e2e` para as três camadas, ou `npm run test:all` para executar todas. Integração e E2E usam PostgreSQL real com schemas temporários isolados. Veja a [configuração e os cenários cobertos](test/README.md).
 
+## Web Push — pedido pronto com o navegador fechado
+
+A notificação de pedido `COMPLETED` usa o Service Worker do frontend, inscrições individuais vinculadas ao token de acompanhamento e a tabela `push_subscriptions`. Execute `yarn prisma migrate deploy` no PostgreSQL antes de ativar.
+
+Gere o par VAPID **uma única vez** (Node.js 22+):
+
+```bash
+node -e "const e=require('node:crypto').createECDH('prime256v1');e.generateKeys();console.log('VAPID_PUBLIC_KEY='+e.getPublicKey().toString('base64url'));console.log('VAPID_PRIVATE_KEY='+e.getPrivateKey().toString('base64url'))"
+```
+
+Nas variáveis de ambiente do **backend**, configure `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT=mailto:contato@seudominio.com` (substitua por um e-mail de contato válido). **Não publique a chave privada no frontend.** Reinicie o backend após configurar. A mesma chave pública é entregue em `GET /push/vapid-public-key`.
+
+A página pública `/pedidos` registra inscrições no `POST /orders/tracking/:trackingToken/push` após o cliente conceder permissão, com suporte a remoção via `DELETE` na mesma rota. A inscrição fica vinculada exclusivamente ao pedido autorizado pelo token. Quando esse pedido é concluído, o backend entrega Web Push criptografado e remove inscrições expiradas.
+
+O site deve ser acessado por **HTTPS** e o dispositivo/navegador deve suportar Push API. Em iPhone/iPad, normalmente é necessário adicionar a página à Tela de Início antes de permitir Web Push. Notificações podem ser restringidas pelo sistema operacional ou pelo navegador. A entrega depende dos serviços de push e não é garantida em todos os cenários.
+
 ## Como usar a API
 
 Todas as requisições com corpo usam `Content-Type: application/json`. Rotas protegidas exigem:
