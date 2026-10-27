@@ -129,7 +129,6 @@ model Order {
 
   items     OrderItem[]
   histories OrderStatusHistory[]
-  pushSubscriptions PushSubscription[]
   table     Table? @relation(fields: [tableId], references: [id], onDelete: Restrict)
   user      User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   tableSession TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
@@ -211,18 +210,4 @@ model OrderItemAddition {
 
   @@unique([orderItemId, additionId])
   @@map("order_item_additions")
-}
-
-model PushSubscription {
-  id        String   @id @default(uuid())
-  orderId   String   @map("order_id")
-  endpoint  String
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now()) @map("created_at")
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@unique([orderId, endpoint])
-  @@index([orderId])
-  @@map("push_subscriptions")
 }
