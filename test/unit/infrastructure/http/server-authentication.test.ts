@@ -87,6 +87,7 @@ describe('Server authentication', () => {
       ['GET', '/orders/tracking/:trackingToken'],
       ['GET', '/orders/tracking/:trackingToken/events'],
       ['GET', '/store/status'],
+      ['GET', '/store/events'],
     ] as const;
 
     for (const [method, path] of publicRoutes) {
