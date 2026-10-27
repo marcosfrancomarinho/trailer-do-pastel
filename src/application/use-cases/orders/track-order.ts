@@ -6,6 +6,13 @@ import type { OrderQueries } from '../../queries/order-queries.js';
 export class TrackOrder {
   public constructor(private orderQueries: OrderQueries) {}
 
+  public async resolveOrderId(trackingTokenValue: string): Promise<string> {
+    const trackingToken = ReferenceId.create(trackingTokenValue, 'trackingToken');
+    const id = await this.orderQueries.findOrderIdByTrackingToken(trackingToken.getValue());
+    if (!id) throw new ApplicationError('trackingToken', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
+    return id;
+  }
+
   public async track(input: TrackOrderInput): Promise<TrackOrderOutput> {
     const trackingToken = ReferenceId.create(input.trackingToken, 'trackingToken');
     const order = await this.orderQueries.findByTrackingToken(trackingToken.getValue());
