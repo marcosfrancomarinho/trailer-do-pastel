@@ -97,7 +97,7 @@ export class PushNotifications {
     const payload = JSON.stringify({
       title: 'Trailer do Pastel — Pedido pronto!',
       body: 'Seu pedido #' + order.id.slice(0, 8) + ' está pronto para retirada.',
-      url: '/meus-pedidos',
+      url: '/pedidos',
       tag: 'trailer-pedido-' + order.id,
     });
     await Promise.allSettled(order.pushSubscriptions.map(async (subscription) => {
