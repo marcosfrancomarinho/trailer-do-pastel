@@ -6,6 +6,44 @@ import { PrismaAdditionRepository } from '../src/infrastructure/repositories/pri
 import { buildCatalogAddition } from './helpers/order-fixtures.js';
 
 describe('PrismaAdditionRepository', () => {
+  it('loads an addition with its decimal price and returns null for an unknown ID', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) =>
+      where.id === 'addition-1'
+        ? { id: 'addition-1', name: 'Queijo extra', price: new Prisma.Decimal('2.50'), available: false }
+        : null);
+    const repository = new PrismaAdditionRepository({ addition: { findUnique } } as unknown as PrismaClient);
+
+    const addition = await repository.findAdditionById('addition-1');
+    assert.equal(addition?.getName(), 'Queijo extra');
+    assert.equal(addition?.getPrice(), '2.5');
+    assert.equal(addition?.isAvailable(), false);
+    assert.equal(await repository.findAdditionById('missing'), null);
+  });
+
+  it('checks name uniqueness and saves a catalog addition', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { name: string } }) =>
+      where.name === 'Queijo extra' ? { id: 'addition-1' } : null);
+    const create = context.mock.fn(async () => ({ id: 'addition-2' }));
+    const repository = new PrismaAdditionRepository({ addition: { findUnique, create } } as unknown as PrismaClient);
+
+    assert.equal(await repository.existsByName('Queijo extra'), true);
+    assert.equal(await repository.existsByName('Bacon'), false);
+    assert.equal(await repository.save(buildCatalogAddition('addition-2', '3.50', false)), 'addition-2');
+    assert.deepEqual(create.mock.calls[0].arguments, [{
+      data: { name: 'Queijo extra', price: '3.5', available: false }, select: { id: true },
+    }]);
+  });
+
+  it('translates a duplicate name error during creation', async () => {
+    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
+      code: 'P2002', clientVersion: '6.19.3',
+    });
+    const prisma = { addition: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+
+    await assert.rejects(new PrismaAdditionRepository(prisma).save(buildCatalogAddition('addition-1', '2.50')),
+      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+  });
+
   it('checks the exact product and addition association', async (context) => {
     const findUnique = context.mock.fn(async ({ where }: {
       where: {

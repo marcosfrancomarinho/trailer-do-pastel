@@ -31,4 +31,25 @@ describe('StoreController', () => {
     assert.deepEqual(setHeader.mock.calls[0].arguments, ['Cache-Control', 'no-store']);
     assert.equal(next.mock.callCount(), 0);
   });
+
+  it('forwards storage failures for status, opening and closing without sending a success response', async (context) => {
+    const failure = new Error('Database unavailable');
+    const repository = {
+      getStatus: async () => { throw failure; },
+      setStatus: async () => { throw failure; },
+    };
+    const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository));
+
+    for (const method of ['getStatus', 'open', 'close'] as const) {
+      const { response, status, json } = createResponse(context);
+      response.set = context.mock.fn(() => response);
+      const next = context.mock.fn();
+
+      await controller[method]({} as Request, response, next);
+
+      assert.deepEqual(next.mock.calls[0].arguments, [failure]);
+      assert.equal(status.mock.callCount(), 0);
+      assert.equal(json.mock.callCount(), 0);
+    }
+  });
 });

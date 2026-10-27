@@ -8,6 +8,16 @@ import { UserName } from '../src/domain/value-objects/user/user-name.js';
 import { UserPassword } from '../src/domain/value-objects/user/user-password.js';
 
 describe('PrismaUserRepository.findByName', () => {
+  it('checks whether a user name is already registered', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { name: string } }) =>
+      where.name === 'Marcos' ? { id: 'user-1' } : null);
+    const repository = new PrismaUserRepository({ user: { findUnique } } as unknown as PrismaClient);
+
+    assert.equal(await repository.existsByName('Marcos'), true);
+    assert.equal(await repository.existsByName('Ana'), false);
+    assert.deepEqual(findUnique.mock.calls[0].arguments, [{ where: { name: 'Marcos' }, select: { id: true } }]);
+  });
+
   it('reconstitutes the user with the stored hash and ID', async (context) => {
     const hash = '$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
     const findUnique = context.mock.fn(async () => ({ id: 'user-1', name: 'Marcos', password: hash, role: 'ADMIN' }));
@@ -80,5 +90,17 @@ describe('PrismaUserRepository.save', () => {
 
     assert.equal(await new PrismaUserRepository(prisma).save(user), 'user-2');
     assert.equal(create.mock.calls[0].arguments[0].data.role, 'EMPLOYEE');
+  });
+
+  it('reports a duplicate name when creation races with another request', async () => {
+    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
+      code: 'P2002', clientVersion: '6.19.3',
+    });
+    const prisma = { user: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+    const user = User.create(UserName.create('Funcionário'), UserPassword.create('Pastel123!'));
+    user.defineEncryptedPassword('$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+
+    await assert.rejects(new PrismaUserRepository(prisma).save(user),
+      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
   });
 });

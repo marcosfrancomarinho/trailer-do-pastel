@@ -15,6 +15,7 @@ let knownTestFiles = '';
 let recreateTimer;
 let closing = false;
 let watchMode = false;
+let coverageMode = false;
 
 async function collectFiles(directory, matcher) {
   let entries;
@@ -51,6 +52,12 @@ async function findTests() {
 }
 
 async function findCompiledTests() {
+  if (coverageMode) {
+    return (
+      await collectFiles(join(cacheRoot, 'coverage', 'test'), (name) => /\.(test|spec)\.js$/i.test(name))
+    ).sort();
+  }
+
   return (
     await collectFiles(cacheRoot, (name) => /\.(mjs|cjs|js)$/i.test(name))
   ).sort();
@@ -89,7 +96,10 @@ async function runTests() {
 
   const { NODE_TEST_CONTEXT: _nodeTestContext, ...env } = process.env;
 
-  const child = spawn(process.execPath, ['--test', ...files], {
+  const nodeArgs = coverageMode
+    ? ['--experimental-test-coverage', '--enable-source-maps', '--test', ...files]
+    : ['--test', ...files];
+  const child = spawn(process.execPath, nodeArgs, {
     cwd: projectRoot,
     env,
     stdio: 'inherit',
@@ -129,21 +139,27 @@ async function createTestContext(files) {
   await rm(cacheRoot, { recursive: true, force: true });
   await mkdir(cacheRoot, { recursive: true });
 
+  const entryPoints = coverageMode
+    ? [
+        ...files,
+        ...(await collectFiles(join(projectRoot, 'src'), (name) => /\.(ts|tsx|mts|cts)$/i.test(name))),
+        ...(await collectFiles(testRoot, (name) => /\.(ts|tsx|mts|cts)$/i.test(name))),
+      ]
+    : files;
+
   return context({
     absWorkingDir: projectRoot,
-    entryPoints: files,
-    outbase: testRoot,
-    outdir: cacheRoot,
-    outExtension: {
-      '.js': '.mjs',
-    },
-    bundle: true,
+    entryPoints: [...new Set(entryPoints)],
+    outbase: coverageMode ? projectRoot : testRoot,
+    outdir: coverageMode ? join(cacheRoot, 'coverage') : cacheRoot,
+    ...(coverageMode ? {} : { outExtension: { '.js': '.mjs' } }),
+    bundle: !coverageMode,
     packages: 'external',
     platform: 'node',
     format: 'esm',
     target: 'node22',
     sourcemap: 'inline',
-    minifyWhitespace: true,
+    minifyWhitespace: !coverageMode,
     logLevel: 'silent',
     plugins: [
       {
@@ -230,7 +246,8 @@ async function main() {
   const args = process.argv.slice(2);
   watchMode =
     args.includes('--watch') || process.env.npm_config_watch === 'true';
-  const target = args.find((argument) => argument !== '--watch');
+  coverageMode = args.includes('--coverage');
+  const target = args.find((argument) => argument !== '--watch' && argument !== '--coverage');
 
   if (target) {
     const { generateTest } = require('./generator.cjs');

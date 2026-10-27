@@ -11,6 +11,7 @@
 @additionPrice = 2.50
 @adminName = SEU_USUARIO
 @adminPassword = SUA_SENHA
+@historyDate = 2026-10-24
 @accessToken = {{loginUsuario.response.body.$.accessToken}}
 
 ### Login de usuário — 200; retorna name, role e accessToken
@@ -107,7 +108,7 @@ Authorization: Bearer {{accessToken}}
 
 {
   "price": "14.50",
-  "available": false
+  "available": true
 }
 
 ### Substituir os adicionais do produto — 200
@@ -122,7 +123,7 @@ Authorization: Bearer {{accessToken}}
 
 ### Listar produtos da categoria — 200
 # @name listarProdutosDaCategoria
-GET {{baseUrl}}/categories/47ba76d2-1205-4f88-a025-b18ce14afb40/products
+GET {{baseUrl}}/categories/{{criarCategoria.response.body.$.id}}/products
 
 ### Cadastrar adicional — 201
 # @name criarAdicional
@@ -159,7 +160,7 @@ Authorization: Bearer {{accessToken}}
 
 GET {{baseUrl}}/products/{{criarProduto.response.body.$.id}}/additions
 
-### Cadastrar pedido com adicional — 201; total esperado: "30"
+### Cadastrar pedido com adicional — 201; total esperado: "34"
 # Os IDs abaixo são obtidos das respostas de criarProduto e criarAdicional.
 # A quantidade do adicional é aplicada a cada unidade do produto.
 # @name criarPedido
@@ -184,7 +185,7 @@ Content-Type: application/json
   ]
 }
 
-### Cadastrar pedido sem adicionais — 201; total esperado: "12.5"
+### Cadastrar pedido sem adicionais — 201; total esperado: "14.5"
 # O controller usa [] quando additions não é informado.
 POST {{baseUrl}}/orders
 Content-Type: application/json
@@ -234,6 +235,11 @@ Authorization: Bearer {{accessToken}}
 
 ### Consultar comandas atuais e anteriores, incluindo pedidos cancelados — 200
 GET {{baseUrl}}/tables/{{criarMesa.response.body.$.id}}/sessions
+Authorization: Bearer {{accessToken}}
+
+### Consultar comandas fechadas e pedidos online finalizados no dia — 200 (somente ADMIN)
+# Ajuste historyDate para o dia do fechamento da comanda ou da finalização do pedido online.
+GET {{baseUrl}}/tables/sessions/history?date={{historyDate}}
 Authorization: Bearer {{accessToken}}
 
 ### Excluir mesa livre, preservando comandas anteriores — 204

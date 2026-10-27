@@ -6,6 +6,16 @@ import { PrismaProductRepository } from '../src/infrastructure/repositories/pris
 import { buildCatalogAddition, buildCatalogProduct } from './helpers/order-fixtures.js';
 
 describe('PrismaProductRepository', () => {
+  it('checks name uniqueness and returns null for an unknown product', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { name?: string; id?: string } }) =>
+      where.name === 'Pastel de queijo' ? { id: 'product-1' } : null);
+    const repository = new PrismaProductRepository({ product: { findUnique } } as unknown as PrismaClient);
+
+    assert.equal(await repository.existsByName('Pastel de queijo'), true);
+    assert.equal(await repository.existsByName('Pastel de carne'), false);
+    assert.equal(await repository.findProductById('missing'), null);
+  });
+
   it('checks whether a product ID exists', async (context) => {
     const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) => {
       return where.id === 'product-1' ? { id: 'product-1' } : null;
@@ -73,6 +83,16 @@ describe('PrismaProductRepository', () => {
     assert.equal(Object.hasOwn(data, 'additions'), false);
   });
 
+  it('reports a duplicate product name during creation', async () => {
+    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
+      code: 'P2002', clientVersion: '6.19.3',
+    });
+    const prisma = { product: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+
+    await assert.rejects(new PrismaProductRepository(prisma).save(buildCatalogProduct('unused-id', '12.50'), []),
+      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+  });
+
   it('updates product fields and replaces addition links in one transaction', async (context) => {
     const calls: string[] = [];
     const update = context.mock.fn(async () => { calls.push('update'); });
@@ -122,6 +142,25 @@ describe('PrismaProductRepository', () => {
     await repository.update(product, []);
     assert.equal(deleteMany.mock.callCount(), 1);
     assert.equal(createMany.mock.callCount(), 0);
+  });
+
+  it('reports duplicate names, missing products and invalid category or addition links on update', async () => {
+    const cases = [
+      { prismaCode: 'P2002', field: 'name', applicationCode: 'ALREADY_EXISTS' },
+      { prismaCode: 'P2025', field: 'productId', applicationCode: 'NOT_FOUND' },
+      { prismaCode: 'P2003', field: 'product', applicationCode: 'NOT_FOUND' },
+    ];
+
+    for (const { prismaCode, field, applicationCode } of cases) {
+      const failure = new Prisma.PrismaClientKnownRequestError('Update failed', {
+        code: prismaCode, clientVersion: '6.19.3',
+      });
+      const prisma = { $transaction: async () => { throw failure; } } as unknown as PrismaClient;
+
+      await assert.rejects(new PrismaProductRepository(prisma).update(buildCatalogProduct('product-1', '12.50')),
+        (error: unknown) => error instanceof ApplicationError
+          && error.field === field && error.code === applicationCode);
+    }
   });
 
   it('deletes a product by ID', async (context) => {

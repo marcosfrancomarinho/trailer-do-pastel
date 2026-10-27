@@ -115,4 +115,34 @@ describe('PrismaTableOrderQueries table sessions', () => {
     });
   });
 
+  it('reports a canceled online order with zero collected total and preserves a legacy null total', async () => {
+    const closedAt = new Date('2026-10-24T13:00:00Z');
+    const prisma = {
+      tableSession: { findMany: async () => [{
+        id: 'session-legacy', tableId: 'table-1', table: { number: 4 },
+        openedAt: new Date('2026-10-24T12:00:00Z'), closedAt, closedTotal: null, orders: [],
+      }] },
+      order: { findMany: async () => [{
+        id: 'online-canceled', customerName: 'Ana', customerPhone: '11999999999',
+        user: null, observation: null, tableId: null, status: 'CANCELED',
+        total: new Prisma.Decimal('15'), createdAt: new Date('2026-10-24T12:00:00Z'),
+        updatedAt: closedAt, items: [],
+      }] },
+    } as unknown as PrismaClient;
+
+    const results = await new PrismaTableOrderQueries(prisma).findClosedSessions('2026-10-24');
+
+    assert.deepEqual(results.map((result) => [result.origin, result.session.id]), [
+      ['TABLE', 'session-legacy'], ['ONLINE', 'online-canceled'],
+    ]);
+    assert.equal(results[0].session.closedTotal, null);
+    assert.equal(results[1].session.closedTotal, '0');
+    assert.equal(results[1].session.orders[0].status, 'CANCELED');
+  });
+
+  it('returns null for sessions of an unknown table', async () => {
+    const prisma = { table: { findUnique: async () => null } } as unknown as PrismaClient;
+    assert.equal(await new PrismaTableOrderQueries(prisma).findSessionsByTableId('missing'), null);
+  });
+
 });

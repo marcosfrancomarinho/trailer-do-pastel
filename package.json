@@ -10,6 +10,7 @@
     "build": "node kit-dev/build/esbuild.config.cjs",
     "type": "node kit-dev/build/type.cjs",
     "test": "node kit-dev/test/test.cjs",
+    "test:coverage": "node kit-dev/test/test.cjs --coverage",
     "write": "node kit-dev/write/write.cjs",
     "w": "node kit-dev/write/write.cjs"
   },

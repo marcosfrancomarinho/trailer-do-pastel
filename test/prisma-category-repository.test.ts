@@ -7,6 +7,28 @@ import { CategoryName } from '../src/domain/value-objects/category/category-name
 import { PrismaCategoryRepository } from '../src/infrastructure/repositories/prisma-category-repository.js';
 
 describe('PrismaCategoryRepository', () => {
+  it('checks name uniqueness and saves a category', async (context) => {
+    const findUnique = context.mock.fn(async ({ where }: { where: { name: string } }) =>
+      where.name === 'Pastéis' ? { id: 'category-1' } : null);
+    const create = context.mock.fn(async () => ({ id: 'category-2' }));
+    const repository = new PrismaCategoryRepository({ category: { findUnique, create } } as unknown as PrismaClient);
+
+    assert.equal(await repository.existsByName('Pastéis'), true);
+    assert.equal(await repository.existsByName('Bebidas'), false);
+    assert.equal(await repository.save(Category.create(CategoryName.create('Bebidas'))), 'category-2');
+    assert.deepEqual(create.mock.calls[0].arguments, [{ data: { name: 'Bebidas' }, select: { id: true } }]);
+  });
+
+  it('translates a duplicate name error during creation', async () => {
+    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
+      code: 'P2002', clientVersion: '6.19.3',
+    });
+    const prisma = { category: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+
+    await assert.rejects(new PrismaCategoryRepository(prisma).save(Category.create(CategoryName.create('Pastéis'))),
+      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+  });
+
   it('updates the name of a category', async (context) => {
     const update = context.mock.fn(async () => ({ id: 'category-1' }));
     const prisma = { category: { update } } as unknown as PrismaClient;
