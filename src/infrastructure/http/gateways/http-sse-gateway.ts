@@ -2,9 +2,9 @@ import type { Response } from 'express';
 import type { SseGateway } from '../../../application/gateways/sse-gateway.js';
 
 export class HttpSseGateway implements SseGateway {
-  private readonly clients = new Map<Response, { heartbeat: NodeJS.Timeout; orderId: string | null }>();
+  private readonly clients = new Map<Response, { heartbeat: NodeJS.Timeout; orderId: string | null; storeOnly: boolean }>();
 
-  public connect(response: Response, orderId: string | null = null): void {
+  public connect(response: Response, orderId: string | null = null, storeOnly = false): void {
     if (this.clients.has(response) || response.destroyed || response.writableEnded) return;
 
     response.status(200);
@@ -18,7 +18,7 @@ export class HttpSseGateway implements SseGateway {
 
     const heartbeat = setInterval(() => this.write(response, ': heartbeat\n\n'), 25_000);
     heartbeat.unref();
-    this.clients.set(response, { heartbeat, orderId });
+    this.clients.set(response, { heartbeat, orderId, storeOnly });
 
     response.once('close', () => this.disconnect(response));
     response.once('error', () => {
@@ -33,9 +33,12 @@ export class HttpSseGateway implements SseGateway {
     const data = JSON.stringify(event);
     if (data === undefined) return;
 
+    const isStoreEvent = event && typeof event === 'object' && 'type' in event && ['STORE_OPENED', 'STORE_CLOSED'].includes(String((event as { type?: unknown }).type));
     const eventOrderId = event && typeof event === 'object' && 'orderId' in event ? (event as { orderId?: unknown }).orderId : null;
     for (const [response, client] of this.clients) {
+      if (client.storeOnly && !isStoreEvent) continue;
       if (client.orderId !== null && client.orderId !== eventOrderId) continue;
+      if (client.orderId !== null && isStoreEvent) continue;
       this.write(response, `data: ${data}\n\n`);
     }
   }
