@@ -55,7 +55,7 @@ export class PushNotifications {
       where: { trackingToken: token },
       select: { id: true, status: true, tableId: true },
     });
-    if (!order || order.tableId !== null || order.status === 'CANCELED') {
+    if (!order || order.tableId !== null || (order.status === 'CANCELED' || order.status === 'COMPLETED')) {
       throw new ApplicationError('trackingToken', 'NOT_FOUND', 'Pedido não encontrado.');
     }
     return order.id;
@@ -104,7 +104,7 @@ export class PushNotifications {
     });
     await Promise.allSettled(order.pushSubscriptions.map(async (subscription) => {
       const response = await this.deliver(subscription.endpoint, subscription.p256dh, subscription.auth, payload);
-      if (response.status === 404 || response.status === 410) {
+      if (response.ok || response.status === 404 || response.status === 410) {
         await this.db.pushSubscription.delete({ where: { id: subscription.id } });
       } else if (!response.ok) {
         console.warn('Web Push HTTP', response.status);
