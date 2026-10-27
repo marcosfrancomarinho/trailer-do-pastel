@@ -5,15 +5,22 @@ import { CreateTable } from '../../../../application/use-cases/tables/create-tab
 export class CreateTableController {
   public constructor(private createTable: CreateTable) {}
 
-  public async execute(request: Request, response: Response<CreateTableOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<CreateTableOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const input: CreateTableInput = {
-        number: request.body?.number,
-        ...(request.body?.status !== undefined ? { status: request.body.status } : {}),
-      };
+      const { number, status } = request.body ?? {};
+      const input: CreateTableInput = { number };
+
+      if (status !== undefined) {
+        input.status = status;
+      }
+
       const output = await this.createTable.create(input);
-      response.status(201);
-      response.json(output);
+
+      response.status(201).json(output);
     } catch (error) {
       next(error);
     }

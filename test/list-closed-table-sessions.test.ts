@@ -9,10 +9,8 @@ describe('ListClosedTableSessions', () => {
     const useCase = new ListClosedTableSessions({
       findClosedSessions: async date => { receivedDate = date; return []; },
     } as ConstructorParameters<typeof ListClosedTableSessions>[0]);
-    assert.deepEqual(await useCase.list('2026-10-24'), { comandas: [] });
+    assert.deepEqual(await useCase.list({ date: '2026-10-24' }), { comandas: [] });
     assert.equal(receivedDate, '2026-10-24');
-    assert.deepEqual(await useCase.list(), { comandas: [] });
-    assert.equal(receivedDate, undefined);
   });
 
   it('rejects invalid dates before querying', async () => {
@@ -20,8 +18,8 @@ describe('ListClosedTableSessions', () => {
     const useCase = new ListClosedTableSessions({
       findClosedSessions: async () => { calls++; return []; },
     } as ConstructorParameters<typeof ListClosedTableSessions>[0]);
-    for (const date of ['2026-02-30', '2026-13-01', '24/10/2026', '']) {
-      await assert.rejects(useCase.list(date), (error: unknown) =>
+    for (const date of [undefined, '2026-02-30', '2026-13-01', '24/10/2026', '']) {
+      await assert.rejects(useCase.list({ date: date as string }), (error: unknown) =>
         error instanceof DomainError && error.field === 'date');
     }
     assert.equal(calls, 0);

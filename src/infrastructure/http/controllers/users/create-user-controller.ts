@@ -5,7 +5,11 @@ import { CreateUser } from '../../../../application/use-cases/users/create-user.
 export class CreateUserController {
   public constructor(private createUser: CreateUser) {}
 
-  public async execute(request: Request, response: Response<CreateUserOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<CreateUserOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const input: CreateUserInput = {
         name: request.body?.name,

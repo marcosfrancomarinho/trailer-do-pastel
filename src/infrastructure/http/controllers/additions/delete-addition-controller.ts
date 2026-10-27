@@ -4,9 +4,16 @@ import { DeleteAddition } from '../../../../application/use-cases/additions/dele
 export class DeleteAdditionController {
   public constructor(private deleteAddition: DeleteAddition) {}
 
-  public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ additionId: string }>,
+    response: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      await this.deleteAddition.delete({ additionId: request.params.additionId as string });
+      const { additionId } = request.params;
+
+      await this.deleteAddition.delete({ additionId });
+
       response.status(204).send();
     } catch (error) {
       next(error);

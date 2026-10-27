@@ -2,17 +2,19 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
 import type { Order } from '../../domain/entities/order.js';
 import type { OrderRepository, SavedOrder } from '../../domain/repositories/order-repository.js';
-import type { OrderStatus } from '../../domain/value-objects/order/order-status.js';
+import type { OrderStatus, OrderStatusValue } from '../../domain/value-objects/order/order-status.js';
 
 export class PrismaOrderRepository implements OrderRepository {
+  private REMOVABLE_ORDER_STATUSES: OrderStatusValue[] = ['PENDING', 'CONFIRMED', 'PREPARING'];
   public constructor(private prisma: PrismaClient) {}
 
   public async removeFromTable(tableId: string, orderId: string): Promise<string> {
     return this.prisma.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<Array<{ status: string }>>`
-        SELECT status FROM "tables" WHERE id = ${tableId} FOR UPDATE
+      // Impede que a mesa seja liberada enquanto o pedido é retirado.
+      const lockedTables = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM "tables" WHERE id = ${tableId} FOR UPDATE
       `;
-      if (rows.length === 0) {
+      if (lockedTables.length === 0) {
         throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
       }
 
@@ -23,41 +25,52 @@ export class PrismaOrderRepository implements OrderRepository {
       if (order === null || order.tableId !== tableId) {
         throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
       }
-      if (!['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)) {
+      if (!this.REMOVABLE_ORDER_STATUSES.includes(order.status)) {
         throw new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
       }
 
-      const unlinked = await tx.order.updateMany({
-        where: { id: orderId, tableId, status: { in: ['PENDING', 'CONFIRMED', 'PREPARING'] } },
+      const canceledOrder = await tx.order.updateMany({
+        where: { id: orderId, tableId, status: { in: this.REMOVABLE_ORDER_STATUSES } },
         data: { tableId: null, status: 'CANCELED' },
       });
-      if (unlinked.count !== 1) {
-        const currentOrder = await tx.order.findUnique({
-          where: { id: orderId },
-          select: { tableId: true },
-        });
-        if (currentOrder === null || currentOrder.tableId !== tableId) {
-          throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
-        }
-        throw new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
+      if (canceledOrder.count !== 1) {
+        const error = await this.getRemovalConflictError(tx, tableId, orderId);
+        throw error;
       }
 
       await tx.orderStatusHistory.create({ data: { orderId, status: 'CANCELED' } });
 
-      const adjusted = await tx.table.updateMany({
+      const adjustedTable = await tx.table.updateMany({
         where: { id: tableId, totalSpent: { gte: order.total } },
         data: { totalSpent: { decrement: order.total } },
       });
-      if (adjusted.count !== 1) {
+      if (adjustedTable.count !== 1) {
         throw new ApplicationError('tableId', 'IN_USE', 'O total da mesa está inconsistente com o pedido.');
       }
 
-      const updatedTable = await tx.table.findUniqueOrThrow({
+      const table = await tx.table.findUniqueOrThrow({
         where: { id: tableId },
         select: { totalSpent: true },
       });
-      return updatedTable.totalSpent.toString();
+      return table.totalSpent.toString();
     });
+  }
+
+  private async getRemovalConflictError(
+    tx: Prisma.TransactionClient,
+    tableId: string,
+    orderId: string,
+  ): Promise<ApplicationError> {
+    const currentOrder = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { tableId: true },
+    });
+
+    if (currentOrder?.tableId !== tableId) {
+      return new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
+    }
+
+    return new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
   }
 
   public async save(order: Order): Promise<SavedOrder> {
@@ -88,10 +101,11 @@ export class PrismaOrderRepository implements OrderRepository {
       },
       histories: { create: { status: order.getStatus() } },
     };
-    const create = (prisma: Prisma.TransactionClient, tableSessionId: string | null): Promise<SavedOrder> => prisma.order.create({
-      data: { ...data, tableSessionId },
-      select: { id: true, trackingToken: true },
-    });
+    const create = (prisma: Prisma.TransactionClient, tableSessionId: string | null): Promise<SavedOrder> =>
+      prisma.order.create({
+        data: { ...data, tableSessionId },
+        select: { id: true, trackingToken: true },
+      });
 
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -114,7 +128,8 @@ export class PrismaOrderRepository implements OrderRepository {
         }
 
         let session = await tx.tableSession.findFirst({
-          where: { tableId, closedAt: null }, select: { id: true },
+          where: { tableId, closedAt: null },
+          select: { id: true },
         });
         if (session === null) {
           session = await tx.tableSession.create({ data: { tableId }, select: { id: true } });
@@ -141,7 +156,8 @@ export class PrismaOrderRepository implements OrderRepository {
       }
 
       const current = await tx.order.findUnique({
-        where: { id }, select: { tableId: true, status: true, total: true },
+        where: { id },
+        select: { tableId: true, status: true, total: true },
       });
       if (current === null) {
         throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');

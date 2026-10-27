@@ -5,12 +5,16 @@ import { ListPendingOrders } from '../../../../application/use-cases/orders/list
 export class ListPendingOrdersController {
   public constructor(private listPendingOrders: ListPendingOrders) {}
 
-  public async execute(request: Request, response: Response<ListPendingOrdersOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<ListPendingOrdersOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const input: ListPendingOrdersInput = { date: request.query.date };
       const output = await this.listPendingOrders.list(input);
-      response.status(200);
-      response.json(output);
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

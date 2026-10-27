@@ -4,9 +4,16 @@ import { DeleteTable } from '../../../../application/use-cases/tables/delete-tab
 export class DeleteTableController {
   public constructor(private deleteTable: DeleteTable) {}
 
-  public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ tableId: string }>,
+    response: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      await this.deleteTable.delete({ tableId: request.params.tableId as string });
+      const { tableId } = request.params;
+
+      await this.deleteTable.delete({ tableId });
+
       response.status(204).send();
     } catch (error) {
       next(error);

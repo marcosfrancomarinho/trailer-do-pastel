@@ -1,7 +1,13 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
+import type { ReleaseTableOutput } from '../../application/dtos/tables/release-table-dto.js';
 import type { Table } from '../../domain/entities/table.js';
 import type { TableRepository } from '../../domain/repositories/table-repository.js';
+
+type LockedTable = {
+  status: 'FREE' | 'OCCUPIED';
+  total_spent: Prisma.Decimal;
+};
 
 export class PrismaTableRepository implements TableRepository {
   public constructor(private prisma: PrismaClient) {}
@@ -22,7 +28,8 @@ export class PrismaTableRepository implements TableRepository {
     if (archived.count === 1) return;
 
     const table = await this.prisma.table.findUnique({
-      where: { id }, select: { status: true, deletedAt: true },
+      where: { id },
+      select: { status: true, deletedAt: true },
     });
     if (!table || table.deletedAt !== null) {
       throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
@@ -31,68 +38,85 @@ export class PrismaTableRepository implements TableRepository {
   }
 
   public async save(table: Table): Promise<string> {
+    const status = table.getStatus();
+    const data: Prisma.TableCreateInput = {
+      number: table.getNumber(),
+      status,
+      totalSpent: table.getTotalSpent(),
+    };
+
+    if (status === 'OCCUPIED') {
+      data.sessions = { create: {} };
+    }
+
     try {
       const savedTable = await this.prisma.table.create({
-        data: {
-          number: table.getNumber(), status: table.getStatus(), totalSpent: table.getTotalSpent(),
-          ...(table.getStatus() === 'OCCUPIED' ? { sessions: { create: {} } } : {}),
-        },
+        data,
         select: { id: true },
       });
+
       return savedTable.id;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const isUniqueConstraintViolation = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+
+      if (isUniqueConstraintViolation) {
         throw new ApplicationError('number', 'ALREADY_EXISTS', 'Já existe uma mesa cadastrada com esse número.');
       }
+
       throw error;
     }
   }
 
-  public async release(id: string): Promise<{
-    id: string; status: 'FREE'; totalSpent: string; sessionId: string; closedTotal: string;
-  }> {
+  public async release(id: string): Promise<ReleaseTableOutput> {
     return this.prisma.$transaction(async (tx) => {
-      // A criação de pedidos também atualiza esta linha antes de inserir o pedido.
-      // O bloqueio mantém a conferência e a liberação na mesma ocupação da mesa.
-      const rows = await tx.$queryRaw<Array<{ id: string; status: string; total_spent: Prisma.Decimal }>>`
-        SELECT id, status, total_spent FROM "tables" WHERE id = ${id} FOR UPDATE
+      // A criação de pedidos bloqueia a mesma linha antes de alterar a mesa.
+      const [table] = await tx.$queryRaw<LockedTable[]>`
+        SELECT status, total_spent
+        FROM "tables"
+        WHERE id = ${id} AND deleted_at IS NULL
+        FOR UPDATE
       `;
-      const table = rows[0];
-      if (!table) {
+      if (table === undefined) {
         throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
       }
       if (table.status === 'FREE') {
         throw new ApplicationError('tableId', 'UNAVAILABLE', 'A mesa já está livre.');
       }
 
-      const activeOrders = await tx.order.count({
+      const activeOrder = await tx.order.findFirst({
         where: { tableId: id, status: { in: ['PENDING', 'CONFIRMED', 'PREPARING'] } },
+        select: { id: true },
       });
-      if (activeOrders > 0) {
+      if (activeOrder !== null) {
         throw new ApplicationError('tableId', 'IN_USE', 'A mesa possui pedidos em andamento.');
       }
 
-      const session = await tx.tableSession.findFirst({
+      const openSession = await tx.tableSession.findFirst({
         where: { tableId: id, closedAt: null },
         select: { id: true },
       });
-      if (session === null) {
+      if (openSession === null) {
         throw new ApplicationError('tableId', 'IN_USE', 'A mesa ocupada não possui uma comanda aberta.');
       }
 
+      const closedTotal = table.total_spent;
       await tx.tableSession.update({
-        where: { id: session.id },
-        data: { closedAt: new Date(), closedTotal: table.total_spent },
+        where: { id: openSession.id },
+        data: { closedAt: new Date(), closedTotal },
       });
 
-      const released = await tx.table.update({
+      const releasedTable = await tx.table.update({
         where: { id },
         data: { status: 'FREE', totalSpent: '0' },
         select: { id: true, totalSpent: true },
       });
+
       return {
-        id: released.id, status: 'FREE', totalSpent: released.totalSpent.toString(),
-        sessionId: session.id, closedTotal: table.total_spent.toString(),
+        id: releasedTable.id,
+        status: 'FREE',
+        totalSpent: releasedTable.totalSpent.toString(),
+        sessionId: openSession.id,
+        closedTotal: closedTotal.toString(),
       };
     });
   }

@@ -5,9 +5,15 @@ import { TrackOrder } from '../../../../application/use-cases/orders/track-order
 export class TrackOrderController {
   public constructor(private trackOrder: TrackOrder) {}
 
-  public async execute(request: Request, response: Response<TrackOrderOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ trackingToken: string }>,
+    response: Response<TrackOrderOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const input: TrackOrderInput = { trackingToken: request.params.trackingToken as string };
+      const { trackingToken } = request.params;
+
+      const input: TrackOrderInput = { trackingToken };
       const output = await this.trackOrder.track(input);
 
       response.setHeader('Cache-Control', 'no-store');

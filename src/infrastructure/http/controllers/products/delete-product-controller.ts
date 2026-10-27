@@ -4,9 +4,16 @@ import { DeleteProduct } from '../../../../application/use-cases/products/delete
 export class DeleteProductController {
   public constructor(private deleteProduct: DeleteProduct) {}
 
-  public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ productId: string }>,
+    response: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      await this.deleteProduct.delete({ productId: request.params.productId as string });
+      const { productId } = request.params;
+
+      await this.deleteProduct.delete({ productId });
+
       response.status(204).send();
     } catch (error) {
       next(error);

@@ -5,12 +5,15 @@ import { ListProducts } from '../../../../application/use-cases/products/list-pr
 export class ListProductsController {
   public constructor(private listProducts: ListProducts) {}
 
-  public async execute(_request: Request, response: Response<ListProductsOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    _request: Request,
+    response: Response<ListProductsOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const output = await this.listProducts.list();
 
-      response.status(200);
-      response.json(output);
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

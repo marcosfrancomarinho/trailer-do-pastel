@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { PrismaOrderQueries } from '../src/infrastructure/queries/prisma-order-queries.js';
+import { PrismaTableOrderQueries } from '../src/infrastructure/queries/prisma-table-order-queries.js';
 
-describe('PrismaOrderQueries table sessions', () => {
+describe('PrismaTableOrderQueries table sessions', () => {
   it('returns only orders of the open comanda with its current total', async (context) => {
     const findUnique = context.mock.fn(async () => ({
       id: 'table-1', number: 1, status: 'OCCUPIED', totalSpent: new Prisma.Decimal('25.50'),
@@ -27,7 +27,7 @@ describe('PrismaOrderQueries table sessions', () => {
     }));
     const prisma = { table: { findUnique } } as unknown as PrismaClient;
 
-    assert.deepEqual(await new PrismaOrderQueries(prisma).findByTableId('table-1'), {
+    assert.deepEqual(await new PrismaTableOrderQueries(prisma).findByTableId('table-1'), {
       tableId: 'table-1', number: 1, status: 'OCCUPIED', totalSpent: '25.5', sessionId: 'session-current',
       orders: [
         { id: 'order-1', createdBy: null, customerName: 'Maria', customerPhone: '11999999999', observation: null,
@@ -53,7 +53,7 @@ describe('PrismaOrderQueries table sessions', () => {
     const emptyTable = { id: 'table-1', number: 1, status: 'FREE', totalSpent: new Prisma.Decimal('0'), sessions: [] };
     const prisma = { table: { findUnique: async ({ where }: { where: { id: string } }) =>
       where.id === 'table-1' ? emptyTable : null } } as unknown as PrismaClient;
-    const queries = new PrismaOrderQueries(prisma);
+    const queries = new PrismaTableOrderQueries(prisma);
 
     assert.deepEqual(await queries.findByTableId('table-1'), {
       tableId: 'table-1', number: 1, status: 'FREE', totalSpent: '0', sessionId: null, orders: [],
@@ -74,7 +74,7 @@ describe('PrismaOrderQueries table sessions', () => {
       }],
     }));
     const prisma = { table: { findUnique } } as unknown as PrismaClient;
-    assert.deepEqual(await new PrismaOrderQueries(prisma).findSessionsByTableId('table-1'), {
+    assert.deepEqual(await new PrismaTableOrderQueries(prisma).findSessionsByTableId('table-1'), {
       tableId: 'table-1', sessions: [{
         id: 'session-old', openedAt: '2026-10-22T10:00:00.000Z',
         closedAt: '2026-10-22T11:00:00.000Z', closedTotal: '30',
@@ -101,7 +101,7 @@ describe('PrismaOrderQueries table sessions', () => {
       updatedAt: new Date('2026-10-24T14:30:00Z'), items: [],
     }]);
     const prisma = { tableSession: { findMany: findSessions }, order: { findMany: findOnline } } as unknown as PrismaClient;
-    const results = await new PrismaOrderQueries(prisma).findClosedSessions('2026-10-24');
+    const results = await new PrismaTableOrderQueries(prisma).findClosedSessions('2026-10-24');
     assert.equal(results.length, 2);
     assert.equal(results[0].origin, 'ONLINE');
     assert.equal(results[0].tableNumber, null);

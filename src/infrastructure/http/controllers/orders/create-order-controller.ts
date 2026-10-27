@@ -10,7 +10,11 @@ import { CreateOrder } from '../../../../application/use-cases/orders/create-ord
 export class CreateOrderController {
   public constructor(private createOrder: CreateOrder) {}
 
-  public async execute(request: Request, response: Response<CreateOrderOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<CreateOrderOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const requestedItems = request.body?.items ?? [];
 
@@ -40,8 +44,7 @@ export class CreateOrderController {
 
       const output = await this.createOrder.create(input);
 
-      response.status(201);
-      response.json(output);
+      response.status(201).json(output);
     } catch (error) {
       next(error);
     }

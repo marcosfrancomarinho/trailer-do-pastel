@@ -5,12 +5,15 @@ import { ListAdditions } from '../../../../application/use-cases/additions/list-
 export class ListAdditionsController {
   public constructor(private listAdditions: ListAdditions) {}
 
-  public async execute(_request: Request, response: Response<ListAdditionsOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    _request: Request,
+    response: Response<ListAdditionsOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const output = await this.listAdditions.list();
 
-      response.status(200);
-      response.json(output);
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

@@ -9,26 +9,45 @@ export class StoreController {
     private setStoreStatus: SetStoreStatus,
   ) {}
 
-  public async getStatus(_request: Request, response: Response<StoreStatusOutput>, next: NextFunction): Promise<void> {
+  public async getStatus(
+    _request: Request,
+    response: Response<StoreStatusOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       response.set('Cache-Control', 'no-store');
-      response.status(200).json(await this.getStoreStatus.get());
+
+      const output = await this.getStoreStatus.get();
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }
   }
 
-  public async open(_request: Request, response: Response<StoreStatusOutput>, next: NextFunction): Promise<void> {
+  public async open(
+    _request: Request,
+    response: Response<StoreStatusOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      response.status(200).json(await this.setStoreStatus.open());
+      const output = await this.setStoreStatus.open();
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }
   }
 
-  public async close(_request: Request, response: Response<StoreStatusOutput>, next: NextFunction): Promise<void> {
+  public async close(
+    _request: Request,
+    response: Response<StoreStatusOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      response.status(200).json(await this.setStoreStatus.close());
+      const output = await this.setStoreStatus.close();
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

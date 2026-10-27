@@ -5,11 +5,16 @@ import { ReleaseTable } from '../../../../application/use-cases/tables/release-t
 export class ReleaseTableController {
   public constructor(private releaseTable: ReleaseTable) {}
 
-  public async execute(request: Request, response: Response<ReleaseTableOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ tableId: string }>,
+    response: Response<ReleaseTableOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const output = await this.releaseTable.release({ tableId: request.params.tableId as string });
-      response.status(200);
-      response.json(output);
+      const { tableId } = request.params;
+      const output = await this.releaseTable.release({ tableId });
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

@@ -5,7 +5,11 @@ import { CreateProduct } from '../../../../application/use-cases/products/create
 export class CreateProductController {
   public constructor(private createProduct: CreateProduct) {}
 
-  public async execute(request: Request, response: Response<CreateProductOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<CreateProductOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const input: CreateProductInput = {
         name: request.body?.name,

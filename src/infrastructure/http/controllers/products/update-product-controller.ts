@@ -5,10 +5,16 @@ import { UpdateProduct } from '../../../../application/use-cases/products/update
 export class UpdateProductController {
   public constructor(private updateProduct: UpdateProduct) {}
 
-  public async execute(request: Request, response: Response<UpdateProductOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ productId: string }>,
+    response: Response<UpdateProductOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
+      const { productId } = request.params;
+
       const input: UpdateProductInput = {
-        productId: request.params.productId as string,
+        productId,
         name: request.body?.name,
         description: request.body?.description,
         categoryId: request.body?.categoryId,
@@ -19,8 +25,8 @@ export class UpdateProductController {
       };
 
       const output = await this.updateProduct.update(input);
-      response.status(200);
-      response.json(output);
+
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

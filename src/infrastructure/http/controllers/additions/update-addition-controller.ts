@@ -5,16 +5,23 @@ import { UpdateAddition } from '../../../../application/use-cases/additions/upda
 export class UpdateAdditionController {
   public constructor(private updateAddition: UpdateAddition) {}
 
-  public async execute(request: Request, response: Response<UpdateAdditionOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ additionId: string }>,
+    response: Response<UpdateAdditionOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
+      const { additionId } = request.params;
+
       const input: UpdateAdditionInput = {
-        additionId: request.params.additionId as string,
+        additionId,
         name: request.body?.name,
         price: request.body?.price,
         available: request.body?.available,
       };
 
       const output = await this.updateAddition.update(input);
+
       response.status(200).json(output);
     } catch (error) {
       next(error);

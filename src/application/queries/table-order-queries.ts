@@ -3,7 +3,7 @@ import type { ClosedTableSessionListItem } from '../dtos/tables/list-closed-tabl
 import type { ListTableSessionsOutput } from '../dtos/tables/list-table-sessions-dto.js';
 
 export interface TableOrderQueries {
-  findClosedSessions(date?: string): Promise<ClosedTableSessionListItem[]>;
+  findClosedSessions(date: string): Promise<ClosedTableSessionListItem[]>;
   findByTableId(tableId: string): Promise<ListTableOrdersOutput | null>;
   findSessionsByTableId(tableId: string): Promise<ListTableSessionsOutput | null>;
 }

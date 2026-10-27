@@ -14,11 +14,12 @@ export class ListAdditionsByProductController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const input: ListAdditionsByProductInput = { productId: request.params.productId };
+      const { productId } = request.params;
+
+      const input: ListAdditionsByProductInput = { productId };
       const output = await this.listAdditionsByProduct.list(input);
 
-      response.status(200);
-      response.json(output);
+      response.status(200).json(output);
     } catch (error) {
       next(error);
     }

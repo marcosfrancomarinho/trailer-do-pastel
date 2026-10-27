@@ -5,7 +5,11 @@ import { LoginUser } from '../../../../application/use-cases/users/login-user.js
 export class LoginUserController {
   public constructor(private loginUser: LoginUser) {}
 
-  public async execute(request: Request, response: Response<LoginUserOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request,
+    response: Response<LoginUserOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const input: LoginUserInput = {
         name: request.body?.name,

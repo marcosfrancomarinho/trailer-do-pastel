@@ -4,9 +4,16 @@ import { DeleteCategory } from '../../../../application/use-cases/categories/del
 export class DeleteCategoryController {
   public constructor(private deleteCategory: DeleteCategory) {}
 
-  public async execute(request: Request, response: Response, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ categoryId: string }>,
+    response: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      await this.deleteCategory.delete({ categoryId: request.params.categoryId as string });
+      const { categoryId } = request.params;
+
+      await this.deleteCategory.delete({ categoryId });
+
       response.status(204).send();
     } catch (error) {
       next(error);

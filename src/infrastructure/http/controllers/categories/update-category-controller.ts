@@ -5,14 +5,21 @@ import { UpdateCategory } from '../../../../application/use-cases/categories/upd
 export class UpdateCategoryController {
   public constructor(private updateCategory: UpdateCategory) {}
 
-  public async execute(request: Request, response: Response<UpdateCategoryOutput>, next: NextFunction): Promise<void> {
+  public async execute(
+    request: Request<{ categoryId: string }>,
+    response: Response<UpdateCategoryOutput>,
+    next: NextFunction,
+  ): Promise<void> {
     try {
+      const { categoryId } = request.params;
+
       const input: UpdateCategoryInput = {
         name: request.body?.name,
-        categoryId: request.params.categoryId as string,
+        categoryId,
       };
 
       const output = await this.updateCategory.update(input);
+
       response.status(200).json(output);
     } catch (error) {
       next(error);

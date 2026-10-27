@@ -94,6 +94,7 @@ import { Server } from '../infrastructure/http/server.js';
 import { PrismaAdditionQueries } from '../infrastructure/queries/prisma-addition-queries.js';
 import { PrismaCategoryQueries } from '../infrastructure/queries/prisma-category-queries.js';
 import { PrismaOrderQueries } from '../infrastructure/queries/prisma-order-queries.js';
+import { PrismaTableOrderQueries } from '../infrastructure/queries/prisma-table-order-queries.js';
 import { PrismaProductQueries } from '../infrastructure/queries/prisma-product-queries.js';
 import { PrismaTableQueries } from '../infrastructure/queries/prisma-table-queries.js';
 import { PrismaUserQueries } from '../infrastructure/queries/prisma-user-queries.js';
@@ -121,7 +122,7 @@ const providers = new AppConfig()
   .useClass<AdditionQueries>(PrismaAdditionQueries)
   .useClass<ProductQueries>(PrismaProductQueries)
   .useClass<OrderQueries>(PrismaOrderQueries)
-  .useClass<TableOrderQueries>(PrismaOrderQueries)
+  .useClass<TableOrderQueries>(PrismaTableOrderQueries)
   .useClass<TableQueries>(PrismaTableQueries)
   .useClass<UserQueries>(PrismaUserQueries)
   .useClass<ProductRepository>(PrismaProductRepository)

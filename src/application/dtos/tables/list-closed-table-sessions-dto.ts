@@ -1,5 +1,9 @@
 import type { TableSessionListItem } from './list-table-sessions-dto.js';
 
+export interface ListClosedTableSessionsInput {
+  date: string;
+}
+
 export interface ClosedTableSessionListItem {
   tableId: string | null;
   tableNumber: number | null;
