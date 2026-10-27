@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
@@ -16,7 +17,7 @@ describe('StoreController', () => {
         return { status: current, updatedAt: '2026-10-23T12:00:00.000Z' };
       },
     };
-    const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository));
+    const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository, new EventObserver()));
     const { response, status, json } = createResponse(context);
     const setHeader = context.mock.fn(() => response);
     response.set = setHeader;
@@ -38,7 +39,7 @@ describe('StoreController', () => {
       getStatus: async () => { throw failure; },
       setStatus: async () => { throw failure; },
     };
-    const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository));
+    const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository, new EventObserver()));
 
     for (const method of ['getStatus', 'open', 'close'] as const) {
       const { response, status, json } = createResponse(context);
