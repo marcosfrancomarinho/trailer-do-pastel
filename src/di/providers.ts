@@ -1,4 +1,3 @@
-import { pushNotifications } from '../infrastructure/push/push-notifications.js';
 import { PrismaClient } from '@prisma/client';
 import { AppConfig, createApplicationContext } from '../../kit-dev/di/container.js';
 import { EventObserver } from '../application/observer/event-observer.js';
@@ -117,8 +116,6 @@ const providers = new AppConfig()
   .useFactory(EventObserver, (context) => {
     const observer = new EventObserver();
     observer.register(context.get(SseListener));
-    pushNotifications.configure(context.get(PrismaClient));
-    observer.register({ handle: async (event: unknown) => pushNotifications.handle(event) });
     return observer;
   })
   .useClass<OrderRepository>(PrismaOrderRepository)
