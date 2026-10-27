@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DeleteTable } from '../../../../../src/application/use-cases/tables/delete-table.js';
@@ -7,7 +8,7 @@ import type { TableRepository } from '../../../../../src/domain/repositories/tab
 describe('DeleteTable', () => {
   it('validates and archives the requested table', async (context) => {
     const archive = context.mock.fn(async () => {});
-    const useCase = new DeleteTable({ archive } as unknown as TableRepository);
+    const useCase = new DeleteTable({ archive } as unknown as TableRepository, new EventObserver());
 
     await useCase.delete({ tableId: ' table-1 ' });
 
