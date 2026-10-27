@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { CreateTable } from '../../../../../src/application/use-cases/tables/create-table.js';
@@ -20,7 +21,7 @@ describe('CreateTable', () => {
         assert.equal(table.getTotalSpent(), '0');
         return 'table-id';
       },
-    });
+    }, new EventObserver());
 
     assert.deepEqual(await useCase.create({ number: 12 }), { id: 'table-id', status: 'FREE', totalSpent: '0' });
     assert.deepEqual(calls, ['lookup', 'save']);
@@ -33,11 +34,11 @@ describe('CreateTable', () => {
         assert.equal(table.getStatus(), 'OCCUPIED');
         return 'table-id';
       },
-    });
+    }, new EventObserver());
 
     assert.deepEqual(await useCase.create({ number: 12, status: 'OCCUPIED' }), {
       id: 'table-id', status: 'OCCUPIED', totalSpent: '0',
-    });
+    }, new EventObserver());
   });
 
   it('rejects missing, invalid, and nonpositive numbers before accessing the repository', async (context) => {
