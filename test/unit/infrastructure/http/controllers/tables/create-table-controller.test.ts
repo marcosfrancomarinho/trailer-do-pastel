@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
@@ -8,7 +9,7 @@ import { createResponse } from '../../../../../helpers/http-fixtures.js';
 
 describe('CreateTableController', () => {
   it('accepts only the number and responds with 201', async (context) => {
-    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' });
+    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' }, new EventObserver());
     const create = context.mock.method(useCase, 'create');
     const controller = new CreateTableController(useCase);
     const { response, status, json } = createResponse(context);
@@ -23,7 +24,7 @@ describe('CreateTableController', () => {
   });
 
   it('passes an explicit status to the use case', async (context) => {
-    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' });
+    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' }, new EventObserver());
     const create = context.mock.method(useCase, 'create');
     const controller = new CreateTableController(useCase);
     const { response, json } = createResponse(context);
@@ -37,7 +38,7 @@ describe('CreateTableController', () => {
   });
 
   it('forwards missing number as a domain error', async (context) => {
-    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' });
+    const useCase = new CreateTable({ existsByNumber: async () => false, save: async () => 'table-id' }, new EventObserver());
     const controller = new CreateTableController(useCase);
     const { response, status } = createResponse(context);
     const next = context.mock.fn();
