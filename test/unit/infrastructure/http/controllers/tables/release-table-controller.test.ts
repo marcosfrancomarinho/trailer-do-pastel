@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
@@ -11,7 +12,7 @@ describe('ReleaseTableController', () => {
       existsByNumber: async () => false,
       save: async () => 'unused',
       release: async (id) => ({ id, status: 'FREE', totalSpent: '0', sessionId: 'session-1', closedTotal: '25.5' }),
-    });
+    }, new EventObserver());
     const release = context.mock.method(useCase, 'release');
     const controller = new ReleaseTableController(useCase);
     const { response, status, json } = createResponse(context);
