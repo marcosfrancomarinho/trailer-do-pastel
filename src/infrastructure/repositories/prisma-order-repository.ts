@@ -2,10 +2,9 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
 import type { Order } from '../../domain/entities/order.js';
 import type { OrderRepository, SavedOrder } from '../../domain/repositories/order-repository.js';
-import type { OrderStatus, OrderStatusValue } from '../../domain/value-objects/order/order-status.js';
+import { OrderStatus } from '../../domain/value-objects/order/order-status.js';
 
 export class PrismaOrderRepository implements OrderRepository {
-  private REMOVABLE_ORDER_STATUSES: OrderStatusValue[] = ['PENDING', 'CONFIRMED', 'PREPARING'];
   public constructor(private prisma: PrismaClient) {}
 
   public async removeFromTable(tableId: string, orderId: string): Promise<string> {
@@ -25,12 +24,12 @@ export class PrismaOrderRepository implements OrderRepository {
       if (order === null || order.tableId !== tableId) {
         throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
       }
-      if (!this.REMOVABLE_ORDER_STATUSES.includes(order.status)) {
+      if (!OrderStatus.create(order.status).canBeRemovedFromTable()) {
         throw new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
       }
 
       const canceledOrder = await tx.order.updateMany({
-        where: { id: orderId, tableId, status: { in: this.REMOVABLE_ORDER_STATUSES } },
+        where: { id: orderId, tableId, status: { in: OrderStatus.getActiveStatuses() } },
         data: { tableId: null, status: 'CANCELED' },
       });
       if (canceledOrder.count !== 1) {
@@ -162,13 +161,13 @@ export class PrismaOrderRepository implements OrderRepository {
       if (current === null) {
         throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
       }
-      if (current.status === 'COMPLETED' || current.status === 'CANCELED') {
+      if (!OrderStatus.create(current.status).canChangeStatus()) {
         throw new ApplicationError('status', 'UNAVAILABLE', 'Um pedido concluído ou cancelado não pode mudar de status.');
       }
 
       const statusValue = status.getValue();
       const updated = await tx.order.updateMany({
-        where: { id, status: { in: ['PENDING', 'CONFIRMED', 'PREPARING'] } },
+        where: { id, status: { in: OrderStatus.getActiveStatuses() } },
         data: { status: statusValue },
       });
       if (updated.count !== 1) {

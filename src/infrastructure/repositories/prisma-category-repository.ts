@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
+import { isForeignKeyConstraintError } from './prisma-errors.js';
 import type { Category } from '../../domain/entities/category.js';
 import type { CategoryRepository } from '../../domain/repositories/category-repository.js';
 
@@ -66,14 +67,14 @@ export class PrismaCategoryRepository implements CategoryRepository {
     try {
       await this.prisma.category.delete({ where: { id } });
     } catch (error) {
+      if (isForeignKeyConstraintError(error)) {
+        throw new ApplicationError('categoryId', 'IN_USE', 'A categoria não pode ser excluída porque possui produtos.');
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
           throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
         }
 
-        if (error.code === 'P2003') {
-          throw new ApplicationError('categoryId', 'IN_USE', 'A categoria não pode ser excluída porque possui produtos.');
-        }
       }
 
       throw error;

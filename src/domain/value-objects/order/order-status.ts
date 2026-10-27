@@ -1,6 +1,8 @@
 import { DomainError } from '../../errors/domain-error.js';
 
 export class OrderStatus {
+  private static readonly ACTIVE_STATUSES: readonly OrderStatusValue[] = ['PENDING', 'CONFIRMED', 'PREPARING'];
+
   public static VALID_STATUSES = [
     'PENDING',
     'CONFIRMED',
@@ -18,6 +20,18 @@ export class OrderStatus {
 
   public getValue(): OrderStatusValue {
     return this.status;
+  }
+
+  public static getActiveStatuses(): OrderStatusValue[] {
+    return [...OrderStatus.ACTIVE_STATUSES];
+  }
+
+  public canChangeStatus(): boolean {
+    return OrderStatus.ACTIVE_STATUSES.includes(this.status);
+  }
+
+  public canBeRemovedFromTable(): boolean {
+    return this.canChangeStatus();
   }
 
   private static validate(status: unknown): asserts status is OrderStatusValue {

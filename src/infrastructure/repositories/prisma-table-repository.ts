@@ -3,6 +3,8 @@ import { ApplicationError } from '../../application/errors/application-error.js'
 import type { ReleaseTableOutput } from '../../application/dtos/tables/release-table-dto.js';
 import type { Table } from '../../domain/entities/table.js';
 import type { TableRepository } from '../../domain/repositories/table-repository.js';
+import { OrderStatus } from '../../domain/value-objects/order/order-status.js';
+import { TableReleasePolicy } from '../../domain/policies/table-release-policy.js';
 
 type LockedTable = {
   status: 'FREE' | 'OCCUPIED';
@@ -79,29 +81,33 @@ export class PrismaTableRepository implements TableRepository {
       if (table === undefined) {
         throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
       }
-      if (table.status === 'FREE') {
-        throw new ApplicationError('tableId', 'UNAVAILABLE', 'A mesa já está livre.');
-      }
-
-      const activeOrder = await tx.order.findFirst({
-        where: { tableId: id, status: { in: ['PENDING', 'CONFIRMED', 'PREPARING'] } },
-        select: { id: true },
+      // Evita consultas desnecessárias quando o estado já impede a liberação.
+      const activeOrder =
+        table.status === 'OCCUPIED'
+          ? await tx.order.findFirst({
+              where: { tableId: id, status: { in: OrderStatus.getActiveStatuses() } },
+              select: { id: true },
+            })
+          : null;
+      const openSession =
+        table.status === 'OCCUPIED' && activeOrder === null
+          ? await tx.tableSession.findFirst({
+              where: { tableId: id, closedAt: null },
+              select: { id: true },
+            })
+          : null;
+      const decision = TableReleasePolicy.evaluate({
+        status: table.status,
+        hasActiveOrders: activeOrder !== null,
+        openSessionId: openSession?.id ?? null,
       });
-      if (activeOrder !== null) {
-        throw new ApplicationError('tableId', 'IN_USE', 'A mesa possui pedidos em andamento.');
-      }
-
-      const openSession = await tx.tableSession.findFirst({
-        where: { tableId: id, closedAt: null },
-        select: { id: true },
-      });
-      if (openSession === null) {
-        throw new ApplicationError('tableId', 'IN_USE', 'A mesa ocupada não possui uma comanda aberta.');
+      if (!decision.allowed) {
+        throw new ApplicationError('tableId', decision.code, decision.message);
       }
 
       const closedTotal = table.total_spent;
       await tx.tableSession.update({
-        where: { id: openSession.id },
+        where: { id: decision.sessionId },
         data: { closedAt: new Date(), closedTotal },
       });
 
@@ -115,7 +121,7 @@ export class PrismaTableRepository implements TableRepository {
         id: releasedTable.id,
         status: 'FREE',
         totalSpent: releasedTable.totalSpent.toString(),
-        sessionId: openSession.id,
+        sessionId: decision.sessionId,
         closedTotal: closedTotal.toString(),
       };
     });

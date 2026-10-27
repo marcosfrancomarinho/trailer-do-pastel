@@ -9,6 +9,7 @@ import { ProductPrice } from '../../domain/value-objects/product/product-price.j
 import { ProductDescription } from '../../domain/value-objects/product/product-description.js';
 import { DecimalValue } from '../../domain/value-objects/shared/decimal-value.js';
 import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
+import { isForeignKeyConstraintError } from './prisma-errors.js';
 
 export class PrismaProductRepository implements ProductRepository {
   public constructor(private prisma: PrismaClient) {}
@@ -122,7 +123,7 @@ export class PrismaProductRepository implements ProductRepository {
     try {
       await this.prisma.product.delete({ where: { id } });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      if (isForeignKeyConstraintError(error)) {
         throw new ApplicationError('productId', 'IN_USE', 'O produto não pode ser excluído porque já está em um pedido.');
       }
 

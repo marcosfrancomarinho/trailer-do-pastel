@@ -41,7 +41,7 @@ function testPath(projectRoot, sourcePath) {
   const src = join(projectRoot, 'src');
   inside(src, sourcePath);
   const rel = relative(src, sourcePath);
-  return join(projectRoot, 'test', rel.slice(0, -extname(rel).length) + '.test.ts');
+  return join(projectRoot, 'test', 'unit', rel.slice(0, -extname(rel).length) + '.test.ts');
 }
 
 function importPath(destinationPath, sourcePath) {

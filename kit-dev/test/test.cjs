@@ -16,6 +16,14 @@ let recreateTimer;
 let closing = false;
 let watchMode = false;
 let coverageMode = false;
+let suite = 'unit';
+
+function belongsToSuite(file, root = testRoot) {
+  const firstDirectory = relative(root, file).split(/[\\/]/)[0];
+  return suite === 'unit'
+    ? !['integration', 'e2e'].includes(firstDirectory)
+    : firstDirectory === suite;
+}
 
 async function collectFiles(directory, matcher) {
   let entries;
@@ -48,25 +56,25 @@ async function findTests() {
       testRoot,
       (name) => /\.(test|spec)\.(ts|tsx|mts|cts)$/i.test(name),
     )
-  ).sort();
+  ).filter((file) => belongsToSuite(file)).sort();
 }
 
 async function findCompiledTests() {
   if (coverageMode) {
     return (
       await collectFiles(join(cacheRoot, 'coverage', 'test'), (name) => /\.(test|spec)\.js$/i.test(name))
-    ).sort();
+    ).filter((file) => belongsToSuite(file, join(cacheRoot, 'coverage', 'test'))).sort();
   }
 
   return (
     await collectFiles(cacheRoot, (name) => /\.(mjs|cjs|js)$/i.test(name))
-  ).sort();
+  ).filter((file) => belongsToSuite(file, cacheRoot)).sort();
 }
 
 async function findLegacyTests() {
   return (
     await collectFiles(testRoot, (name) => /\.(test|spec)\.cjs$/i.test(name))
-  ).sort();
+  ).filter((file) => belongsToSuite(file)).sort();
 }
 
 function stopTestProcess() {
@@ -247,7 +255,11 @@ async function main() {
   watchMode =
     args.includes('--watch') || process.env.npm_config_watch === 'true';
   coverageMode = args.includes('--coverage');
-  const target = args.find((argument) => argument !== '--watch' && argument !== '--coverage');
+  suite = args.find((argument) => argument.startsWith('--suite='))?.slice('--suite='.length) ?? 'unit';
+  if (!['unit', 'integration', 'e2e'].includes(suite)) {
+    throw new Error('Unknown test suite. Use unit, integration or e2e.');
+  }
+  const target = args.find((argument) => argument !== '--watch' && argument !== '--coverage' && !argument.startsWith('--suite='));
 
   if (target) {
     const { generateTest } = require('./generator.cjs');
@@ -263,7 +275,7 @@ async function main() {
   const hasTests = await refreshContext(true);
 
   if (!watchMode) {
-    if (!hasTests) await close(0);
+    if (!hasTests) await close(suite === 'unit' ? 0 : 1);
     return;
   }
 
