@@ -1,4 +1,3 @@
-import { pushNotifications } from '../push/push-notifications.js';
 import express, { type RequestHandler } from 'express';
 import cors from 'cors';
 import type { Server as HttpServer } from 'node:http';
@@ -169,21 +168,6 @@ export class Server {
   private registerOrderRoutes(authenticate: RequestHandler): void {
     this.app.get('/store/events', (_request, response) => {
       this.sseGateway.connect(response, null, true);
-    });
-    this.app.get('/push/vapid-public-key', (_request, response) => {
-      response.json({ publicKey: pushNotifications.publicKey() });
-    });
-    this.app.post('/orders/tracking/:trackingToken/push', async (request, response, next) => {
-      try {
-        await pushNotifications.subscribe(String(request.params.trackingToken), request.body);
-        response.status(204).send();
-      } catch (error) { next(error); }
-    });
-    this.app.delete('/orders/tracking/:trackingToken/push', async (request, response, next) => {
-      try {
-        await pushNotifications.unsubscribe(String(request.params.trackingToken), request.body);
-        response.status(204).send();
-      } catch (error) { next(error); }
     });
     this.app.get('/orders/events', authenticate, (_request, response) => {
       this.sseGateway.connect(response);
