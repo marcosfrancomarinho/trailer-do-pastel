@@ -1,3 +1,4 @@
+import { EventObserver } from '../../../../../src/application/observer/event-observer.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { GetStoreStatus } from '../../../../../src/application/use-cases/store/get-store-status.js';
@@ -21,7 +22,7 @@ describe('Store use cases', () => {
       const result = { status, updatedAt: '2026-10-27T12:00:00Z' };
       const setStatus = context.mock.fn(async (_status: 'OPEN' | 'CLOSED') => result);
       const getStatus = context.mock.fn(async () => result);
-      assert.strictEqual(await new SetStoreStatus({ getStatus, setStatus })[method](), result);
+      assert.strictEqual(await new SetStoreStatus({ getStatus, setStatus }, new EventObserver())[method](), result);
       assert.deepEqual(setStatus.mock.calls.map(call => call.arguments), [[status]]);
       assert.equal(getStatus.mock.callCount(), 0);
     });
@@ -33,7 +34,7 @@ describe('Store use cases', () => {
       const fail = async () => { throw failure; };
       const repository: StoreRepository = { getStatus: fail, setStatus: fail };
       await assert.rejects(method === 'get' ? new GetStoreStatus(repository).get()
-        : new SetStoreStatus(repository)[method](), (error: unknown) => error === failure);
+        : new SetStoreStatus(repository, new EventObserver())[method](), (error: unknown) => error === failure);
     });
   }
 });
