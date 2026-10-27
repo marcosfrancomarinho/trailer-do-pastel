@@ -2,9 +2,9 @@ import type { Response } from 'express';
 import type { SseGateway } from '../../../application/gateways/sse-gateway.js';
 
 export class HttpSseGateway implements SseGateway {
-  private readonly clients = new Map<Response, NodeJS.Timeout>();
+  private readonly clients = new Map<Response, { heartbeat: NodeJS.Timeout; orderId: string | null }>();
 
-  public connect(response: Response): void {
+  public connect(response: Response, orderId: string | null = null): void {
     if (this.clients.has(response) || response.destroyed || response.writableEnded) return;
 
     response.status(200);
@@ -18,7 +18,7 @@ export class HttpSseGateway implements SseGateway {
 
     const heartbeat = setInterval(() => this.write(response, ': heartbeat\n\n'), 25_000);
     heartbeat.unref();
-    this.clients.set(response, heartbeat);
+    this.clients.set(response, { heartbeat, orderId });
 
     response.once('close', () => this.disconnect(response));
     response.once('error', () => {
@@ -33,7 +33,9 @@ export class HttpSseGateway implements SseGateway {
     const data = JSON.stringify(event);
     if (data === undefined) return;
 
-    for (const response of this.clients.keys()) {
+    const eventOrderId = event && typeof event === 'object' && 'orderId' in event ? (event as { orderId?: unknown }).orderId : null;
+    for (const [response, client] of this.clients) {
+      if (client.orderId !== null && client.orderId !== eventOrderId) continue;
       this.write(response, `data: ${data}\n\n`);
     }
   }
@@ -55,7 +57,8 @@ export class HttpSseGateway implements SseGateway {
   }
 
   private disconnect(response: Response): void {
-    clearInterval(this.clients.get(response));
+    const client = this.clients.get(response);
+    if (client) clearInterval(client.heartbeat);
     this.clients.delete(response);
   }
 }
