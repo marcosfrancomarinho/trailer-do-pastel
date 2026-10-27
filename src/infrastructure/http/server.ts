@@ -166,6 +166,9 @@ export class Server {
   }
 
   private registerOrderRoutes(authenticate: RequestHandler): void {
+    this.app.get('/store/events', (_request, response) => {
+      this.sseGateway.connect(response, null, true);
+    });
     this.app.get('/orders/events', authenticate, (_request, response) => {
       this.sseGateway.connect(response);
     });
