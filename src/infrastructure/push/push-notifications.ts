@@ -83,8 +83,10 @@ export class PushNotifications {
     if (!event || typeof event !== 'object') return;
     const data = event as { orderId?: unknown; status?: unknown };
     if (data.status !== 'COMPLETED' || typeof data.orderId !== 'string') return;
-    try { await this.sendCompleted(data.orderId); }
-    catch (error) { console.error('Falha ao disparar Web Push:', error); }
+    // Não bloqueia a confirmação do pedido enquanto o provedor Push responde.
+    void this.sendCompleted(data.orderId).catch((error: unknown) => {
+      console.error('Falha ao disparar Web Push:', error);
+    });
   }
 
   private async sendCompleted(orderId: string): Promise<void> {
