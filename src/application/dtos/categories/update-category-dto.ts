@@ -1,6 +1,5 @@
 export interface UpdateCategoryInput {
   name: string;
-  sortOrder?: number;
   categoryId: string;
 }
 
