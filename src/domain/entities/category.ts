@@ -5,6 +5,7 @@ export class Category {
   private constructor(
     private name: CategoryName,
     private id: string | undefined,
+    private sortOrder = 0,
     private sortOrder: number = 0,
   ) {}
 
@@ -20,6 +21,8 @@ export class Category {
 
     return this.id;
   }
+
+  public getSortOrder(): number { return this.sortOrder; }
 
   public getSortOrder(): number { return this.sortOrder; }
 
