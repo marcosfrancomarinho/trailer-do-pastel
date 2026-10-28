@@ -105,6 +105,7 @@ model Product {
   imageUrl    String?  @map("image_url")
   available   Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   category  Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   items     OrderItem[]
@@ -180,6 +181,7 @@ model Addition {
   price     Decimal
   available Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
 
   orderItemAdditions OrderItemAddition[]
   products           ProductAddition[]
