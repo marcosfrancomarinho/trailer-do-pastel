@@ -14,7 +14,7 @@ export class CreateCategory {
     if (categoryExists) {
       throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
     }
-    const category = Category.create(name);
+    const category = Category.create(name, undefined, input.sortOrder ?? 0);
     const id = await this.categoryRepository.save(category);
 
     return { id };
