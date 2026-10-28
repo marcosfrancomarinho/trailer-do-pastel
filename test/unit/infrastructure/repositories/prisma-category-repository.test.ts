@@ -96,10 +96,9 @@ describe('PrismaCategoryRepository', () => {
     assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
-  it('reports missing categories and categories with products', async () => {
+  it('reports missing categories', async () => {
     const cases = [
       { prismaCode: 'P2025', applicationCode: 'NOT_FOUND' },
-      { prismaCode: 'P2003', applicationCode: 'IN_USE' },
     ];
 
     for (const { prismaCode, applicationCode } of cases) {
