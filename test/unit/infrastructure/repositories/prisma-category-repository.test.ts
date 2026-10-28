@@ -16,7 +16,7 @@ describe('PrismaCategoryRepository', () => {
     assert.equal(await repository.existsByName('Pastéis'), true);
     assert.equal(await repository.existsByName('Bebidas'), false);
     assert.equal(await repository.save(Category.create(CategoryName.create('Bebidas'))), 'category-2');
-    assert.deepEqual(create.mock.calls[0].arguments, [{ data: { name: 'Bebidas' }, select: { id: true } }]);
+    assert.deepEqual(create.mock.calls[0].arguments, [{ data: { name: 'Bebidas', sortOrder: 0 }, select: { id: true } }]);
   });
 
   it('translates a duplicate name error during creation', async () => {
@@ -38,7 +38,7 @@ describe('PrismaCategoryRepository', () => {
 
     assert.deepEqual(update.mock.calls[0].arguments, [{
       where: { id: 'category-1' },
-      data: { name: 'Pastéis' },
+      data: { name: 'Pastéis', sortOrder: 0 },
     }]);
   });
 
