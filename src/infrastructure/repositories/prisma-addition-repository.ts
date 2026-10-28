@@ -11,7 +11,7 @@ export class PrismaAdditionRepository implements AdditionRepository {
   public constructor(private prisma: PrismaClient) {}
 
   public async findAdditionById(id: string): Promise<Addition | null> {
-    const addition = await this.prisma.addition.findUnique({ where: { id } });
+    const addition = await this.prisma.addition.findFirst({ where: { id, deletedAt: null } });
 
     if (!addition) return null;
 
@@ -88,7 +88,7 @@ export class PrismaAdditionRepository implements AdditionRepository {
 
   public async deleteById(id: string): Promise<void> {
     try {
-      await this.prisma.addition.delete({ where: { id } });
+      await this.prisma.addition.update({ where: { id }, data: { deletedAt: new Date(), available: false } });
     } catch (error) {
       if (isForeignKeyConstraintError(error)) {
         throw new ApplicationError('additionId', 'IN_USE', 'O adicional não pode ser excluído porque já está em um pedido.');
