@@ -174,9 +174,9 @@ describe('PrismaProductRepository', () => {
     assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
-  it('reports a product used in orders', async () => {
+  it('reports a missing product when archiving', async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError('Deletion failed', {
-      code: 'P2003',
+      code: 'P2025',
       clientVersion: '6.19.3',
     });
     const prisma = {
@@ -187,7 +187,7 @@ describe('PrismaProductRepository', () => {
       new PrismaProductRepository(prisma).deleteById('product-1'),
       (error: unknown) => error instanceof ApplicationError
         && error.field === 'productId'
-        && error.code === 'IN_USE',
+        && error.code === 'NOT_FOUND',
     );
   });
 });
