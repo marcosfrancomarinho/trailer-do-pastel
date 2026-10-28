@@ -10,7 +10,7 @@ describe('PrismaCategoryQueries', () => {
       const prisma = { category: { findMany } } as unknown as PrismaClient;
       assert.strictEqual(await new PrismaCategoryQueries(prisma).findAll(), result);
       assert.deepEqual(findMany.mock.calls.map(call => call.arguments), [[{
-        select: { id: true, name: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true, name: true }, orderBy: { name: 'asc' },
       }]]);
     });
   }
