@@ -1,6 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ApplicationError } from '../../application/errors/application-error.js';
-import { isForeignKeyConstraintError } from './prisma-errors.js';
 import { Addition } from '../../domain/entities/addition.js';
 import type { AdditionRepository } from '../../domain/repositories/addition-repository.js';
 import { AdditionName } from '../../domain/value-objects/addition/addition-name.js';
@@ -90,9 +89,6 @@ export class PrismaAdditionRepository implements AdditionRepository {
     try {
       await this.prisma.addition.update({ where: { id }, data: { deletedAt: new Date(), available: false } });
     } catch (error) {
-      if (isForeignKeyConstraintError(error)) {
-        throw new ApplicationError('additionId', 'IN_USE', 'O adicional não pode ser excluído porque já está em um pedido.');
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
           throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');
