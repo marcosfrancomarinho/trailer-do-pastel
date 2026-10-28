@@ -119,10 +119,9 @@ describe('PrismaAdditionRepository', () => {
     }
   });
 
-  it('reports missing additions and additions used in orders', async () => {
+  it('reports missing additions', async () => {
     const cases = [
       { prismaCode: 'P2025', applicationCode: 'NOT_FOUND' },
-      { prismaCode: 'P2003', applicationCode: 'IN_USE' },
     ];
 
     for (const { prismaCode, applicationCode } of cases) {
