@@ -28,6 +28,7 @@ describe('PrismaProductQueries', () => {
     }]);
     assert.equal(findMany.mock.callCount(), 1);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
+      where: { deletedAt: null, category: { deletedAt: null } },
       select: {
         id: true,
         name: true,
@@ -72,7 +73,7 @@ describe('PrismaProductQueries', () => {
       available: false,
     }]);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
-      where: { categoryId: 'category-1' },
+      where: { categoryId: 'category-1', deletedAt: null, category: { deletedAt: null } },
       select: {
         id: true,
         name: true,
