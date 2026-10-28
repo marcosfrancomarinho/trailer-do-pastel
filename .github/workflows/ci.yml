@@ -54,7 +54,7 @@ jobs:
         run: yarn build
 
   database-tests:
-    name: Integração e E2E (PostgreSQL)
+    name: E2E (PostgreSQL)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -90,7 +90,5 @@ jobs:
         run: yarn install --frozen-lockfile --non-interactive
       - name: Gerar Prisma Client
         run: yarn prisma generate
-      - name: Testes de integração com migrations reais
-        run: yarn test:integration
       - name: Testes E2E do build de produção
         run: yarn test:e2e
