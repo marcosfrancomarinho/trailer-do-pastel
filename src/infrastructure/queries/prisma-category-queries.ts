@@ -7,8 +7,8 @@ export class PrismaCategoryQueries implements CategoryQueries {
 
   public async findAll(): Promise<CategoryListItem[]> {
     return this.prisma.category.findMany({
-      select: { id: true, name: true, sortOrder: true },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
     });
   }
 }
