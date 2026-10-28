@@ -9,7 +9,7 @@ describe('PrismaProductRepository', () => {
   it('checks name uniqueness and returns null for an unknown product', async (context) => {
     const findUnique = context.mock.fn(async ({ where }: { where: { name?: string; id?: string } }) =>
       where.name === 'Pastel de queijo' ? { id: 'product-1' } : null);
-    const repository = new PrismaProductRepository({ product: { findUnique } } as unknown as PrismaClient);
+    const repository = new PrismaProductRepository({ product: { findUnique, findFirst: findUnique } } as unknown as PrismaClient);
 
     assert.equal(await repository.existsByName('Pastel de queijo'), true);
     assert.equal(await repository.existsByName('Pastel de carne'), false);
@@ -20,20 +20,20 @@ describe('PrismaProductRepository', () => {
     const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) => {
       return where.id === 'product-1' ? { id: 'product-1' } : null;
     });
-    const prisma = { product: { findUnique } } as unknown as PrismaClient;
+    const prisma = { product: { findFirst: findUnique } } as unknown as PrismaClient;
     const repository = new PrismaProductRepository(prisma);
 
     assert.equal(await repository.existsById('product-1'), true);
     assert.equal(await repository.existsById('missing'), false);
     assert.deepEqual(findUnique.mock.calls[0].arguments, [
-      { where: { id: 'product-1' }, select: { id: true } },
+      { where: { id: 'product-1', deletedAt: null, category: { deletedAt: null } }, select: { id: true } },
     ]);
   });
 
   it('loads the image URL from a stored product', async () => {
     const prisma = {
       product: {
-        findUnique: async () => ({
+        findFirst: async () => ({
           id: 'product-1',
           name: 'Pastel de queijo',
           description: 'Preparado na hora',
@@ -165,11 +165,13 @@ describe('PrismaProductRepository', () => {
 
   it('deletes a product by ID', async (context) => {
     const remove = context.mock.fn(async () => ({ id: 'product-1' }));
-    const prisma = { product: { delete: remove } } as unknown as PrismaClient;
+    const prisma = { product: { update: remove } } as unknown as PrismaClient;
 
     await new PrismaProductRepository(prisma).deleteById('product-1');
 
-    assert.deepEqual(remove.mock.calls[0].arguments, [{ where: { id: 'product-1' } }]);
+    assert.deepEqual(remove.mock.calls[0].arguments[0].where, { id: 'product-1' });
+    assert.equal(remove.mock.calls[0].arguments[0].data.available, false);
+    assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
   it('reports a product used in orders', async () => {
@@ -178,7 +180,7 @@ describe('PrismaProductRepository', () => {
       clientVersion: '6.19.3',
     });
     const prisma = {
-      product: { delete: async () => { throw prismaError; } },
+      product: { update: async () => { throw prismaError; } },
     } as unknown as PrismaClient;
 
     await assert.rejects(
