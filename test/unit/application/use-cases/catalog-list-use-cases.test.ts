@@ -6,7 +6,7 @@ import type { CategoryListItem } from '../../../../src/application/dtos/categori
 import type { AdditionListItem } from '../../../../src/application/dtos/additions/list-additions-dto.js';
 
 describe('Catalog listing use cases', () => {
-  for (const result of [[], [{ id: 'category-1', name: 'Pasteis' }]] satisfies CategoryListItem[][]) {
+  for (const result of [[], [{ id: 'category-1', name: 'Pasteis', sortOrder: 0 }]] satisfies CategoryListItem[][]) {
     it(`returns ${result.length} categories without changing query results`, async (context) => {
       const findAll = context.mock.fn(async () => result);
       assert.strictEqual(await new ListCategories({ findAll }).list(), result);
