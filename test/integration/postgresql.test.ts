@@ -177,12 +177,30 @@ describe('PostgreSQL integration: migrations, repositories, use cases and transa
     assert.equal(unchanged?.isAvailable(), true);
   });
 
-  it('translates real foreign key restrictions for categories and products used in orders', async () => {
-    await orderAtTable();
-    await assert.rejects(new PrismaCategoryRepository(db.prisma).deleteById(catalog.category.id), rule('categoryId', 'IN_USE'));
-    await assert.rejects(new PrismaProductRepository(db.prisma).deleteById(catalog.product.id), rule('productId', 'IN_USE'));
-    assert.equal(await db.prisma.category.count(), 1);
-    assert.equal(await db.prisma.product.count(), 1);
+  it('archives catalog records used by past orders without deleting their history', async () => {
+    const { order } = await orderAtTable();
+    await new PrismaProductRepository(db.prisma).deleteById(catalog.product.id);
+    await new PrismaAdditionRepository(db.prisma).deleteById(catalog.addition.id);
+    await new PrismaCategoryRepository(db.prisma).deleteById(catalog.category.id);
+
+    const [category, product, addition, storedOrder] = await Promise.all([
+      db.prisma.category.findUniqueOrThrow({ where: { id: catalog.category.id } }),
+      db.prisma.product.findUniqueOrThrow({ where: { id: catalog.product.id } }),
+      db.prisma.addition.findUniqueOrThrow({ where: { id: catalog.addition.id } }),
+      db.prisma.order.findUniqueOrThrow({
+        where: { id: order.id },
+        include: { items: { include: { additions: true } } },
+      }),
+    ]);
+    assert.ok(category.deletedAt);
+    assert.ok(product.deletedAt);
+    assert.ok(addition.deletedAt);
+    assert.equal(product.available, false);
+    assert.equal(addition.available, false);
+    assert.equal(storedOrder.items[0].productId, product.id);
+    assert.equal(storedOrder.items[0].additions[0].additionId, addition.id);
+    assert.equal(await new PrismaProductRepository(db.prisma).findProductById(product.id), null);
+    assert.equal(await new PrismaAdditionRepository(db.prisma).findAdditionById(addition.id), null);
   });
 
   it('applies inclusive and exclusive local date boundaries in actual SQL', async () => {
