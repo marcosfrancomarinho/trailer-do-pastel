@@ -20,7 +20,7 @@ describe('UpdateCategoryController', () => {
 
     await controller.execute(request, response, next);
 
-    assert.deepEqual(update.mock.calls[0].arguments, [{ name: 'Pastéis', categoryId: 'category-1' }]);
+    assert.deepEqual(update.mock.calls[0].arguments, [{ name: 'Pastéis', categoryId: 'category-1', sortOrder: undefined }]);
     assert.deepEqual(status.mock.calls[0].arguments, [200]);
     assert.deepEqual(json.mock.calls[0].arguments, [{ id: 'category-1' }]);
     assert.equal(next.mock.callCount(), 0);
