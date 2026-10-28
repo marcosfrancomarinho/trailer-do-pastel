@@ -37,7 +37,7 @@ import { ListOrderHistoryController } from './controllers/orders/list-order-hist
 import { ErrorHandler } from './middlewares/error-handler.js';
 import { RequireAuthentication } from './middlewares/require-authentication.js';
 import { RequireAdmin } from './middlewares/require-admin.js';
-import { HttpSseGateway } from './gateways/http-sse-gateway.js';
+import type { SseGateway } from '../../application/gateways/sse-gateway.js';
 
 export class Server {
   private app = express();
@@ -76,7 +76,7 @@ export class Server {
     private listPendingOrdersController: ListPendingOrdersController,
     private listPreparingOrdersController: ListPreparingOrdersController,
     private listOrderHistoryController: ListOrderHistoryController,
-    private sseGateway: HttpSseGateway,
+    private sseGateway: SseGateway,
     private requireAuthentication: RequireAuthentication,
     private requireAdmin: RequireAdmin,
     private errorHandler: ErrorHandler,
