@@ -8,8 +8,8 @@ export class PrismaCategoryRepository implements CategoryRepository {
   public constructor(private prisma: PrismaClient) {}
 
   public async existsById(id: string): Promise<boolean> {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
+    const category = await this.prisma.category.findFirst({
+      where: { id, deletedAt: null },
       select: { id: true },
     });
 
@@ -65,7 +65,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
 
   public async deleteById(id: string): Promise<void> {
     try {
-      await this.prisma.category.delete({ where: { id } });
+      await this.prisma.category.update({ where: { id }, data: { deletedAt: new Date() } });
     } catch (error) {
       if (isForeignKeyConstraintError(error)) {
         throw new ApplicationError('categoryId', 'IN_USE', 'A categoria não pode ser excluída porque possui produtos.');
