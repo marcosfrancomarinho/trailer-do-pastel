@@ -28,7 +28,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
   public async save(category: Category): Promise<string> {
     try {
       const savedCategory = await this.prisma.category.create({
-        data: { name: category.getName() },
+        data: { name: category.getName(), sortOrder: category.getSortOrder() },
         select: { id: true },
       });
 
@@ -46,7 +46,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
     try {
       await this.prisma.category.update({
         where: { id: category.getId() },
-        data: { name: category.getName() },
+        data: { name: category.getName(), sortOrder: category.getSortOrder() },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
