@@ -60,6 +60,7 @@ model User {
 model Category {
   id        String   @id @default(uuid())
   name      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
 
   products Product[]
