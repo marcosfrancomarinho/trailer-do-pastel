@@ -7,6 +7,7 @@ export class PrismaAdditionQueries implements AdditionQueries {
 
   public async findAll(): Promise<AdditionListItem[]> {
     const additions = await this.prisma.addition.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -26,7 +27,7 @@ export class PrismaAdditionQueries implements AdditionQueries {
 
   public async findByProductId(productId: string): Promise<AdditionListItem[]> {
     const additions = await this.prisma.addition.findMany({
-      where: { products: { some: { productId } } },
+      where: { deletedAt: null, products: { some: { productId } } },
       select: {
         id: true,
         name: true,
