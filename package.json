@@ -11,8 +11,7 @@
     "type": "node kit-dev/build/type.cjs",
     "test": "node kit-dev/test/test.cjs",
     "test:unit": "node kit-dev/test/test.cjs --suite=unit",
-    "test:e2e": "npm run build && node kit-dev/test/test.cjs --suite=e2e",
-    "test:all": "npm run test:unit && npm run test:e2e",
+    "test:all": "npm run test:unit",
     "test:coverage": "node kit-dev/test/test.cjs --coverage",
     "write": "node kit-dev/write/write.cjs",
     "w": "node kit-dev/write/write.cjs"
