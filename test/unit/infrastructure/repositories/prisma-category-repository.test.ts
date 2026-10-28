@@ -70,28 +70,30 @@ describe('PrismaCategoryRepository', () => {
   it('checks category existence by ID', async (context) => {
     const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) =>
       where.id === 'category-1' ? { id: 'category-1' } : null);
-    const prisma = { category: { findUnique } } as unknown as PrismaClient;
+    const prisma = { category: { findFirst: findUnique } } as unknown as PrismaClient;
     const repository = new PrismaCategoryRepository(prisma);
 
     assert.equal(await repository.existsById('category-1'), true);
     assert.equal(await repository.existsById('missing'), false);
     assert.deepEqual(findUnique.mock.calls[0].arguments, [{
-      where: { id: 'category-1' },
+      where: { id: 'category-1', deletedAt: null },
       select: { id: true },
     }]);
     assert.deepEqual(findUnique.mock.calls[1].arguments, [{
-      where: { id: 'missing' },
+      where: { id: 'missing', deletedAt: null },
       select: { id: true },
     }]);
   });
 
   it('deletes a category by ID', async (context) => {
     const remove = context.mock.fn(async () => ({ id: 'category-1' }));
-    const prisma = { category: { delete: remove } } as unknown as PrismaClient;
+    const prisma = { category: { update: remove } } as unknown as PrismaClient;
 
     await new PrismaCategoryRepository(prisma).deleteById('category-1');
 
-    assert.deepEqual(remove.mock.calls[0].arguments, [{ where: { id: 'category-1' } }]);
+    assert.equal(remove.mock.callCount(), 1);
+    assert.deepEqual(remove.mock.calls[0].arguments[0].where, { id: 'category-1' });
+    assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
   it('reports missing categories and categories with products', async () => {
@@ -106,7 +108,7 @@ describe('PrismaCategoryRepository', () => {
         clientVersion: '6.19.3',
       });
       const prisma = {
-        category: { delete: async () => { throw prismaError; } },
+        category: { update: async () => { throw prismaError; } },
       } as unknown as PrismaClient;
 
       await assert.rejects(
