@@ -15,7 +15,6 @@ export class UpdateCategoryController {
 
       const input: UpdateCategoryInput = {
         name: request.body?.name,
-        sortOrder: request.body?.sortOrder,
         categoryId,
       };
 
