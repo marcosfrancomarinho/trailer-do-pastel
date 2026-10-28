@@ -13,7 +13,7 @@ Requisitos: **Node.js 22+**, **Yarn 1** e **PostgreSQL**.
 ```bash
 git clone https://github.com/marcosfrancomarinho/trailer-do-pastel.git
 cd trailer-do-pastel
-cp postgresql.env.example .env
+cp .env.example .env
 yarn install --frozen-lockfile
 yarn prisma generate
 yarn prisma migrate deploy
