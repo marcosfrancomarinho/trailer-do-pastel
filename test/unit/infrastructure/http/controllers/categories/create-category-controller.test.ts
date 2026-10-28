@@ -21,7 +21,7 @@ describe('CreateCategoryController', () => {
 
     await controller.execute({ body: { name: 'Pastéis', id: 'ignored-id' } } as Request, response, next);
 
-    assert.deepEqual(create.mock.calls[0].arguments, [{ name: 'Pastéis', sortOrder: undefined }]);
+    assert.deepEqual(create.mock.calls[0].arguments, [{ name: 'Pastéis' }]);
     assert.deepEqual(status.mock.calls[0].arguments, [201]);
     assert.deepEqual(json.mock.calls[0].arguments, [{ id: 'category-id' }]);
     assert.equal(next.mock.callCount(), 0);
