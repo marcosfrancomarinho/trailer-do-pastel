@@ -20,7 +20,7 @@ describe('PrismaAdditionQueries', () => {
       available: false,
     }]);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
-      where: { products: { some: { productId: 'product-1' } } },
+      where: { deletedAt: null, products: { some: { productId: 'product-1' } } },
       select: { id: true, name: true, price: true, available: true },
       orderBy: { name: 'asc' },
     }]);
@@ -42,6 +42,7 @@ describe('PrismaAdditionQueries', () => {
       available: false,
     }]);
     assert.deepEqual(findMany.mock.calls[0].arguments, [{
+      where: { deletedAt: null },
       select: { id: true, name: true, price: true, available: true },
       orderBy: { name: 'asc' },
     }]);
