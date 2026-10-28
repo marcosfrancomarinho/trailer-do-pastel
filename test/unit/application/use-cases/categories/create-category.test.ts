@@ -62,4 +62,18 @@ describe('CreateCategory', () => {
 
     await assert.rejects(useCase.create({ name: 'Pastéis' }), (error: unknown) => error === failure);
   });
+  it('persists a non-negative category position and rejects invalid positions', async () => {
+    const useCase = new CreateCategory({
+      existsById: async () => false,
+      existsByName: async () => false,
+      save: async (category) => {
+        assert.equal(category.getSortOrder(), 1);
+        return 'id';
+      },
+    });
+    await useCase.create({ name: 'Pastéis', sortOrder: 1 });
+    await assert.rejects(useCase.create({ name: 'Água', sortOrder: -1 }), DomainError);
+    await assert.rejects(useCase.create({ name: 'Refrigerantes', sortOrder: 1.5 }), DomainError);
+  });
+
 });
