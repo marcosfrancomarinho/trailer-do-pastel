@@ -11,7 +11,7 @@ export class CreateCategoryController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const input: CreateCategoryInput = { name: request.body?.name, sortOrder: request.body?.sortOrder };
+      const input: CreateCategoryInput = { name: request.body?.name };
       const output = await this.createCategory.create(input);
 
       response.status(201).json(output);
