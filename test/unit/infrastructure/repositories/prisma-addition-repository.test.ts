@@ -11,7 +11,7 @@ describe('PrismaAdditionRepository', () => {
       where.id === 'addition-1'
         ? { id: 'addition-1', name: 'Queijo extra', price: new Prisma.Decimal('2.50'), available: false }
         : null);
-    const repository = new PrismaAdditionRepository({ addition: { findUnique } } as unknown as PrismaClient);
+    const repository = new PrismaAdditionRepository({ addition: { findFirst: findUnique } } as unknown as PrismaClient);
 
     const addition = await repository.findAdditionById('addition-1');
     assert.equal(addition?.getName(), 'Queijo extra');
@@ -74,11 +74,13 @@ describe('PrismaAdditionRepository', () => {
 
   it('deletes an addition by ID', async (context) => {
     const remove = context.mock.fn(async () => ({ id: 'addition-1' }));
-    const prisma = { addition: { delete: remove } } as unknown as PrismaClient;
+    const prisma = { addition: { update: remove } } as unknown as PrismaClient;
 
     await new PrismaAdditionRepository(prisma).deleteById('addition-1');
 
-    assert.deepEqual(remove.mock.calls[0].arguments, [{ where: { id: 'addition-1' } }]);
+    assert.deepEqual(remove.mock.calls[0].arguments[0].where, { id: 'addition-1' });
+    assert.equal(remove.mock.calls[0].arguments[0].data.available, false);
+    assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
   it('updates the addition fields', async (context) => {
@@ -129,7 +131,7 @@ describe('PrismaAdditionRepository', () => {
         clientVersion: '6.19.3',
       });
       const prisma = {
-        addition: { delete: async () => { throw prismaError; } },
+        addition: { update: async () => { throw prismaError; } },
       } as unknown as PrismaClient;
 
       await assert.rejects(
