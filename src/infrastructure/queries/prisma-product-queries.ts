@@ -7,6 +7,7 @@ export class PrismaProductQueries implements ProductQueries {
 
   public async findAll(): Promise<ProductListItem[]> {
     const products = await this.prisma.product.findMany({
+      where: { category: { deletedAt: null } },
       select: {
         id: true,
         name: true,
@@ -32,7 +33,7 @@ export class PrismaProductQueries implements ProductQueries {
 
   public async findByCategoryId(categoryId: string): Promise<ProductListItem[]> {
     const products = await this.prisma.product.findMany({
-      where: { categoryId },
+      where: { categoryId, category: { deletedAt: null } },
       select: {
         id: true,
         name: true,
