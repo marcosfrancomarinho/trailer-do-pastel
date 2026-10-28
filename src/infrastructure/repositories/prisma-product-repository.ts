@@ -15,7 +15,7 @@ export class PrismaProductRepository implements ProductRepository {
   public constructor(private prisma: PrismaClient) {}
 
   public async findProductById(id: string): Promise<Product | null> {
-    const product = await this.prisma.product.findUnique({ where: { id } });
+    const product = await this.prisma.product.findFirst({ where: { id, deletedAt: null, category: { deletedAt: null } } });
 
     if (!product) return null;
 
@@ -28,8 +28,8 @@ export class PrismaProductRepository implements ProductRepository {
   }
 
   public async existsById(id: string): Promise<boolean> {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+    const product = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null, category: { deletedAt: null } },
       select: { id: true },
     });
 
@@ -121,7 +121,7 @@ export class PrismaProductRepository implements ProductRepository {
 
   public async deleteById(id: string): Promise<void> {
     try {
-      await this.prisma.product.delete({ where: { id } });
+      await this.prisma.product.update({ where: { id }, data: { deletedAt: new Date(), available: false } });
     } catch (error) {
       if (isForeignKeyConstraintError(error)) {
         throw new ApplicationError('productId', 'IN_USE', 'O produto não pode ser excluído porque já está em um pedido.');
