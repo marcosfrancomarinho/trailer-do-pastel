@@ -165,8 +165,14 @@ describe('E2E: production bundle → HTTP → authentication → use cases → P
     assert.equal((await db.prisma.product.findUniqueOrThrow({ where: { id: productId } })).price.toString(), '12.5');
     await request('POST', '/orders', 201, orderBody());
     for (const path of [`/products/${productId}`, `/categories/${categoryId}`, `/additions/${additionId}`]) {
-      assert.equal((await request('DELETE', path, 409, undefined, adminToken)).code, 'IN_USE');
+      await request('DELETE', path, 204, undefined, adminToken);
     }
+    assert.ok((await db.prisma.category.findUniqueOrThrow({ where: { id: categoryId } })).deletedAt);
+    assert.ok((await db.prisma.product.findUniqueOrThrow({ where: { id: productId } })).deletedAt);
+    assert.ok((await db.prisma.addition.findUniqueOrThrow({ where: { id: additionId } })).deletedAt);
+    assert.equal((await request<Array<unknown>>('GET', '/products', 200)).length, 0);
+    assert.equal((await request<Array<unknown>>('GET', '/categories', 200)).length, 0);
+    assert.equal((await request<Array<unknown>>('GET', '/additions', 200)).length, 0);
   });
 
   it('creates table orders, records the authenticated employee and closes a historical session', async () => {
