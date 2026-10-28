@@ -10,7 +10,7 @@ export class UpdateCategory {
   public async update(input: UpdateCategoryInput): Promise<UpdateCategoryOutput> {
     const categoryId = ReferenceId.create(input.categoryId, 'categoryId');
     const name = CategoryName.create(input.name);
-    const category = Category.create(name, categoryId.getValue());
+    const category = Category.create(name, categoryId.getValue(), input.sortOrder ?? 0);
 
     await this.categoryRepository.update(category);
 
