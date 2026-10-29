@@ -40,22 +40,39 @@ export class PrismaAdditionRepository implements AdditionRepository {
   }
 
   public async save(addition: Addition): Promise<string> {
+    const name = addition.getName();
+    const conflict = () => new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
+
     try {
-      const savedAddition = await this.prisma.addition.create({
+      const existing = await this.prisma.addition.findUnique({
+        where: { name },
+        select: { id: true, deletedAt: true },
+      });
+      if (existing) {
+        if (existing.deletedAt === null) throw conflict();
+        const result = await this.prisma.addition.updateMany({
+          where: { id: existing.id, deletedAt: { not: null } },
+          data: {
+            price: addition.getPrice(),
+            available: addition.isAvailable(),
+            deletedAt: null,
+          },
+        });
+        if (result.count !== 1) throw conflict();
+        return existing.id;
+      }
+
+      const created = await this.prisma.addition.create({
         data: {
-          name: addition.getName(),
+          name,
           price: addition.getPrice(),
           available: addition.isAvailable(),
         },
         select: { id: true },
       });
-
-      return savedAddition.id;
+      return created.id;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
-      }
-
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw conflict();
       throw error;
     }
   }
