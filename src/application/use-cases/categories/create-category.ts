@@ -9,11 +9,6 @@ export class CreateCategory {
 
   public async create(input: CreateCategoryInput): Promise<CreateCategoryOutput> {
     const name = CategoryName.create(input.name);
-    const categoryExists = await this.categoryRepository.existsByName(name.getValue());
-
-    if (categoryExists) {
-      throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
-    }
     const category = Category.create(name);
     const id = await this.categoryRepository.save(category);
 
