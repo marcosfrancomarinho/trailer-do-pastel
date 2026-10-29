@@ -14,7 +14,7 @@ export class CreateOrderItemAdditionService {
     const additionId = ReferenceId.create(input.additionId, 'additionId');
     const quantity = OrderQuantity.create(input.quantity);
 
-    const addition = await this.additionRepository.findAdditionById(additionId.getValue());
+    const addition = await this.additionRepository.findById(additionId.getValue());
 
     if (!addition) {
       throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');

@@ -8,25 +8,25 @@ import type { PasswordHasher } from '../../gateways/password-hasher.js';
 
 export class CreateUser {
   public constructor(
-    private userRepository: UserRepository,
-    private passwordHasher: PasswordHasher,
+    private users: UserRepository,
+    private passwords: PasswordHasher,
   ) {}
 
   public async create(input: CreateUserInput): Promise<CreateUserOutput> {
-    const name = UserName.create(input.name);
-    const userExists = await this.userRepository.existsByName(name.getValue());
+    const name: UserName = UserName.create(input.name);
+    const userExists: boolean = await this.users.existsByName(name.getValue());
 
     if (userExists) {
       throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um usuário cadastrado com esse nome.');
     }
 
-    const password = UserPassword.create(input.password);
-    const user = User.create(name, password);
-    const hash = await this.passwordHasher.hash(user.getPassword());
+    const password: UserPassword = UserPassword.create(input.password);
+    const user: User = User.create(name, password);
+    const hash: string = await this.passwords.hash(user.getPassword());
 
     user.defineEncryptedPassword(hash);
 
-    const id = await this.userRepository.save(user);
+    const id: string = await this.users.save(user);
 
     return { id };
   }

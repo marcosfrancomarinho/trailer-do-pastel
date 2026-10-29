@@ -2,9 +2,9 @@ import type { ListCategoriesOutput } from '../../dtos/categories/list-categories
 import type { CategoryQueries } from '../../queries/category-queries.js';
 
 export class ListCategories {
-  public constructor(private categoryQueries: CategoryQueries) {}
+  public constructor(private categories: CategoryQueries) {}
 
   public async list(): Promise<ListCategoriesOutput> {
-    return this.categoryQueries.findAll();
+    return this.categories.findAll();
   }
 }

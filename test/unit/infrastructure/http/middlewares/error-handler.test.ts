@@ -4,9 +4,40 @@ import type { Request } from 'express';
 import { ApplicationError } from '../../../../../src/application/errors/application-error.js';
 import { DomainError } from '../../../../../src/domain/errors/domain-error.js';
 import { ErrorHandler } from '../../../../../src/infrastructure/http/middlewares/error-handler.js';
+import { InfrastructureError, type InfrastructureErrorCode } from '../../../../../src/infrastructure/errors/infrastructure-error.js';
 import { createResponse } from '../../../../helpers/http-fixtures.js';
 
 describe('ErrorHandler', () => {
+  it('preserves HTTP statuses for infrastructure errors and hides technical failures', (context) => {
+    const cases: Array<{ code: InfrastructureErrorCode; expectedStatus: number }> = [
+      { code: 'ALREADY_EXISTS', expectedStatus: 409 },
+      { code: 'NOT_FOUND', expectedStatus: 404 },
+      { code: 'UNAVAILABLE', expectedStatus: 409 },
+      { code: 'IN_USE', expectedStatus: 409 },
+      { code: 'UNAUTHORIZED', expectedStatus: 401 },
+      { code: 'FORBIDDEN', expectedStatus: 403 },
+      { code: 'CONNECTION_FAILED', expectedStatus: 500 },
+      { code: 'PERSISTENCE_FAILED', expectedStatus: 500 },
+      { code: 'EXTERNAL_SERVICE_FAILED', expectedStatus: 500 },
+      { code: 'TIMEOUT', expectedStatus: 500 },
+      { code: 'INVALID_CONFIGURATION', expectedStatus: 500 },
+    ];
+
+    for (const { code, expectedStatus } of cases) {
+      const error = new InfrastructureError('resource', code, 'Failure details');
+      const { response, status, json } = createResponse(context);
+      const next = context.mock.fn();
+
+      new ErrorHandler().execute(error, {} as Request, response, next);
+
+      assert.deepEqual(status.mock.calls[0].arguments, [expectedStatus]);
+      assert.deepEqual(json.mock.calls[0].arguments, [expectedStatus === 500
+        ? { code: 'INTERNAL_ERROR', message: 'Erro interno do servidor.' }
+        : { field: error.field, code, message: error.message }]);
+      assert.equal(next.mock.callCount(), 0);
+    }
+  });
+
   it('maps domain and application errors to HTTP responses', (context) => {
     const handler = new ErrorHandler();
     const cases = [

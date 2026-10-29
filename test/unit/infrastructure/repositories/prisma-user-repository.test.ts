@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { PrismaUserRepository } from '../../../../src/infrastructure/repositories/prisma-user-repository.js';
 import { User } from '../../../../src/domain/entities/user.js';
 import { UserName } from '../../../../src/domain/value-objects/user/user-name.js';
@@ -72,7 +72,7 @@ describe('PrismaUserRepository deletion', () => {
     });
     const prisma = { user: { delete: async () => { throw failure; } } } as unknown as PrismaClient;
     await assert.rejects(new PrismaUserRepository(prisma).deleteById('missing'),
-      (error: unknown) => error instanceof ApplicationError && error.field === 'userId' && error.code === 'NOT_FOUND');
+      (error: unknown) => error instanceof InfrastructureError && error.field === 'userId' && error.code === 'NOT_FOUND');
   });
 
   it('returns null when the user ID does not exist', async () => {
@@ -101,6 +101,6 @@ describe('PrismaUserRepository.save', () => {
     user.defineEncryptedPassword('$2b$12$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 
     await assert.rejects(new PrismaUserRepository(prisma).save(user),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'ALREADY_EXISTS');
   });
 });

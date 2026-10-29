@@ -8,6 +8,7 @@ export class Addition {
     private price: AdditionPrice,
     private available: boolean,
     private id: string | undefined,
+    private deletedAt: Date | null,
   ) {}
 
   public static create(
@@ -15,8 +16,13 @@ export class Addition {
     price: AdditionPrice,
     available: boolean = true,
     id?: string,
+    deletedAt: Date | null = null,
   ): Addition {
-    return new Addition(name, price, available, id);
+    if (typeof available !== 'boolean') {
+      throw new DomainError('available', 'INVALID_TYPE', 'A disponibilidade do adicional deve ser um booleano.');
+    }
+
+    return new Addition(name, price, available, id, deletedAt);
   }
 
   public getId(): string {
@@ -31,8 +37,20 @@ export class Addition {
     return this.name.getValue();
   }
 
+  public hasDifferentName(name: AdditionName): boolean {
+    return this.name.getValue() !== name.getValue();
+  }
+
   public getPrice(): string {
     return this.price.getValue().getValue();
+  }
+
+  public isArchived(): boolean {
+    return this.deletedAt !== null;
+  }
+
+  public isActive(): boolean {
+    return this.deletedAt === null;
   }
 
   public isAvailable(): boolean {

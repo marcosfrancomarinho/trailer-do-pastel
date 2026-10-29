@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { PrismaOrderRepository } from '../../../../src/infrastructure/repositories/prisma-order-repository.js';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { OrderStatus } from '../../../../src/domain/value-objects/order/order-status.js';
 import { buildOrder, buildOrderAddition, buildOrderItem } from '../../../helpers/order-fixtures.js';
 
@@ -13,7 +13,7 @@ function repository(tx: object): PrismaOrderRepository {
 }
 
 const rejectsRule = (field: string, code: string) => (error: unknown): boolean =>
-  error instanceof ApplicationError && error.field === field && error.code === code;
+  error instanceof InfrastructureError && error.field === field && error.code === code;
 
 describe('Order persistence business rules', () => {
   it('rejects removal from an unknown table without looking up or changing an order', async (context) => {

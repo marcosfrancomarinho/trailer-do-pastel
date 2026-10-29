@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { ApplicationError } from '../../../application/errors/application-error.js';
+import { InfrastructureError } from '../../errors/infrastructure-error.js';
 import type { AuthTokenGateway } from '../../../application/gateways/auth-token-gateway.js';
 import type { UserRepository } from '../../../domain/repositories/user-repository.js';
 
@@ -18,7 +18,7 @@ export class RequireAuthentication {
 
       const role = userId ? await this.userRepository.findRoleById(userId) : null;
       if (!userId || !role) {
-        throw new ApplicationError('authorization', 'UNAUTHORIZED', 'Token de acesso ausente ou inválido.');
+        throw new InfrastructureError('authorization', 'UNAUTHORIZED', 'Token de acesso ausente ou inválido.');
       }
 
       response.locals.userId = userId;

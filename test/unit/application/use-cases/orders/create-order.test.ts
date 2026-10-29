@@ -103,7 +103,7 @@ describe('CreateOrder', () => {
         : buildCatalogProduct(id, '12.50', true, 'Pastel de carne'),
     });
     const additionRepository = createAdditionRepository({
-      findAdditionById: async (id) => buildCatalogAddition(id, id === 'addition-1' ? '3' : '1'),
+      findById: async (id) => buildCatalogAddition(id, id === 'addition-1' ? '3' : '1'),
     });
     const useCase = createUseCase(repository, productRepository, additionRepository);
     const payload = {
@@ -138,7 +138,7 @@ describe('CreateOrder', () => {
     const productRepository = createProductRepository();
     const additionRepository = createAdditionRepository();
     const productLookup = context.mock.method(productRepository, 'findProductById');
-    const additionLookup = context.mock.method(additionRepository, 'findAdditionById');
+    const additionLookup = context.mock.method(additionRepository, 'findById');
     const useCase = createUseCase(repository, productRepository, additionRepository);
 
     const output = await useCase.create({
@@ -188,10 +188,10 @@ describe('CreateOrder', () => {
         productOverrides: { findProductById: async (id) => buildCatalogProduct(id, '10', false) },
         field: 'productId', code: 'UNAVAILABLE',
       },
-      { payload: withAddition, additionOverrides: { findAdditionById: async () => null }, field: 'additionId', code: 'NOT_FOUND' },
+      { payload: withAddition, additionOverrides: { findById: async () => null }, field: 'additionId', code: 'NOT_FOUND' },
       {
         payload: withAddition,
-        additionOverrides: { findAdditionById: async (id) => buildCatalogAddition(id, '2.50', false) },
+        additionOverrides: { findById: async (id) => buildCatalogAddition(id, '2.50', false) },
         field: 'additionId', code: 'UNAVAILABLE',
       },
       {
@@ -243,7 +243,7 @@ describe('CreateOrder', () => {
       findProductById: async (id) => buildCatalogProduct(id, '0.10'),
     });
     const additionRepository = createAdditionRepository({
-      findAdditionById: async (id) => buildCatalogAddition(id, '0.20'),
+      findById: async (id) => buildCatalogAddition(id, '0.20'),
     });
     const output = await createUseCase(repository, productRepository, additionRepository).create({
       ...input, items: [{ productId: 'product-1', quantity: 3, additions: [{ additionId: 'addition-1', quantity: 1 }] }],
@@ -337,7 +337,7 @@ describe('CreateOrder', () => {
     const repository = createOrderRepository();
     const save = context.mock.method(repository, 'save');
     const additionRepository = createAdditionRepository({
-      findAdditionById: async () => { throw failure; },
+      findById: async () => { throw failure; },
     });
     const useCase = createUseCase(repository, createProductRepository(), additionRepository);
     const payload: CreateOrderInput = {

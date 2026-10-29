@@ -3,9 +3,9 @@ import type { ListPendingOrdersInput, ListPendingOrdersOutput } from '../../dtos
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class ListPendingOrders {
-  public constructor(private orderQueries: OrderQueries) {}
+  public constructor(private orders: OrderQueries) {}
 
   public async list(input: ListPendingOrdersInput): Promise<ListPendingOrdersOutput> {
-    return this.orderQueries.findPending(OrderDateRange.create(input.date));
+    return this.orders.findPending(OrderDateRange.create(input.date));
   }
 }

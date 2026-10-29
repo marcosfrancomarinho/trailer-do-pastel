@@ -4,13 +4,13 @@ import type { TableRepository } from '../../../domain/repositories/table-reposit
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 
 export class ReleaseTable {
-  public constructor(private tableRepository: TableRepository, private eventObserver: EventObserver) {}
+  public constructor(private tables: TableRepository, private events: EventObserver) {}
 
   public async release(input: ReleaseTableInput): Promise<ReleaseTableOutput> {
-    const tableId = ReferenceId.create(input.tableId, 'tableId').getValue();
-    const result = await this.tableRepository.release(tableId);
+    const tableId: string = ReferenceId.create(input.tableId, 'tableId').getValue();
+    const result: ReleaseTableOutput = await this.tables.release(tableId);
     // O SSE apenas avisa os painéis administrativos para consultarem o estado atual da mesa.
-    await this.eventObserver.notify({ orderId: '', status: 'TABLE_RELEASED', tableId });
+    await this.events.notify({ orderId: '', status: 'TABLE_RELEASED', tableId });
     return result;
   }
 }

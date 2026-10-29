@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { PrismaProductRepository } from '../../../../src/infrastructure/repositories/prisma-product-repository.js';
 import { buildCatalogAddition, buildCatalogProduct } from '../../../helpers/order-fixtures.js';
 
@@ -116,7 +116,7 @@ describe('PrismaProductRepository', () => {
     } as unknown as PrismaClient;
     await assert.rejects(
       new PrismaProductRepository(prisma).save(buildCatalogProduct('unused-id', '12.50'), []),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS',
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'ALREADY_EXISTS',
     );
   });
 
@@ -185,7 +185,7 @@ describe('PrismaProductRepository', () => {
       const prisma = { $transaction: async () => { throw failure; } } as unknown as PrismaClient;
 
       await assert.rejects(new PrismaProductRepository(prisma).update(buildCatalogProduct('product-1', '12.50')),
-        (error: unknown) => error instanceof ApplicationError
+        (error: unknown) => error instanceof InfrastructureError
           && error.field === field && error.code === applicationCode);
     }
   });
@@ -212,7 +212,7 @@ describe('PrismaProductRepository', () => {
 
     await assert.rejects(
       new PrismaProductRepository(prisma).deleteById('product-1'),
-      (error: unknown) => error instanceof ApplicationError
+      (error: unknown) => error instanceof InfrastructureError
         && error.field === 'productId'
         && error.code === 'NOT_FOUND',
     );

@@ -10,7 +10,7 @@ describe('CreateOrderItemAdditionService', () => {
 
   it('looks up the addition and uses its catalog price with the requested quantity', async (context) => {
     const repository = createAdditionRepository();
-    const lookup = context.mock.method(repository, 'findAdditionById');
+    const lookup = context.mock.method(repository, 'findById');
     const isLinkedToProduct = context.mock.method(repository, 'isLinkedToProduct');
     const service = new CreateOrderItemAdditionService(repository);
 
@@ -33,7 +33,7 @@ describe('CreateOrderItemAdditionService', () => {
     ];
 
     for (const { addition, code } of cases) {
-      const repository = createAdditionRepository({ findAdditionById: async () => addition });
+      const repository = createAdditionRepository({ findById: async () => addition });
       const service = new CreateOrderItemAdditionService(repository);
 
       await assert.rejects(
@@ -59,7 +59,7 @@ describe('CreateOrderItemAdditionService', () => {
 
   it('rejects invalid IDs and quantities before looking up the addition', async (context) => {
     const repository = createAdditionRepository();
-    const lookup = context.mock.method(repository, 'findAdditionById');
+    const lookup = context.mock.method(repository, 'findById');
     const service = new CreateOrderItemAdditionService(repository);
 
     await assert.rejects(service.create({ ...input, additionId: ' ' }, 'product-1'), DomainError);
@@ -69,7 +69,7 @@ describe('CreateOrderItemAdditionService', () => {
 
   it('preserves repository errors', async () => {
     const failure = new Error('Database unavailable');
-    const repository = createAdditionRepository({ findAdditionById: async () => { throw failure; } });
+    const repository = createAdditionRepository({ findById: async () => { throw failure; } });
     const service = new CreateOrderItemAdditionService(repository);
 
     await assert.rejects(service.create(input, 'product-1'), (error: unknown) => error === failure);

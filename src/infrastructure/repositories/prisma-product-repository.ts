@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../application/errors/application-error.js';
+import { InfrastructureError } from '../errors/infrastructure-error.js';
 import { Product } from '../../domain/entities/product.js';
 import type { Addition } from '../../domain/entities/addition.js';
 import type { ProductRepository } from '../../domain/repositories/product-repository.js';
@@ -46,7 +46,7 @@ export class PrismaProductRepository implements ProductRepository {
 
   public async save(product: Product, additions: Addition[]): Promise<string> {
     const name = product.getName();
-    const conflict = () => new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
+    const conflict = () => new InfrastructureError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
     const data = {
       description: product.getDescription(),
       categoryId: product.getCategoryId(),
@@ -98,7 +98,7 @@ export class PrismaProductRepository implements ProductRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') throw conflict();
         if (error.code === 'P2003') {
-          throw new ApplicationError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
+          throw new InfrastructureError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
         }
       }
       throw error;
@@ -136,13 +136,13 @@ export class PrismaProductRepository implements ProductRepository {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
+          throw new InfrastructureError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
         }
         if (error.code === 'P2025') {
-          throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
+          throw new InfrastructureError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
         }
         if (error.code === 'P2003') {
-          throw new ApplicationError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
+          throw new InfrastructureError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
         }
       }
       throw error;
@@ -154,7 +154,7 @@ export class PrismaProductRepository implements ProductRepository {
       await this.prisma.product.update({ where: { id }, data: { deletedAt: new Date(), available: false } });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
+        throw new InfrastructureError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');
       }
 
       throw error;

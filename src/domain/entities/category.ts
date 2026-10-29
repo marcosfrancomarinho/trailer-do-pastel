@@ -5,10 +5,15 @@ export class Category {
   private constructor(
     private name: CategoryName,
     private id: string | undefined,
+    private deletedAt: Date | null = null,
   ) {}
 
-  public static create(name: CategoryName, id?: string): Category {
-    return new Category(name, id);
+  public static create(name: CategoryName, id?: string, deletedAt: Date | null = null): Category {
+    return new Category(name, id, deletedAt);
+  }
+
+  public isActive(): boolean {
+    return this.deletedAt === null;
   }
 
   public getId(): string {

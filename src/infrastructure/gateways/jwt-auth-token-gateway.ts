@@ -1,3 +1,4 @@
+import { InfrastructureError } from '../errors/infrastructure-error.js';
 import jwt from 'jsonwebtoken';
 import type { AuthTokenGateway } from '../../application/gateways/auth-token-gateway.js';
 
@@ -6,7 +7,7 @@ export class JwtAuthTokenGateway implements AuthTokenGateway {
 
   public constructor(secret: string | undefined) {
     if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
-      throw new Error('JWT_SECRET deve conter pelo menos 32 bytes.');
+      throw new InfrastructureError('JWT_SECRET', 'INVALID_CONFIGURATION', 'JWT_SECRET deve conter pelo menos 32 bytes.');
     }
     this.secret = secret;
   }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import jwt from 'jsonwebtoken';
 import { JwtAuthTokenGateway } from '../../../../src/infrastructure/gateways/jwt-auth-token-gateway.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 
 describe('JwtAuthTokenGateway', () => {
   it('issues an HS256 token for the user without an expiration time', async () => {
@@ -32,7 +33,11 @@ describe('JwtAuthTokenGateway', () => {
   });
 
   it('rejects secrets shorter than 32 bytes', () => {
-    assert.throws(() => new JwtAuthTokenGateway('short'), /JWT_SECRET/);
-    assert.throws(() => new JwtAuthTokenGateway(undefined), /JWT_SECRET/);
+    for (const secret of ['short', undefined]) {
+      assert.throws(() => new JwtAuthTokenGateway(secret), (error: unknown) =>
+        error instanceof InfrastructureError
+          && error.field === 'JWT_SECRET'
+          && error.code === 'INVALID_CONFIGURATION');
+    }
   });
 });

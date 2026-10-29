@@ -52,17 +52,17 @@ describe('UpdateProduct', () => {
   for (const additionIds of [null, 'addition-1', {}, [null], [' '], ['addition-1', ' addition-1 ']]) {
     it(`rejects invalid addition IDs ${JSON.stringify(additionIds)} before looking them up or updating`, async (context) => {
       const update = context.mock.fn(async () => {});
-      const findAdditionById = context.mock.fn(async () => null);
+      const findById = context.mock.fn(async () => null);
       const useCase = new UpdateProduct(createProductRepository({ update }),
-        createAdditionRepository({ findAdditionById }), createCategoryRepository());
+        createAdditionRepository({ findById }), createCategoryRepository());
       await assert.rejects(useCase.update({ productId: 'product-1', additionIds: additionIds as never }),
         (error: unknown) => error instanceof DomainError && error.field === 'additionIds');
-      assert.equal(findAdditionById.mock.callCount(), 0);
+      assert.equal(findById.mock.callCount(), 0);
       assert.equal(update.mock.callCount(), 0);
     });
   }
 
-  for (const stage of ['findProductById', 'existsByName', 'existsById', 'findAdditionById', 'update'] as const) {
+  for (const stage of ['findProductById', 'existsByName', 'existsById', 'findById', 'update'] as const) {
     it(`preserves ${stage} failures and prevents a partial update`, async (context) => {
       const failure = new Error(stage);
       const fail = async () => { throw failure; };
@@ -70,7 +70,7 @@ describe('UpdateProduct', () => {
       const useCase = new UpdateProduct(
         createProductRepository({ update, ...(stage === 'findProductById' ? { findProductById: fail } : {}),
           ...(stage === 'existsByName' ? { existsByName: fail } : {}) }),
-        createAdditionRepository(stage === 'findAdditionById' ? { findAdditionById: fail } : {}),
+        createAdditionRepository(stage === 'findById' ? { findById: fail } : {}),
         createCategoryRepository({ existsById: stage === 'existsById' ? fail : async () => true }));
       await assert.rejects(useCase.update({ productId: 'product-1', name: 'Novo pastel',
         categoryId: 'category-2', additionIds: ['addition-1'] }), (error: unknown) => error === failure);

@@ -4,11 +4,11 @@ import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.j
 import type { DeleteTableInput } from '../../dtos/tables/delete-table-dto.js';
 
 export class DeleteTable {
-  public constructor(private tableRepository: TableRepository, private eventObserver: EventObserver) {}
+  public constructor(private tables: TableRepository, private events: EventObserver) {}
 
   public async delete(input: DeleteTableInput): Promise<void> {
-    const tableId = ReferenceId.create(input.tableId, 'tableId');
-    await this.tableRepository.archive(tableId.getValue());
-    await this.eventObserver.notify({ type: 'TABLE_ARCHIVED', tableId: tableId.getValue() });
+    const tableId: ReferenceId = ReferenceId.create(input.tableId, 'tableId');
+    await this.tables.archive(tableId.getValue());
+    await this.events.notify({ type: 'TABLE_ARCHIVED', tableId: tableId.getValue() });
   }
 }

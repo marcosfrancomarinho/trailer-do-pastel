@@ -7,21 +7,21 @@ import type { CreateTableInput, CreateTableOutput } from '../../dtos/tables/crea
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateTable {
-  public constructor(private tableRepository: TableRepository, private eventObserver: EventObserver) {}
+  public constructor(private tables: TableRepository, private events: EventObserver) {}
 
   public async create(input: CreateTableInput): Promise<CreateTableOutput> {
-    const number = TableNumber.create(input.number);
-    const initialStatus = input.status === undefined ? 'FREE' : input.status;
-    const status = TableStatus.create(initialStatus);
-    const tableExists = await this.tableRepository.existsByNumber(number.getValue());
+    const number: TableNumber = TableNumber.create(input.number);
+    const initialStatus: string = input.status === undefined ? 'FREE' : input.status;
+    const status: TableStatus = TableStatus.create(initialStatus);
+    const tableExists: boolean = await this.tables.existsByNumber(number.getValue());
 
     if (tableExists) {
       throw new ApplicationError('number', 'ALREADY_EXISTS', 'Já existe uma mesa cadastrada com esse número.');
     }
 
-    const table = Table.create(number, status);
-    const id = await this.tableRepository.save(table);
-    await this.eventObserver.notify({ type: 'TABLE_CREATED', tableId: id });
+    const table: Table = Table.create(number, status);
+    const id: string = await this.tables.save(table);
+    await this.events.notify({ type: 'TABLE_CREATED', tableId: id });
 
     return {
       id,

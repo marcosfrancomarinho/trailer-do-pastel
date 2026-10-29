@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
-import { ApplicationError } from '../../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../../src/infrastructure/errors/infrastructure-error.js';
 import { RequireAdmin } from '../../../../../src/infrastructure/http/middlewares/require-admin.js';
 import { createResponse } from '../../../../helpers/http-fixtures.js';
 
@@ -25,7 +25,7 @@ describe('RequireAdmin', () => {
       new RequireAdmin().execute({} as Request, response, next);
 
       const error = next.mock.calls[0].arguments[0];
-      assert.ok(error instanceof ApplicationError);
+      assert.ok(error instanceof InfrastructureError);
       assert.equal(error.code, 'FORBIDDEN');
     }
   });

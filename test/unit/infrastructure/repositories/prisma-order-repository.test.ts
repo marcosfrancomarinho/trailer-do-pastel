@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { OrderStatus } from '../../../../src/domain/value-objects/order/order-status.js';
 import { PrismaOrderRepository } from '../../../../src/infrastructure/repositories/prisma-order-repository.js';
 import { OrderObservation } from '../../../../src/domain/value-objects/order/order-observation.js';
@@ -64,7 +64,7 @@ describe('PrismaOrderRepository', () => {
       const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
       await assert.rejects(
         new PrismaOrderRepository(prisma).removeFromTable('table-1', 'order-1'),
-        (error: unknown) => error instanceof ApplicationError &&
+        (error: unknown) => error instanceof InfrastructureError &&
           error.code === (order.tableId === 'table-1' ? 'UNAVAILABLE' : 'NOT_FOUND'),
       );
     }
@@ -86,7 +86,7 @@ describe('PrismaOrderRepository', () => {
     };
     const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
     await assert.rejects(new PrismaOrderRepository(prisma).removeFromTable('table-1', 'order-1'),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'NOT_FOUND');
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'NOT_FOUND');
     assert.equal(decrement.mock.callCount(), 0);
   });
 
@@ -102,7 +102,7 @@ describe('PrismaOrderRepository', () => {
     };
     const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
     await assert.rejects(new PrismaOrderRepository(prisma).removeFromTable('table-1', 'order-1'),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'IN_USE');
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'IN_USE');
   });
 
   it('persists an app order without a comanda', async (context) => {
@@ -162,7 +162,7 @@ describe('PrismaOrderRepository', () => {
     };
     const invalidPrisma = { $transaction: async (work: (client: typeof invalidTx) => Promise<unknown>) => work(invalidTx) } as unknown as PrismaClient;
     await assert.rejects(new PrismaOrderRepository(invalidPrisma).save(sampleOrder('archived-or-missing')),
-      (error: unknown) => error instanceof ApplicationError && error.field === 'tableId' && error.code === 'NOT_FOUND');
+      (error: unknown) => error instanceof InfrastructureError && error.field === 'tableId' && error.code === 'NOT_FOUND');
     assert.equal(createOrder.mock.callCount(), 1);
   });
 
@@ -177,7 +177,7 @@ describe('PrismaOrderRepository', () => {
     const repository = new PrismaOrderRepository(prisma);
     for (const order of [sampleOrder(), sampleOrder('table-1')]) {
       await assert.rejects(repository.save(order),
-        (error: unknown) => error instanceof ApplicationError && error.field === 'store' && error.code === 'UNAVAILABLE');
+        (error: unknown) => error instanceof InfrastructureError && error.field === 'store' && error.code === 'UNAVAILABLE');
     }
     assert.equal(createOrder.mock.callCount(), 0);
     assert.equal(updateTable.mock.callCount(), 0);
@@ -225,7 +225,7 @@ describe('PrismaOrderRepository', () => {
     assert.equal(decrement.mock.callCount(), 0);
     currentStatus = 'COMPLETED';
     await assert.rejects(repository.updateStatus('order-1', OrderStatus.create('PREPARING')),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'UNAVAILABLE');
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'UNAVAILABLE');
     assert.equal(updateOrder.mock.callCount(), 1);
   });
 
@@ -233,6 +233,6 @@ describe('PrismaOrderRepository', () => {
     const tx = { order: { findUnique: async () => null } };
     const prisma = { $transaction: async (work: (client: typeof tx) => Promise<unknown>) => work(tx) } as unknown as PrismaClient;
     await assert.rejects(new PrismaOrderRepository(prisma).updateStatus('missing', OrderStatus.create('COMPLETED')),
-      (error: unknown) => error instanceof ApplicationError && error.field === 'orderId' && error.code === 'NOT_FOUND');
+      (error: unknown) => error instanceof InfrastructureError && error.field === 'orderId' && error.code === 'NOT_FOUND');
   });
 });

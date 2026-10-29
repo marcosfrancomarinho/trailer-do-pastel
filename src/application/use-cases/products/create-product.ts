@@ -15,37 +15,37 @@ import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateProduct {
   public constructor(
-    private productRepository: ProductRepository,
-    private additionRepository: AdditionRepository,
-    private categoryRepository: CategoryRepository,
+    private products: ProductRepository,
+    private additions: AdditionRepository,
+    private categories: CategoryRepository,
   ) {}
 
   public async create(input: CreateProductInput): Promise<CreateProductOutput> {
-    const name = ProductName.create(input.name);
-    const categoryId = ReferenceId.create(input.categoryId, 'categoryId');
-    const categoryExists = await this.categoryRepository.existsById(categoryId.getValue());
+    const name: ProductName = ProductName.create(input.name);
+    const categoryId: ReferenceId = ReferenceId.create(input.categoryId, 'categoryId');
+    const categoryExists: boolean = await this.categories.existsById(categoryId.getValue());
 
     if (!categoryExists) {
       throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
     }
 
-    const price = ProductPrice.create(DecimalValue.create(input.price));
-    const description = ProductDescription.create(input.description);
-    const imageUrl = input.imageUrl != null ? ProductImageUrl.create(input.imageUrl) : null;
+    const price: ProductPrice = ProductPrice.create(DecimalValue.create(input.price));
+    const description: ProductDescription = ProductDescription.create(input.description);
+    const imageUrl: ProductImageUrl | null = input.imageUrl != null ? ProductImageUrl.create(input.imageUrl) : null;
 
-    const product = Product.create(name, price, description, categoryId, input.available, imageUrl);
+    const product: Product = Product.create(name, price, description, categoryId, input.available, imageUrl);
 
-    const additionIds = this.validateAdditionIds(input.additionIds);
+    const additionIds: string[] = this.validateAdditionIds(input.additionIds);
     const additions: Addition[] = [];
 
     for (const additionId of additionIds) {
-      const addition = await this.additionRepository.findAdditionById(additionId);
+      const addition: Addition | null = await this.additions.findById(additionId);
       if (!addition) {
         throw new ApplicationError('additionIds', 'NOT_FOUND', `Adicional não encontrado: ${additionId}.`);
       }
       additions.push(addition);
     }
-    const id = await this.productRepository.save(product, additions);
+    const id: string = await this.products.save(product, additions);
 
     return { id };
   }
@@ -59,12 +59,12 @@ export class CreateProduct {
       throw new DomainError('additionIds', 'INVALID_TYPE', 'Os IDs dos adicionais devem ser uma lista.');
     }
 
-    const additionIds = value.map((rawId) => {
-      const additionId = ReferenceId.create(rawId, 'additionIds');
+    const additionIds: string[] = value.map((rawId) => {
+      const additionId: ReferenceId = ReferenceId.create(rawId, 'additionIds');
       return additionId.getValue();
     });
 
-    const uniqueAdditionIds = new Set(additionIds);
+    const uniqueAdditionIds: Set<string> = new Set(additionIds);
     if (uniqueAdditionIds.size < additionIds.length) {
       throw new DomainError('additionIds', 'DUPLICATE', 'O mesmo adicional não pode ser informado mais de uma vez.');
     }

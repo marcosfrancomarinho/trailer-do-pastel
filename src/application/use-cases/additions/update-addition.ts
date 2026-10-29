@@ -9,41 +9,38 @@ import type { UpdateAdditionInput, UpdateAdditionOutput } from '../../dtos/addit
 import { ApplicationError } from '../../errors/application-error.js';
 
 export class UpdateAddition {
-  public constructor(private additionRepository: AdditionRepository) {}
+  public constructor(private additions: AdditionRepository) {}
 
   public async update(input: UpdateAdditionInput): Promise<UpdateAdditionOutput> {
-    const additionId = ReferenceId.create(input.additionId, 'additionId');
-    const currentAddition = await this.additionRepository.findAdditionById(additionId.getValue());
+    const additionId: ReferenceId = ReferenceId.create(input.additionId, 'additionId');
+    const currentAddition: Addition | null = await this.additions.findById(additionId.getValue());
 
     if (!currentAddition) {
       throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');
     }
 
-    const hasChanges = [input.name, input.price, input.available].some((value) => value !== undefined);
+    const hasChanges: boolean = [input.name, input.price, input.available].some((value) => value !== undefined);
     if (!hasChanges) {
       throw new DomainError('addition', 'EMPTY', 'Informe pelo menos um campo para atualizar o adicional.');
     }
 
-    const nameValue = input.name === undefined ? currentAddition.getName() : input.name;
-    const priceValue = input.price === undefined ? currentAddition.getPrice() : input.price;
-    const name = AdditionName.create(nameValue);
-    const price = AdditionPrice.create(DecimalValue.create(priceValue));
+    const nameValue: string = input.name === undefined ? currentAddition.getName() : input.name;
+    const priceValue: string = input.price === undefined ? currentAddition.getPrice() : input.price;
+    const name: AdditionName = AdditionName.create(nameValue);
+    const price: AdditionPrice = AdditionPrice.create(DecimalValue.create(priceValue));
+    const available: boolean = input.available === undefined ? currentAddition.isAvailable() : input.available;
 
-    if (input.available !== undefined && typeof input.available !== 'boolean') {
-      throw new DomainError('available', 'INVALID_TYPE', 'A disponibilidade do adicional deve ser um booleano.');
+    const addition: Addition = Addition.create(name, price, available, additionId.getValue());
+
+    const nameChanged: boolean = currentAddition.hasDifferentName(name);
+
+    const nameExists: boolean = nameChanged && (await this.additions.existsByName(name.getValue()));
+
+    if (nameExists) {
+      throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
     }
 
-    const available = input.available === undefined ? currentAddition.isAvailable() : input.available;
-
-    if (name.getValue() !== currentAddition.getName()) {
-      const nameExists = await this.additionRepository.existsByName(name.getValue());
-      if (nameExists) {
-        throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
-      }
-    }
-
-    const addition = Addition.create(name, price, available, additionId.getValue());
-    await this.additionRepository.update(addition);
+    await this.additions.update(addition);
 
     return { id: additionId.getValue() };
   }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { Table } from '../../../../src/domain/entities/table.js';
 import { TableNumber } from '../../../../src/domain/value-objects/table/table-number.js';
 import { PrismaTableRepository } from '../../../../src/infrastructure/repositories/prisma-table-repository.js';
@@ -29,7 +29,7 @@ describe('PrismaTableRepository', () => {
 
     await assert.rejects(
       new PrismaTableRepository(prisma).save(Table.create(TableNumber.create(12))),
-      (error: unknown) => error instanceof ApplicationError && error.field === 'number' && error.code === 'ALREADY_EXISTS',
+      (error: unknown) => error instanceof InfrastructureError && error.field === 'number' && error.code === 'ALREADY_EXISTS',
     );
   });
 
@@ -63,7 +63,7 @@ describe('PrismaTableRepository', () => {
         findUnique: async () => scenario.table,
       } } as unknown as PrismaClient;
       await assert.rejects(new PrismaTableRepository(prisma).archive('table-id'),
-        (error: unknown) => error instanceof ApplicationError && error.field === 'tableId'
+        (error: unknown) => error instanceof InfrastructureError && error.field === 'tableId'
           && error.code === scenario.code);
     }
   });
@@ -124,7 +124,7 @@ describe('PrismaTableRepository', () => {
       } as unknown as PrismaClient;
       await assert.rejects(
         new PrismaTableRepository(prisma).release('table-id'),
-        (error: unknown) => error instanceof ApplicationError && error.field === 'tableId' && error.code === scenario.code,
+        (error: unknown) => error instanceof InfrastructureError && error.field === 'tableId' && error.code === scenario.code,
       );
     }
     assert.equal(update.mock.callCount(), 0);
@@ -144,7 +144,7 @@ describe('PrismaTableRepository', () => {
 
     await assert.rejects(
       new PrismaTableRepository(prisma).release('table-id'),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'IN_USE',
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'IN_USE',
     );
     assert.equal(update.mock.callCount(), 0);
   });
@@ -163,7 +163,7 @@ describe('PrismaTableRepository', () => {
 
     await assert.rejects(
       new PrismaTableRepository(prisma).release(untrustedId),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'NOT_FOUND',
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'NOT_FOUND',
     );
     assert.equal(queryRaw.mock.callCount(), 1);
   });

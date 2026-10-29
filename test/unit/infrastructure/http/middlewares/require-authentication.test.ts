@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import jwt from 'jsonwebtoken';
-import { ApplicationError } from '../../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../../src/infrastructure/errors/infrastructure-error.js';
 import { JwtAuthTokenGateway } from '../../../../../src/infrastructure/gateways/jwt-auth-token-gateway.js';
 import { RequireAuthentication } from '../../../../../src/infrastructure/http/middlewares/require-authentication.js';
 import { createResponse } from '../../../../helpers/http-fixtures.js';
@@ -38,7 +38,7 @@ describe('RequireAuthentication', () => {
       await middleware.execute(request, response, next);
 
       const error = next.mock.calls[0].arguments[0];
-      assert.ok(error instanceof ApplicationError);
+      assert.ok(error instanceof InfrastructureError);
       assert.equal(error.code, 'UNAUTHORIZED');
       assert.equal(error.field, 'authorization');
       assert.equal(response.locals.userId, undefined);
@@ -55,7 +55,7 @@ describe('RequireAuthentication', () => {
     await middleware.execute(request, response, next);
 
     const error = next.mock.calls[0].arguments[0];
-    assert.ok(error instanceof ApplicationError);
+    assert.ok(error instanceof InfrastructureError);
     assert.equal(error.code, 'UNAUTHORIZED');
     assert.equal(response.locals.userId, undefined);
     assert.equal(response.locals.userRole, undefined);

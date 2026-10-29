@@ -4,21 +4,21 @@ import { ApplicationError } from '../../errors/application-error.js';
 import type { DeleteUserInput } from '../../dtos/users/delete-user-dto.js';
 
 export class DeleteUser {
-  public constructor(private userRepository: UserRepository) {}
+  public constructor(private users: UserRepository) {}
 
   public async delete(input: DeleteUserInput): Promise<void> {
-    const userId = ReferenceId.create(input.userId, 'userId');
-    const currentUserId = ReferenceId.create(input.currentUserId, 'currentUserId');
+    const userId: ReferenceId = ReferenceId.create(input.userId, 'userId');
+    const currentUserId: ReferenceId = ReferenceId.create(input.currentUserId, 'currentUserId');
 
     if (userId.getValue() === currentUserId.getValue()) {
       throw new ApplicationError('userId', 'IN_USE', 'Você não pode excluir sua própria conta.');
     }
 
-    const userExists = await this.userRepository.existsById(userId.getValue());
+    const userExists: boolean = await this.users.existsById(userId.getValue());
     if (!userExists) {
       throw new ApplicationError('userId', 'NOT_FOUND', 'O usuário informado não foi encontrado.');
     }
 
-    await this.userRepository.deleteById(userId.getValue());
+    await this.users.deleteById(userId.getValue());
   }
 }

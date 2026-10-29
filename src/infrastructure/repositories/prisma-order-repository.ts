@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../application/errors/application-error.js';
+import { InfrastructureError } from '../errors/infrastructure-error.js';
 import type { Order } from '../../domain/entities/order.js';
 import type { OrderRepository, SavedOrder } from '../../domain/repositories/order-repository.js';
 import { OrderStatus } from '../../domain/value-objects/order/order-status.js';
@@ -14,7 +14,7 @@ export class PrismaOrderRepository implements OrderRepository {
         SELECT id FROM "tables" WHERE id = ${tableId} FOR UPDATE
       `;
       if (lockedTables.length === 0) {
-        throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
+        throw new InfrastructureError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
       }
 
       const order = await tx.order.findUnique({
@@ -22,10 +22,10 @@ export class PrismaOrderRepository implements OrderRepository {
         select: { tableId: true, total: true, status: true },
       });
       if (order === null || order.tableId !== tableId) {
-        throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
+        throw new InfrastructureError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
       }
       if (!OrderStatus.create(order.status).canBeRemovedFromTable()) {
-        throw new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
+        throw new InfrastructureError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
       }
 
       const canceledOrder = await tx.order.updateMany({
@@ -44,7 +44,7 @@ export class PrismaOrderRepository implements OrderRepository {
         data: { totalSpent: { decrement: order.total } },
       });
       if (adjustedTable.count !== 1) {
-        throw new ApplicationError('tableId', 'IN_USE', 'O total da mesa está inconsistente com o pedido.');
+        throw new InfrastructureError('tableId', 'IN_USE', 'O total da mesa está inconsistente com o pedido.');
       }
 
       const table = await tx.table.findUniqueOrThrow({
@@ -59,17 +59,17 @@ export class PrismaOrderRepository implements OrderRepository {
     tx: Prisma.TransactionClient,
     tableId: string,
     orderId: string,
-  ): Promise<ApplicationError> {
+  ): Promise<InfrastructureError> {
     const currentOrder = await tx.order.findUnique({
       where: { id: orderId },
       select: { tableId: true },
     });
 
     if (currentOrder?.tableId !== tableId) {
-      return new ApplicationError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
+      return new InfrastructureError('orderId', 'NOT_FOUND', 'O pedido não foi encontrado nesta mesa.');
     }
 
-    return new ApplicationError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
+    return new InfrastructureError('status', 'UNAVAILABLE', 'O pedido não pode mais ser retirado da mesa.');
   }
 
   public async save(order: Order): Promise<SavedOrder> {
@@ -113,7 +113,7 @@ export class PrismaOrderRepository implements OrderRepository {
           SELECT status FROM "store" WHERE id = 1 FOR SHARE
         `;
         if (store[0]?.status !== 'OPEN') {
-          throw new ApplicationError('store', 'UNAVAILABLE', 'A loja está fechada para novos pedidos.');
+          throw new InfrastructureError('store', 'UNAVAILABLE', 'A loja está fechada para novos pedidos.');
         }
 
         if (tableId === null) return create(tx, null);
@@ -123,7 +123,7 @@ export class PrismaOrderRepository implements OrderRepository {
           data: { status: 'OCCUPIED', totalSpent: { increment: total } },
         });
         if (updatedTable.count !== 1) {
-          throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
+          throw new InfrastructureError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
         }
 
         let session = await tx.tableSession.findFirst({
@@ -138,7 +138,7 @@ export class PrismaOrderRepository implements OrderRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && ['P2003', 'P2025'].includes(error.code)) {
-        throw new ApplicationError('order', 'NOT_FOUND', 'Um produto ou adicional do pedido não foi encontrado.');
+        throw new InfrastructureError('order', 'NOT_FOUND', 'Um produto ou adicional do pedido não foi encontrado.');
       }
       throw error;
     }
@@ -148,7 +148,7 @@ export class PrismaOrderRepository implements OrderRepository {
     await this.prisma.$transaction(async (tx) => {
       const initial = await tx.order.findUnique({ where: { id }, select: { tableId: true } });
       if (initial === null) {
-        throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
+        throw new InfrastructureError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
       }
       if (initial.tableId !== null) {
         await tx.$queryRaw`SELECT id FROM "tables" WHERE id = ${initial.tableId} FOR UPDATE`;
@@ -159,10 +159,10 @@ export class PrismaOrderRepository implements OrderRepository {
         select: { tableId: true, status: true, total: true },
       });
       if (current === null) {
-        throw new ApplicationError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
+        throw new InfrastructureError('orderId', 'NOT_FOUND', 'O pedido informado não foi encontrado.');
       }
       if (!OrderStatus.create(current.status).canChangeStatus()) {
-        throw new ApplicationError('status', 'UNAVAILABLE', 'Um pedido concluído ou cancelado não pode mudar de status.');
+        throw new InfrastructureError('status', 'UNAVAILABLE', 'Um pedido concluído ou cancelado não pode mudar de status.');
       }
 
       const statusValue = status.getValue();
@@ -171,7 +171,7 @@ export class PrismaOrderRepository implements OrderRepository {
         data: { status: statusValue },
       });
       if (updated.count !== 1) {
-        throw new ApplicationError('status', 'UNAVAILABLE', 'O status do pedido mudou durante a atualização.');
+        throw new InfrastructureError('status', 'UNAVAILABLE', 'O status do pedido mudou durante a atualização.');
       }
       await tx.orderStatusHistory.create({ data: { orderId: id, status: statusValue } });
 
@@ -181,7 +181,7 @@ export class PrismaOrderRepository implements OrderRepository {
           data: { totalSpent: { decrement: current.total } },
         });
         if (adjusted.count !== 1) {
-          throw new ApplicationError('tableId', 'IN_USE', 'O total da mesa está inconsistente com o pedido.');
+          throw new InfrastructureError('tableId', 'IN_USE', 'O total da mesa está inconsistente com o pedido.');
         }
       }
     });

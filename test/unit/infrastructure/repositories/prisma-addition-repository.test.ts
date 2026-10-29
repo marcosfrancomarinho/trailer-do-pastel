@@ -1,11 +1,38 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
+import { Addition } from '../../../../src/domain/entities/addition.js';
 import { PrismaAdditionRepository } from '../../../../src/infrastructure/repositories/prisma-addition-repository.js';
 import { buildCatalogAddition } from '../../../helpers/order-fixtures.js';
 
 describe('PrismaAdditionRepository', () => {
+  it('finds domain additions by name, including archived entries, or returns null', async () => {
+    for (const deletedAt of [null, new Date()]) {
+      const repository = new PrismaAdditionRepository({
+        addition: {
+          findUnique: async ({ where }: { where: { name: string } }) => {
+            assert.equal(where.name, 'Queijo extra');
+            return { id: 'addition-1', name: where.name, price: new Prisma.Decimal('2.50'), available: false, deletedAt };
+          },
+        },
+      } as unknown as PrismaClient);
+
+      const addition = await repository.findByName('Queijo extra');
+      assert.ok(addition instanceof Addition);
+      assert.equal(addition.getId(), 'addition-1');
+      assert.equal(addition.getName(), 'Queijo extra');
+      assert.equal(addition.getPrice(), '2.5');
+      assert.equal(addition.isAvailable(), false);
+      assert.equal(addition.isArchived(), deletedAt !== null);
+    }
+
+    const repository = new PrismaAdditionRepository({
+      addition: { findUnique: async () => null },
+    } as unknown as PrismaClient);
+    assert.equal(await repository.findByName('missing'), null);
+  });
+
   it('loads an addition with its decimal price and returns null for an unknown ID', async (context) => {
     const findUnique = context.mock.fn(async ({ where }: { where: { id: string } }) =>
       where.id === 'addition-1'
@@ -13,11 +40,11 @@ describe('PrismaAdditionRepository', () => {
         : null);
     const repository = new PrismaAdditionRepository({ addition: { findFirst: findUnique } } as unknown as PrismaClient);
 
-    const addition = await repository.findAdditionById('addition-1');
+    const addition = await repository.findById('addition-1');
     assert.equal(addition?.getName(), 'Queijo extra');
     assert.equal(addition?.getPrice(), '2.5');
     assert.equal(addition?.isAvailable(), false);
-    assert.equal(await repository.findAdditionById('missing'), null);
+    assert.equal(await repository.findById('missing'), null);
   });
 
   it('creates a new catalog addition', async () => {
@@ -40,14 +67,7 @@ describe('PrismaAdditionRepository', () => {
       },
     };
     const repository = new PrismaAdditionRepository({ addition } as unknown as PrismaClient);
-    assert.equal(await repository.save(buildCatalogAddition('new-id', '3.50', false)), 'old-id');
-  });
-
-  it('rejects additions which are already active', async () => {
-    const addition = { findUnique: async () => ({ id: 'active-id', deletedAt: null }) };
-    const repository = new PrismaAdditionRepository({ addition } as unknown as PrismaClient);
-    await assert.rejects(repository.save(buildCatalogAddition('new-id', '3.50')),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+    assert.equal(await repository.reactivate('old-id', buildCatalogAddition('new-id', '3.50', false)), 'old-id');
   });
 
   it('updates the addition fields', async (context) => {
@@ -79,7 +99,7 @@ describe('PrismaAdditionRepository', () => {
 
       await assert.rejects(
         new PrismaAdditionRepository(prisma).update(buildCatalogAddition('addition-1', '3.50')),
-        (error: unknown) => error instanceof ApplicationError
+        (error: unknown) => error instanceof InfrastructureError
           && error.field === field
           && error.code === applicationCode,
       );
@@ -102,7 +122,7 @@ describe('PrismaAdditionRepository', () => {
 
       await assert.rejects(
         new PrismaAdditionRepository(prisma).deleteById('addition-1'),
-        (error: unknown) => error instanceof ApplicationError
+        (error: unknown) => error instanceof InfrastructureError
           && error.field === 'additionId'
           && error.code === applicationCode,
       );

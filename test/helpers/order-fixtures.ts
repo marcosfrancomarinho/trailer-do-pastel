@@ -88,7 +88,7 @@ export function createProductRepository(overrides: Partial<ProductRepository> = 
 
 export function createAdditionRepository(overrides: Partial<AdditionRepository> = {}): AdditionRepository {
   return {
-    async findAdditionById(id) {
+    async findById(id) {
       if (id === 'addition-1') return buildCatalogAddition(id, '2.50');
       if (id === 'addition-2') return buildCatalogAddition(id, '1.00');
       return null;
@@ -96,6 +96,8 @@ export function createAdditionRepository(overrides: Partial<AdditionRepository> 
     async isLinkedToProduct() {
       return true;
     },
+    async findByName() { return null; },
+    async reactivate(id) { return id; },
     async existsByName() {
       return false;
     },
@@ -110,6 +112,8 @@ export function createAdditionRepository(overrides: Partial<AdditionRepository> 
 
 export function createCategoryRepository(overrides: Partial<CategoryRepository> = {}): CategoryRepository {
   return {
+    async findByName() { return null; },
+    async reactivate(id) { return id; },
     async existsById(id) {
       return id === 'category-1';
     },
@@ -142,11 +146,12 @@ export function buildCatalogProduct(
   );
 }
 
-export function buildCatalogAddition(id: string, price: string, available: boolean = true): Addition {
+export function buildCatalogAddition(id: string, price: string, available: boolean = true, deletedAt: Date | null = null): Addition {
   return Addition.create(
     AdditionName.create('Queijo extra'),
     AdditionPrice.create(DecimalValue.create(price)),
     available,
     id,
+    deletedAt,
   );
 }

@@ -3,10 +3,10 @@ import type { ListAdditionsByProductInput, ListAdditionsByProductOutput } from '
 import type { AdditionQueries } from '../../queries/addition-queries.js';
 
 export class ListAdditionsByProduct {
-  public constructor(private additionQueries: AdditionQueries) {}
+  public constructor(private additions: AdditionQueries) {}
 
   public async list(input: ListAdditionsByProductInput): Promise<ListAdditionsByProductOutput> {
-    const productId = ReferenceId.create(input.productId, 'productId');
-    return this.additionQueries.findByProductId(productId.getValue());
+    const productId: ReferenceId = ReferenceId.create(input.productId, 'productId');
+    return this.additions.findByProductId(productId.getValue());
   }
 }

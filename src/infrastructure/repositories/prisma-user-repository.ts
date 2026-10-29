@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../application/errors/application-error.js';
+import { InfrastructureError } from '../errors/infrastructure-error.js';
 import { User } from '../../domain/entities/user.js';
 import type { UserRepository } from '../../domain/repositories/user-repository.js';
 import type { UserRole } from '../../domain/value-objects/user/user-role.js';
@@ -62,7 +62,7 @@ export class PrismaUserRepository implements UserRepository {
       return savedUser.id;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um usuário cadastrado com esse nome.');
+        throw new InfrastructureError('name', 'ALREADY_EXISTS', 'Já existe um usuário cadastrado com esse nome.');
       }
 
       throw error;
@@ -74,7 +74,7 @@ export class PrismaUserRepository implements UserRepository {
       await this.prisma.user.delete({ where: { id } });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new ApplicationError('userId', 'NOT_FOUND', 'O usuário informado não foi encontrado.');
+        throw new InfrastructureError('userId', 'NOT_FOUND', 'O usuário informado não foi encontrado.');
       }
       throw error;
     }

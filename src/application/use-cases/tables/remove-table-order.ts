@@ -5,16 +5,16 @@ import { EventObserver } from '../../observer/event-observer.js';
 
 export class RemoveTableOrder {
   public constructor(
-    private orderRepository: OrderRepository,
-    private eventObserver: EventObserver,
+    private orders: OrderRepository,
+    private events: EventObserver,
   ) {}
 
   public async remove(input: RemoveTableOrderInput): Promise<RemoveTableOrderOutput> {
-    const tableId = ReferenceId.create(input.tableId, 'tableId').getValue();
-    const orderId = ReferenceId.create(input.orderId, 'orderId').getValue();
-    const totalSpent = await this.orderRepository.removeFromTable(tableId, orderId);
+    const tableId: string = ReferenceId.create(input.tableId, 'tableId').getValue();
+    const orderId: string = ReferenceId.create(input.orderId, 'orderId').getValue();
+    const totalSpent: string = await this.orders.removeFromTable(tableId, orderId);
 
-    await this.eventObserver.notify({ orderId, status: 'CANCELED', tableId });
+    await this.events.notify({ orderId, status: 'CANCELED', tableId });
 
     return { orderId, tableId: null, status: 'CANCELED', totalSpent };
   }

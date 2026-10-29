@@ -69,19 +69,19 @@ describe('CreateProduct', () => {
   });
 
   it('creates a product without additions when the field is omitted or empty', async (context) => {
-    const findAdditionById = context.mock.fn(async () => null);
+    const findById = context.mock.fn(async () => null);
     const save = context.mock.fn(async (_product, additions: Addition[]) => {
       assert.deepEqual(additions, []);
       return 'generated-id';
     });
     const useCase = createUseCase(
       { findProductById: async () => null, existsByName: async () => false, save },
-      createAdditionRepository({ findAdditionById }),
+      createAdditionRepository({ findById }),
     );
 
     assert.deepEqual(await useCase.create(input), { id: 'generated-id' });
     assert.deepEqual(await useCase.create({ ...input, additionIds: [] }), { id: 'generated-id' });
-    assert.equal(findAdditionById.mock.callCount(), 0);
+    assert.equal(findById.mock.callCount(), 0);
     assert.equal(save.mock.callCount(), 2);
   });
 
@@ -101,20 +101,20 @@ describe('CreateProduct', () => {
   });
 
   it('validates and saves the selected additions with the product', async (context) => {
-    const findAdditionById = context.mock.fn(createAdditionRepository().findAdditionById);
+    const findById = context.mock.fn(createAdditionRepository().findById);
     const save = context.mock.fn(async (_product, additions: Addition[]) => {
       assert.deepEqual(additions.map((addition) => addition.getId()), ['addition-1', 'addition-2']);
       return 'generated-id';
     });
     const useCase = createUseCase(
       { findProductById: async () => null, existsByName: async () => false, save },
-      createAdditionRepository({ findAdditionById }),
+      createAdditionRepository({ findById }),
     );
 
     assert.deepEqual(await useCase.create({ ...input, additionIds: [' addition-1 ', 'addition-2'] }), {
       id: 'generated-id',
     });
-    assert.deepEqual(findAdditionById.mock.calls.map((call) => call.arguments), [
+    assert.deepEqual(findById.mock.calls.map((call) => call.arguments), [
       ['addition-1'], ['addition-2'],
     ]);
     assert.equal(save.mock.callCount(), 1);
@@ -196,14 +196,14 @@ describe('CreateProduct', () => {
 
   it('returns a categoryId NOT_FOUND error when the category does not exist', async (context) => {
     const save = context.mock.fn(async () => 'unexpected-id');
-    const findAdditionById = context.mock.fn(async () => null);
+    const findById = context.mock.fn(async () => null);
     const existsById = context.mock.fn(async (id: string) => {
       assert.equal(id, 'missing-category');
       return false;
     });
     const useCase = createUseCase(
       { findProductById: async () => null, existsByName: async () => false, save },
-      createAdditionRepository({ findAdditionById }),
+      createAdditionRepository({ findById }),
       createCategoryRepository({ existsById }),
     );
 
@@ -212,7 +212,7 @@ describe('CreateProduct', () => {
       (error: unknown) => error instanceof ApplicationError && error.field === 'categoryId' && error.code === 'NOT_FOUND',
     );
     assert.equal(existsById.mock.callCount(), 1);
-    assert.equal(findAdditionById.mock.callCount(), 0);
+    assert.equal(findById.mock.callCount(), 0);
     assert.equal(save.mock.callCount(), 0);
   });
 

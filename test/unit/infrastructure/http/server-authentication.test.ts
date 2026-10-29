@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request, Response } from 'express';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { JwtAuthTokenGateway } from '../../../../src/infrastructure/gateways/jwt-auth-token-gateway.js';
 import { ErrorHandler } from '../../../../src/infrastructure/http/middlewares/error-handler.js';
 import { RequireAuthentication } from '../../../../src/infrastructure/http/middlewares/require-authentication.js';
@@ -104,7 +104,7 @@ describe('Server authentication', () => {
 
     await middleware({ header: () => undefined } as unknown as Request, response, next);
     const error = next.mock.calls[0].arguments[0];
-    assert.ok(error instanceof ApplicationError);
+    assert.ok(error instanceof InfrastructureError);
     assert.equal(error.code, 'UNAUTHORIZED');
 
     const token = await gateway.issue('user-1');
@@ -135,7 +135,7 @@ describe('Server authentication', () => {
 
     await orderGuard({ body: { tableId: 'table-1' }, header: () => undefined } as unknown as Request, response, orderNext);
     const tableOrderError = orderNext.mock.calls[2].arguments[0];
-    assert.ok(tableOrderError instanceof ApplicationError);
+    assert.ok(tableOrderError instanceof InfrastructureError);
     assert.equal(tableOrderError.code, 'UNAUTHORIZED');
 
     await orderGuard({ body: { tableId: 'table-1' }, header: () => `Bearer ${token}` } as unknown as Request,

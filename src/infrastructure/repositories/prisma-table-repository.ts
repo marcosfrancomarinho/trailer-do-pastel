@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../application/errors/application-error.js';
+import { InfrastructureError } from '../errors/infrastructure-error.js';
 import type { ReleaseTableOutput } from '../../application/dtos/tables/release-table-dto.js';
 import type { Table } from '../../domain/entities/table.js';
 import type { TableRepository } from '../../domain/repositories/table-repository.js';
@@ -34,9 +34,9 @@ export class PrismaTableRepository implements TableRepository {
       select: { status: true, deletedAt: true },
     });
     if (!table || table.deletedAt !== null) {
-      throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
+      throw new InfrastructureError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
     }
-    throw new ApplicationError('tableId', 'IN_USE', 'Libere a mesa antes de excluí-la.');
+    throw new InfrastructureError('tableId', 'IN_USE', 'Libere a mesa antes de excluí-la.');
   }
 
   public async save(table: Table): Promise<string> {
@@ -62,7 +62,7 @@ export class PrismaTableRepository implements TableRepository {
       const isUniqueConstraintViolation = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 
       if (isUniqueConstraintViolation) {
-        throw new ApplicationError('number', 'ALREADY_EXISTS', 'Já existe uma mesa cadastrada com esse número.');
+        throw new InfrastructureError('number', 'ALREADY_EXISTS', 'Já existe uma mesa cadastrada com esse número.');
       }
 
       throw error;
@@ -79,7 +79,7 @@ export class PrismaTableRepository implements TableRepository {
         FOR UPDATE
       `;
       if (table === undefined) {
-        throw new ApplicationError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
+        throw new InfrastructureError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
       }
       // Evita consultas desnecessárias quando o estado já impede a liberação.
       const activeOrder =
@@ -102,7 +102,7 @@ export class PrismaTableRepository implements TableRepository {
         openSessionId: openSession?.id ?? null,
       });
       if (!decision.allowed) {
-        throw new ApplicationError('tableId', decision.code, decision.message);
+        throw new InfrastructureError('tableId', decision.code, decision.message);
       }
 
       const closedTotal = table.total_spent;

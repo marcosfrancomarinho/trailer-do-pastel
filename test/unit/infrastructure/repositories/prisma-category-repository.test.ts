@@ -1,12 +1,48 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { ApplicationError } from '../../../../src/application/errors/application-error.js';
+import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { Category } from '../../../../src/domain/entities/category.js';
 import { CategoryName } from '../../../../src/domain/value-objects/category/category-name.js';
 import { PrismaCategoryRepository } from '../../../../src/infrastructure/repositories/prisma-category-repository.js';
 
 describe('PrismaCategoryRepository', () => {
+  it('finds categories as domain entities, including archived entries, or returns null', async () => {
+    for (const deletedAt of [null, new Date()]) {
+      const repository = new PrismaCategoryRepository({
+        category: {
+          findUnique: async ({ where }: { where: { name: string } }) => {
+            assert.equal(where.name, 'Bebidas');
+            return { id: 'category-1', name: where.name, deletedAt };
+          },
+        },
+      } as unknown as PrismaClient);
+
+      const category: Category | null = await repository.findByName('Bebidas');
+      assert.ok(category instanceof Category);
+      assert.equal(category.getId(), 'category-1');
+      assert.equal(category.getName(), 'Bebidas');
+      assert.equal(category.isActive(), deletedAt === null);
+    }
+
+    const repository = new PrismaCategoryRepository({
+      category: { findUnique: async () => null },
+    } as unknown as PrismaClient);
+    assert.equal(await repository.findByName('missing'), null);
+  });
+
+  it('maps a duplicate name detected during creation', async () => {
+    const error = new Prisma.PrismaClientKnownRequestError('Duplicate name', {
+      code: 'P2002', clientVersion: '6.19.3',
+    });
+    const repository = new PrismaCategoryRepository({
+      category: { create: async () => { throw error; } },
+    } as unknown as PrismaClient);
+
+    await assert.rejects(repository.save(Category.create(CategoryName.create('Bebidas'))),
+      (failure: unknown) => failure instanceof InfrastructureError && failure.code === 'ALREADY_EXISTS');
+  });
+
   it('creates a new category', async () => {
     const category = {
       findUnique: async () => null,
@@ -26,14 +62,15 @@ describe('PrismaCategoryRepository', () => {
       },
     };
     const repository = new PrismaCategoryRepository({ category } as unknown as PrismaClient);
-    assert.equal(await repository.save(Category.create(CategoryName.create('Pastéis'))), 'old-id');
+    assert.equal(await repository.reactivate('old-id'), 'old-id');
   });
 
-  it('rejects a category which is still active', async () => {
-    const category = { findUnique: async () => ({ id: 'active-id', deletedAt: null }) };
-    const repository = new PrismaCategoryRepository({ category } as unknown as PrismaClient);
-    await assert.rejects(repository.save(Category.create(CategoryName.create('Pastéis'))),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+  it('rejects a concurrent reactivation', async () => {
+    const repository = new PrismaCategoryRepository({
+      category: { updateMany: async () => ({ count: 0 }) },
+    } as unknown as PrismaClient);
+    await assert.rejects(repository.reactivate('old-id'),
+      (error: unknown) => error instanceof InfrastructureError && error.code === 'ALREADY_EXISTS');
   });
 
   it('updates the name of a category', async (context) => {
@@ -49,11 +86,10 @@ describe('PrismaCategoryRepository', () => {
     }]);
   });
 
-  it('reports duplicate names and missing categories on update', async () => {
+  it('reports duplicate names on update', async () => {
     const category = Category.create(CategoryName.create('Pastéis'), 'category-1');
     const cases = [
       { prismaCode: 'P2002', field: 'name', applicationCode: 'ALREADY_EXISTS' },
-      { prismaCode: 'P2025', field: 'categoryId', applicationCode: 'NOT_FOUND' },
     ];
 
     for (const { prismaCode, field, applicationCode } of cases) {
@@ -67,7 +103,7 @@ describe('PrismaCategoryRepository', () => {
 
       await assert.rejects(
         new PrismaCategoryRepository(prisma).update(category),
-        (error: unknown) => error instanceof ApplicationError
+        (error: unknown) => error instanceof InfrastructureError
           && error.field === field
           && error.code === applicationCode,
       );
@@ -119,7 +155,7 @@ describe('PrismaCategoryRepository', () => {
 
       await assert.rejects(
         new PrismaCategoryRepository(prisma).deleteById('category-1'),
-        (error: unknown) => error instanceof ApplicationError
+        (error: unknown) => error instanceof InfrastructureError
           && error.field === 'categoryId'
           && error.code === applicationCode,
       );

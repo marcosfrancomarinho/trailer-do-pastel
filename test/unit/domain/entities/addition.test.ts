@@ -16,6 +16,22 @@ function createAddition(available?: boolean, id?: string): Addition {
 }
 
 describe('Addition', () => {
+  it('compares names using their validated values', () => {
+    const addition: Addition = createAddition();
+
+    assert.equal(addition.hasDifferentName(AdditionName.create(' Queijo extra ')), false);
+    assert.equal(addition.hasDifferentName(AdditionName.create('Bacon extra')), true);
+  });
+
+  it('rejects non-boolean availability', () => {
+    const invalidValues: unknown[] = [null, 'true', 'false', 0, 1, {}, []];
+
+    for (const available of invalidValues) {
+      assert.throws(() => createAddition(available as boolean), (error: unknown) =>
+        error instanceof DomainError && error.field === 'available' && error.code === 'INVALID_TYPE');
+    }
+  });
+
   it('exposes validated values and the persisted ID while preserving unavailable status', () => {
     const addition = createAddition(false, 'database-id');
 

@@ -1,15 +1,27 @@
 import { Category } from '../../../domain/entities/category.js';
+import { ApplicationError } from '../../errors/application-error.js';
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import { CategoryName } from '../../../domain/value-objects/category/category-name.js';
 import type { CreateCategoryInput, CreateCategoryOutput } from '../../dtos/categories/create-category-dto.js';
 
 export class CreateCategory {
-  public constructor(private categoryRepository: CategoryRepository) {}
+  public constructor(private categories: CategoryRepository) {}
 
   public async create(input: CreateCategoryInput): Promise<CreateCategoryOutput> {
-    const name = CategoryName.create(input.name);
-    const category = Category.create(name);
-    const id = await this.categoryRepository.save(category);
+    const name: CategoryName = CategoryName.create(input.name);
+    const existing: Category | null = await this.categories.findByName(name.getValue());
+
+    if (existing && existing.isActive()) {
+      throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
+    }
+
+    if (existing) {
+      const id: string = await this.categories.reactivate(existing.getId());
+      return { id };
+    }
+
+    const category: Category = Category.create(name);
+    const id: string = await this.categories.save(category);
 
     return { id };
   }

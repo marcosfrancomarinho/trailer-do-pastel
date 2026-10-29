@@ -1,6 +1,6 @@
+import type { SavedOrder, OrderRepository } from '../../../domain/repositories/order-repository.js';
 import { Order } from '../../../domain/entities/order.js';
 import type { OrderItem } from '../../../domain/entities/order-item.js';
-import type { OrderRepository } from '../../../domain/repositories/order-repository.js';
 import { CustomerName } from '../../../domain/value-objects/customer/customer-name.js';
 import { CustomerPhone } from '../../../domain/value-objects/customer/customer-phone.js';
 import { OrderObservation } from '../../../domain/value-objects/order/order-observation.js';
@@ -11,28 +11,28 @@ import { EventObserver } from '../../observer/event-observer.js';
 
 export class CreateOrder {
   public constructor(
-    private orderRepository: OrderRepository,
-    private createOrderItemService: CreateOrderItemService,
-    private eventObserver: EventObserver,
+    private orders: OrderRepository,
+    private orderItems: CreateOrderItemService,
+    private events: EventObserver,
   ) {}
 
   public async create(input: CreateOrderInput): Promise<CreateOrderOutput> {
-    const customerName = CustomerName.create(input.customerName);
-    const customerPhone = CustomerPhone.create(input.customerPhone);
-    const observation = OrderObservation.create(input.observation);
-    const tableId = input.tableId == null ? null : ReferenceId.create(input.tableId, 'tableId');
-    const userId = tableId === null ? null : ReferenceId.create(input.userId as string, 'userId');
+    const customerName: CustomerName = CustomerName.create(input.customerName);
+    const customerPhone: CustomerPhone = CustomerPhone.create(input.customerPhone);
+    const observation: OrderObservation = OrderObservation.create(input.observation);
+    const tableId: ReferenceId | null = input.tableId == null ? null : ReferenceId.create(input.tableId, 'tableId');
+    const userId: ReferenceId | null = tableId === null ? null : ReferenceId.create(input.userId as string, 'userId');
     const items: OrderItem[] = [];
 
     for (const item of input.items) {
-      const orderItem = await this.createOrderItemService.create(item);
+      const orderItem: OrderItem = await this.orderItems.create(item);
       items.push(orderItem);
     }
 
-    const order = Order.create(customerName, customerPhone, items, observation, tableId, undefined, userId);
-    const { id, trackingToken } = await this.orderRepository.save(order);
+    const order: Order = Order.create(customerName, customerPhone, items, observation, tableId, undefined, userId);
+    const { id, trackingToken }: SavedOrder = await this.orders.save(order);
 
-    await this.eventObserver.notify({
+    await this.events.notify({
       orderId: id,
       status: order.getStatus(),
       tableId: order.getTableId(),

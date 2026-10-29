@@ -3,9 +3,9 @@ import type { ListOrderHistoryInput, ListOrderHistoryOutput } from '../../dtos/o
 import type { OrderQueries } from '../../queries/order-queries.js';
 
 export class ListOrderHistory {
-  public constructor(private orderQueries: OrderQueries) {}
+  public constructor(private orders: OrderQueries) {}
 
   public async list(input: ListOrderHistoryInput): Promise<ListOrderHistoryOutput> {
-    return this.orderQueries.findHistory(OrderDateRange.create(input.date));
+    return this.orders.findHistory(OrderDateRange.create(input.date));
   }
 }
