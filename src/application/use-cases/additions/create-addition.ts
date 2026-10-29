@@ -11,12 +11,6 @@ export class CreateAddition {
 
   public async create(input: CreateAdditionInput): Promise<CreateAdditionOutput> {
     const name = AdditionName.create(input.name);
-    const additionExists = await this.additionRepository.existsByName(name.getValue());
-
-    if (additionExists) {
-      throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um adicional cadastrado com esse nome.');
-    }
-
     const decimalPrice = DecimalValue.create(input.price);
     const price = AdditionPrice.create(decimalPrice);
     const addition = Addition.create(name, price, input.available);
