@@ -11,7 +11,7 @@ import { ReferenceId } from '../../../../src/domain/value-objects/shared/referen
 describe('Order', () => {
   it('preserves the employee responsible for a table order', () => {
     const order = Order.create(CustomerName.create('Maria'), CustomerPhone.create('11999999999'),
-      [buildOrderItem()], undefined, ReferenceId.create('table-1', 'tableId'), undefined,
+      [buildOrderItem()], undefined, ReferenceId.create('table-1', 'tableId'),
       ReferenceId.create(' employee-1 ', 'userId'));
     assert.equal(order.getUserId(), 'employee-1');
     assert.equal(order.getTableId(), 'table-1');

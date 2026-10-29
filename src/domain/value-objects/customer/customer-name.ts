@@ -24,5 +24,9 @@ export class CustomerName {
     if (!name.trim()) {
       throw new DomainError('customerName', 'EMPTY', 'O nome do cliente não pode ser vazio.');
     }
+
+    if (Array.from(name.trim()).length < 3) {
+      throw new DomainError('customerName', 'TOO_SHORT', 'O nome do cliente deve ter pelo menos 3 caracteres.');
+    }
   }
 }

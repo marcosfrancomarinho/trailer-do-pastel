@@ -2,7 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { InfrastructureError } from '../errors/infrastructure-error.js';
 import type { Order } from '../../domain/entities/order.js';
 import type { OrderRepository, SavedOrder } from '../../domain/repositories/order-repository.js';
-import { OrderStatus } from '../../domain/value-objects/order/order-status.js';
+import { OrderStatus, type OrderStatusValue } from '../../domain/value-objects/order/order-status.js';
 
 export class PrismaOrderRepository implements OrderRepository {
   public constructor(private prisma: PrismaClient) {}
@@ -73,15 +73,16 @@ export class PrismaOrderRepository implements OrderRepository {
   }
 
   public async save(order: Order): Promise<SavedOrder> {
-    const tableId = order.getTableId();
-    const total = order.getTotal();
+    const tableId: string | null = order.getTableId();
+    const total: string = order.getTotal();
+    const status: OrderStatusValue = order.getStatus();
     const data: Prisma.OrderUncheckedCreateInput = {
       tableId,
       userId: order.getUserId(),
       customerName: order.getCustomerName(),
       customerPhone: order.getCustomerPhone(),
       observation: order.getObservation(),
-      status: order.getStatus(),
+      status,
       total,
       items: {
         create: order.getItems().map((item) => ({
@@ -98,7 +99,7 @@ export class PrismaOrderRepository implements OrderRepository {
           },
         })),
       },
-      histories: { create: { status: order.getStatus() } },
+      histories: { create: { status } },
     };
     const create = (prisma: Prisma.TransactionClient, tableSessionId: string | null): Promise<SavedOrder> =>
       prisma.order.create({
@@ -107,9 +108,9 @@ export class PrismaOrderRepository implements OrderRepository {
       });
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Compartilha o bloqueio entre pedidos e espera uma abertura/fechamento em andamento.
-        const store = await tx.$queryRaw<Array<{ status: string }>>`
+        const store: Array<{ status: string }> = await tx.$queryRaw<Array<{ status: string }>>`
           SELECT status FROM "store" WHERE id = 1 FOR SHARE
         `;
         if (store[0]?.status !== 'OPEN') {
@@ -118,7 +119,7 @@ export class PrismaOrderRepository implements OrderRepository {
 
         if (tableId === null) return create(tx, null);
 
-        const updatedTable = await tx.table.updateMany({
+        const updatedTable: Prisma.BatchPayload = await tx.table.updateMany({
           where: { id: tableId, deletedAt: null },
           data: { status: 'OCCUPIED', totalSpent: { increment: total } },
         });
@@ -126,7 +127,7 @@ export class PrismaOrderRepository implements OrderRepository {
           throw new InfrastructureError('tableId', 'NOT_FOUND', 'A mesa informada não foi encontrada.');
         }
 
-        let session = await tx.tableSession.findFirst({
+        let session: { id: string } | null = await tx.tableSession.findFirst({
           where: { tableId, closedAt: null },
           select: { id: true },
         });

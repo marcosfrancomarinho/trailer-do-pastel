@@ -23,9 +23,9 @@ describe('CreateOrderItemService', () => {
 
   it('uses the catalog name and price and delegates each addition to the injected service', async (context) => {
     const repository = createProductRepository({
-      findProductById: async () => buildCatalogProduct('product-1', '9.75', true, 'Pastel especial'),
+      findById: async () => buildCatalogProduct('product-1', '9.75', true, 'Pastel especial'),
     });
-    const lookup = context.mock.method(repository, 'findProductById');
+    const lookup = context.mock.method(repository, 'findById');
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
     const createAddition = context.mock.method(additionService, 'create', async (addition) => (
       buildOrderAddition(addition.quantity, addition.additionId === 'cheese' ? '0.50' : '0.25', addition.additionId)
@@ -54,7 +54,7 @@ describe('CreateOrderItemService', () => {
     ];
 
     for (const { product, code } of cases) {
-      const repository = createProductRepository({ findProductById: async () => product });
+      const repository = createProductRepository({ findById: async () => product });
       const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
       const createAddition = context.mock.method(additionService, 'create');
       const service = new CreateOrderItemService(repository, additionService);
@@ -69,7 +69,7 @@ describe('CreateOrderItemService', () => {
 
   it('validates IDs and quantities before looking up the product or creating additions', async (context) => {
     const repository = createProductRepository();
-    const lookup = context.mock.method(repository, 'findProductById');
+    const lookup = context.mock.method(repository, 'findById');
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
     const createAddition = context.mock.method(additionService, 'create');
     const service = new CreateOrderItemService(repository, additionService);
@@ -85,14 +85,14 @@ describe('CreateOrderItemService', () => {
     assert.equal(createAddition.mock.callCount(), 0);
   });
 
-  it('propagates addition service errors and stops processing the remaining additions', async (context) => {
+  it('propagates addition service errors after starting all additions', async (context) => {
     const failure = new ApplicationError('additionId', 'NOT_FOUND', 'Adicional não encontrado.');
     const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
     const createAddition = context.mock.method(additionService, 'create', async () => { throw failure; });
     const service = new CreateOrderItemService(createProductRepository(), additionService);
 
     await assert.rejects(service.create(input), (error: unknown) => error === failure);
-    assert.equal(createAddition.mock.callCount(), 1);
+    assert.equal(createAddition.mock.callCount(), input.additions.length);
   });
 
   it('keeps the entity validation against repeated additions', async () => {

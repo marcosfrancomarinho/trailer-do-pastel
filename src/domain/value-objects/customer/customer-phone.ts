@@ -5,7 +5,8 @@ export class CustomerPhone {
 
   public static create(phone: string): CustomerPhone {
     CustomerPhone.validate(phone);
-    return new CustomerPhone(phone.replace(/[\s()-]/g, ''));
+    const normalizedPhone: string = CustomerPhone.normalize(phone);
+    return new CustomerPhone(normalizedPhone);
   }
 
   public getValue(): string {
@@ -25,8 +26,12 @@ export class CustomerPhone {
       throw new DomainError('customerPhone', 'EMPTY', 'O telefone do cliente não pode ser vazio.');
     }
 
-    if (!/^\+?[0-9]{10,15}$/.test(phone.replace(/[\s()-]/g, ''))) {
+    if (!/^\+?[0-9]{10,15}$/.test(CustomerPhone.normalize(phone))) {
       throw new DomainError('customerPhone', 'INVALID_FORMAT', 'O telefone do cliente deve conter entre 10 e 15 dígitos.');
     }
+  }
+
+  private static normalize(phone: string): string {
+    return phone.replace(/[\s()-]/g, '');
   }
 }

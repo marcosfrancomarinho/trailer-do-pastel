@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import { GetStoreStatus } from '../../../../../../src/application/use-cases/store/get-store-status.js';
 import { SetStoreStatus } from '../../../../../../src/application/use-cases/store/set-store-status.js';
+import { StoreState } from '../../../../../../src/domain/entities/store-state.js';
 import { StoreController } from '../../../../../../src/infrastructure/http/controllers/store/store-controller.js';
 import { createResponse } from '../../../../../helpers/http-fixtures.js';
 
@@ -11,10 +12,10 @@ describe('StoreController', () => {
   it('returns status and opens or closes through the use cases', async (context) => {
     let current = 'OPEN' as 'OPEN' | 'CLOSED';
     const repository = {
-      getStatus: async () => ({ status: current, updatedAt: '2026-10-23T12:00:00.000Z' }),
+      getStatus: async () => StoreState.create(current, new Date('2026-10-23T12:00:00.000Z')),
       setStatus: async (status: 'OPEN' | 'CLOSED') => {
         current = status;
-        return { status: current, updatedAt: '2026-10-23T12:00:00.000Z' };
+        return StoreState.create(current, new Date('2026-10-23T12:00:00.000Z'));
       },
     };
     const controller = new StoreController(new GetStoreStatus(repository), new SetStoreStatus(repository, new EventObserver()));

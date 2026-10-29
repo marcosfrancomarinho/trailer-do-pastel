@@ -13,8 +13,8 @@ export class Order {
     private items: OrderItem[],
     private observation: OrderObservation,
     private tableId: ReferenceId | null,
-    private id: string | undefined,
     private userId: ReferenceId | null,
+    private id: string | undefined,
   ) {}
 
   public static create(
@@ -23,11 +23,11 @@ export class Order {
     items: OrderItem[] = [],
     observation: OrderObservation = OrderObservation.create(),
     tableId: ReferenceId | null = null,
-    id?: string,
     userId: ReferenceId | null = null,
+    id?: string,
   ): Order {
     Order.validateItems(items);
-    return new Order(customerName, customerPhone, [...items], observation, tableId, id, userId);
+    return new Order(customerName, customerPhone, [...items], observation, tableId, userId, id);
   }
 
   public getId(): string {

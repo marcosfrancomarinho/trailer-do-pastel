@@ -22,10 +22,16 @@ interface RouteLayer {
 describe('Server authentication', () => {
   it('requires a Bearer token for management routes and keeps customer routes public', async (context) => {
     const gateway = new JwtAuthTokenGateway('a'.repeat(32));
-    const controller = { execute() {}, getStatus() {}, open() {}, close() {} };
+    const controller = {
+      execute(this: unknown) { assert.strictEqual(this, controller); },
+      resolveOrderId: async (trackingToken: string) => trackingToken,
+      getStatus() {}, open() {}, close() {},
+    };
+    const sseGateway = new HttpSseGateway();
+    const connect = context.mock.method(sseGateway, 'connect', () => {});
     const dependencies = [
       ...Array.from({ length: Server.length - 4 }, () => controller),
-      new HttpSseGateway(),
+      sseGateway,
       new RequireAuthentication(gateway, { findRoleById: async () => 'EMPLOYEE' } as UserRepository),
       new RequireAdmin(),
       new ErrorHandler(),
@@ -97,10 +103,29 @@ describe('Server authentication', () => {
     assert.equal(findRoute('POST', '/orders')?.route?.stack.length, 2);
     assert.equal(routes.length, adminRoutes.length + protectedRoutes.length + publicRoutes.length + 1);
 
+    const productHandler = findRoute('GET', '/products')?.route?.stack[0].handle;
+    assert.ok(productHandler);
+    await productHandler({} as Request, {} as Response, () => {});
+
     const middleware = findRoute('GET', '/orders/pending')?.route?.stack[0].handle;
     assert.ok(middleware);
     const { response } = createResponse(context);
     const next = context.mock.fn();
+
+    const trackingEvents = findRoute('GET', '/orders/tracking/:trackingToken/events')?.route?.stack[0].handle;
+    assert.ok(trackingEvents);
+    await trackingEvents({ params: { trackingToken: 'token-1' } } as unknown as Request, response, next);
+    assert.deepEqual(connect.mock.calls[0].arguments, [response, 'token-1']);
+
+    const storeEvents = findRoute('GET', '/store/events')?.route?.stack[0].handle;
+    assert.ok(storeEvents);
+    await storeEvents({} as Request, response, next);
+    assert.deepEqual(connect.mock.calls[1].arguments, [response, null, true]);
+
+    const orderEvents = findRoute('GET', '/orders/events')?.route?.stack[1].handle;
+    assert.ok(orderEvents);
+    await orderEvents({} as Request, response, next);
+    assert.deepEqual(connect.mock.calls[2].arguments, [response]);
 
     await middleware({ header: () => undefined } as unknown as Request, response, next);
     const error = next.mock.calls[0].arguments[0];

@@ -59,4 +59,8 @@ export class Product {
   public isAvailable(): boolean {
     return this.available;
   }
+
+  public isUnavailable(): boolean {
+    return this.available === false;
+  }
 }

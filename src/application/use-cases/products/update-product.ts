@@ -22,7 +22,7 @@ export class UpdateProduct {
 
   public async update(input: UpdateProductInput): Promise<UpdateProductOutput> {
     const productId: ReferenceId = ReferenceId.create(input.productId, 'productId');
-    const currentProduct: Product | null = await this.products.findProductById(productId.getValue());
+    const currentProduct: Product | null = await this.products.findById(productId.getValue());
 
     if (!currentProduct) {
       throw new ApplicationError('productId', 'NOT_FOUND', 'O produto informado não foi encontrado.');

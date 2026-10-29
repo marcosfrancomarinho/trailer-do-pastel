@@ -3,7 +3,7 @@ import { DomainError } from '../../errors/domain-error.js';
 export class ReferenceId {
   private constructor(private id: string) {}
 
-  public static create(id: string, field: string = 'id'): ReferenceId {
+  public static create(id: unknown, field: string = 'id'): ReferenceId {
     ReferenceId.validate(id, field);
     return new ReferenceId(id.trim());
   }
@@ -12,7 +12,7 @@ export class ReferenceId {
     return this.id;
   }
 
-  private static validate(id: unknown, field: string): void {
+  private static validate(id: unknown, field: string): asserts id is string {
     if (id === undefined || id === null) {
       throw new DomainError(field, 'REQUIRED', 'O identificador não pode ser nulo ou indefinido.');
     }

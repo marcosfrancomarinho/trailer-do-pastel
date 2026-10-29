@@ -13,7 +13,7 @@ describe('PrismaProductRepository', () => {
 
     assert.equal(await repository.existsByName('Pastel de queijo'), true);
     assert.equal(await repository.existsByName('Pastel de carne'), false);
-    assert.equal(await repository.findProductById('missing'), null);
+    assert.equal(await repository.findById('missing'), null);
   });
 
   it('checks whether a product ID exists', async (context) => {
@@ -45,9 +45,24 @@ describe('PrismaProductRepository', () => {
       },
     } as unknown as PrismaClient;
 
-    const product = await new PrismaProductRepository(prisma).findProductById('product-1');
+    const product = await new PrismaProductRepository(prisma).findById('product-1');
 
     assert.equal(product?.getImageUrl(), 'https://example.com/pastel.jpg');
+  });
+
+  it('translates Prisma lookup failures into an infrastructure error', async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Lookup failed', {
+      code: 'P2022', clientVersion: '6',
+    });
+    const prisma = {
+      product: { findFirst: async () => { throw prismaError; } },
+    } as unknown as PrismaClient;
+
+    await assert.rejects(
+      new PrismaProductRepository(prisma).findById('product-1'),
+      (error: unknown) => error instanceof InfrastructureError
+        && error.field === 'productId' && error.code === 'PERSISTENCE_FAILED',
+    );
   });
 
   it('creates products with selected additions inside a transaction', async () => {

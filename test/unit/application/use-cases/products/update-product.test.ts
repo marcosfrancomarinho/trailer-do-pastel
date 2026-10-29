@@ -11,7 +11,7 @@ describe('UpdateProduct', () => {
     const current = buildCatalogProduct('product-1', '12.50', false);
     context.mock.method(current, 'getImageUrl', () => 'https://example.com/pastel.jpg');
     const update = context.mock.fn<ProductRepository['update']>(async () => {});
-    const useCase = new UpdateProduct(createProductRepository({ findProductById: async () => current, update }),
+    const useCase = new UpdateProduct(createProductRepository({ findById: async () => current, update }),
       createAdditionRepository(), createCategoryRepository());
     await useCase.update({ productId: 'product-1', description: ' Nova descricao ' });
     const product = update.mock.calls[0].arguments[0];
@@ -62,15 +62,15 @@ describe('UpdateProduct', () => {
     });
   }
 
-  for (const stage of ['findProductById', 'existsByName', 'existsById', 'findById', 'update'] as const) {
+  for (const stage of ['product.findById', 'existsByName', 'existsById', 'addition.findById', 'update'] as const) {
     it(`preserves ${stage} failures and prevents a partial update`, async (context) => {
       const failure = new Error(stage);
       const fail = async () => { throw failure; };
       const update = context.mock.fn(stage === 'update' ? fail : async () => {});
       const useCase = new UpdateProduct(
-        createProductRepository({ update, ...(stage === 'findProductById' ? { findProductById: fail } : {}),
+        createProductRepository({ update, ...(stage === 'product.findById' ? { findById: fail } : {}),
           ...(stage === 'existsByName' ? { existsByName: fail } : {}) }),
-        createAdditionRepository(stage === 'findById' ? { findById: fail } : {}),
+        createAdditionRepository(stage === 'addition.findById' ? { findById: fail } : {}),
         createCategoryRepository({ existsById: stage === 'existsById' ? fail : async () => true }));
       await assert.rejects(useCase.update({ productId: 'product-1', name: 'Novo pastel',
         categoryId: 'category-2', additionIds: ['addition-1'] }), (error: unknown) => error === failure);

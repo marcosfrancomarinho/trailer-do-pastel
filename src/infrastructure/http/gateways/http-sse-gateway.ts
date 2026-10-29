@@ -33,8 +33,13 @@ export class HttpSseGateway implements SseGateway {
     const data = JSON.stringify(event);
     if (data === undefined) return;
 
-    const isStoreEvent = event && typeof event === 'object' && 'type' in event && ['STORE_OPENED', 'STORE_CLOSED'].includes(String((event as { type?: unknown }).type));
-    const eventOrderId = event && typeof event === 'object' && 'orderId' in event ? (event as { orderId?: unknown }).orderId : null;
+    const isStoreEvent =
+      event &&
+      typeof event === 'object' &&
+      'type' in event &&
+      ['STORE_OPENED', 'STORE_CLOSED'].includes(String((event as { type?: unknown }).type));
+    const eventOrderId =
+      event && typeof event === 'object' && 'orderId' in event ? (event as { orderId?: unknown }).orderId : null;
     for (const [response, client] of this.clients) {
       if (client.storeOnly && !isStoreEvent) continue;
       if (client.orderId !== null && client.orderId !== eventOrderId) continue;

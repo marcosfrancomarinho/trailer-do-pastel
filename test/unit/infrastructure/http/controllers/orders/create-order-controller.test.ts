@@ -9,12 +9,12 @@ import { ApplicationError } from '../../../../../../src/application/errors/appli
 import { DomainError } from '../../../../../../src/domain/errors/domain-error.js';
 import { CreateOrderController } from '../../../../../../src/infrastructure/http/controllers/orders/create-order-controller.js';
 import { createResponse } from '../../../../../helpers/http-fixtures.js';
-import { createOrderRepository, createProductRepository, createAdditionRepository } from '../../../../../helpers/order-fixtures.js';
+import { createOrderRepository, createStoreRepository, createProductRepository, createAdditionRepository } from '../../../../../helpers/order-fixtures.js';
 
 function createUseCase(): CreateOrder {
   const additionService = new CreateOrderItemAdditionService(createAdditionRepository());
   const itemService = new CreateOrderItemService(createProductRepository(), additionService);
-  return new CreateOrder(createOrderRepository(), itemService, new EventObserver());
+  return new CreateOrder(createOrderRepository(), createStoreRepository(), itemService, new EventObserver());
 }
 
 describe('CreateOrderController', () => {

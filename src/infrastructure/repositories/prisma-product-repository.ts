@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
+import type { Product as PrismaProduct } from '@prisma/client';
 import { InfrastructureError } from '../errors/infrastructure-error.js';
 import { Product } from '../../domain/entities/product.js';
 import type { Addition } from '../../domain/entities/addition.js';
@@ -13,17 +14,29 @@ import { ReferenceId } from '../../domain/value-objects/shared/reference-id.js';
 export class PrismaProductRepository implements ProductRepository {
   public constructor(private prisma: PrismaClient) {}
 
-  public async findProductById(id: string): Promise<Product | null> {
-    const product = await this.prisma.product.findFirst({ where: { id, deletedAt: null, category: { deletedAt: null } } });
+  public async findById(id: string): Promise<Product | null> {
+    try {
+      const product: PrismaProduct | null = await this.prisma.product.findFirst({
+        where: { id, deletedAt: null, category: { deletedAt: null } },
+      });
 
-    if (!product) return null;
+      if (product === null) return null;
 
-    const name = ProductName.create(product.name);
-    const price = ProductPrice.create(DecimalValue.create(product.price.toString()));
-    const description = ProductDescription.create(product.description);
-    const categoryId = ReferenceId.create(product.categoryId, 'categoryId');
-    const imageUrl = product.imageUrl === null ? null : ProductImageUrl.create(product.imageUrl);
-    return Product.create(name, price, description, categoryId, product.available, imageUrl, product.id);
+      const name: ProductName = ProductName.create(product.name);
+      const price: ProductPrice = ProductPrice.create(DecimalValue.create(product.price.toString()));
+      const description: ProductDescription = ProductDescription.create(product.description);
+      const categoryId: ReferenceId = ReferenceId.create(product.categoryId, 'categoryId');
+      const imageUrl: ProductImageUrl | null = product.imageUrl === null ? null : ProductImageUrl.create(product.imageUrl);
+      return Product.create(name, price, description, categoryId, product.available, imageUrl, product.id);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientInitializationError) {
+        throw new InfrastructureError('productId', 'CONNECTION_FAILED', 'Não foi possível conectar ao banco de dados.');
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError || error instanceof Prisma.PrismaClientUnknownRequestError) {
+        throw new InfrastructureError('productId', 'PERSISTENCE_FAILED', 'Não foi possível buscar o produto.');
+      }
+      throw error;
+    }
   }
 
   public async existsById(id: string): Promise<boolean> {

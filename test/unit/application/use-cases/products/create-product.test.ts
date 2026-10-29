@@ -29,7 +29,7 @@ describe('CreateProduct', () => {
   it('saves the normalized name and returns the generated ID', async () => {
     const calls: string[] = [];
     const useCase = createUseCase({
-      findProductById: async () => null,
+      findById: async () => null,
       async existsByName(name) {
         // Duplicate checking is performed by the persistence layer.
         assert.equal(name, 'Pastel de queijo');
@@ -54,7 +54,7 @@ describe('CreateProduct', () => {
   it('preserves an explicit unavailable status and decimal precision when saving', async () => {
     const price = '9007199254740993.01';
     const useCase = createUseCase({
-      findProductById: async () => null,
+      findById: async () => null,
       async existsByName() {
         return false;
       },
@@ -75,7 +75,7 @@ describe('CreateProduct', () => {
       return 'generated-id';
     });
     const useCase = createUseCase(
-      { findProductById: async () => null, existsByName: async () => false, save },
+      { findById: async () => null, existsByName: async () => false, save },
       createAdditionRepository({ findById }),
     );
 
@@ -90,7 +90,7 @@ describe('CreateProduct', () => {
       assert.equal(product.getImageUrl(), null);
       return 'generated-id';
     });
-    const useCase = createUseCase({ findProductById: async () => null, existsByName: async () => false, save });
+    const useCase = createUseCase({ findById: async () => null, existsByName: async () => false, save });
 
     assert.deepEqual(await useCase.create({ ...input, imageUrl: undefined }), { id: 'generated-id' });
     await assert.rejects(
@@ -107,7 +107,7 @@ describe('CreateProduct', () => {
       return 'generated-id';
     });
     const useCase = createUseCase(
-      { findProductById: async () => null, existsByName: async () => false, save },
+      { findById: async () => null, existsByName: async () => false, save },
       createAdditionRepository({ findById }),
     );
 
@@ -122,7 +122,7 @@ describe('CreateProduct', () => {
 
   it('rejects invalid, duplicate, or missing additions before saving', async (context) => {
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({ findProductById: async () => null, existsByName: async () => false, save });
+    const useCase = createUseCase({ findById: async () => null, existsByName: async () => false, save });
 
     for (const additionIds of [null, 'addition-1', [1], [' '], ['addition-1', ' addition-1 ']]) {
       await assert.rejects(
@@ -141,7 +141,7 @@ describe('CreateProduct', () => {
   it('rejects invalid price payloads without saving', async (context) => {
     const save = context.mock.fn(async () => 'unexpected-id');
     const useCase = createUseCase({
-      findProductById: async () => null,
+      findById: async () => null,
       async existsByName() {
         return false;
       },
@@ -160,7 +160,7 @@ describe('CreateProduct', () => {
   it('rejects an invalid name before consulting the repository', async (context) => {
     const existsByName = context.mock.fn(async () => false);
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({ findProductById: async () => null, existsByName, save });
+    const useCase = createUseCase({ findById: async () => null, existsByName, save });
 
     await assert.rejects(
       useCase.create({ ...input, name: '  ' }),
@@ -173,7 +173,7 @@ describe('CreateProduct', () => {
   it('rejects an invalid description without saving', async (context) => {
     const existsByName = context.mock.fn(async () => false);
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({ findProductById: async () => null, existsByName, save });
+    const useCase = createUseCase({ findById: async () => null, existsByName, save });
 
     await assert.rejects(
       useCase.create({ ...input, description: '  ' }),
@@ -185,7 +185,7 @@ describe('CreateProduct', () => {
 
   it('rejects a missing category without saving', async (context) => {
     const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({ findProductById: async () => null, existsByName: async () => false, save });
+    const useCase = createUseCase({ findById: async () => null, existsByName: async () => false, save });
 
     await assert.rejects(
       useCase.create({ ...input, categoryId: null as unknown as string }),
@@ -202,7 +202,7 @@ describe('CreateProduct', () => {
       return false;
     });
     const useCase = createUseCase(
-      { findProductById: async () => null, existsByName: async () => false, save },
+      { findById: async () => null, existsByName: async () => false, save },
       createAdditionRepository({ findById }),
       createCategoryRepository({ existsById }),
     );
@@ -224,7 +224,7 @@ describe('CreateProduct', () => {
 
     for (const failure of failures) {
       const useCase = createUseCase({
-        findProductById: async () => null,
+        findById: async () => null,
         async existsByName() {
           return false;
         },

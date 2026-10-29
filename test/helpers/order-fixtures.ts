@@ -3,11 +3,13 @@ import { OrderItem } from '../../src/domain/entities/order-item.js';
 import { OrderItemAddition } from '../../src/domain/entities/order-item-addition.js';
 import { Product } from '../../src/domain/entities/product.js';
 import { Addition } from '../../src/domain/entities/addition.js';
+import { StoreState } from '../../src/domain/entities/store-state.js';
 import { ProductPrice } from '../../src/domain/value-objects/product/product-price.js';
 import { ProductDescription } from '../../src/domain/value-objects/product/product-description.js';
 import { AdditionName } from '../../src/domain/value-objects/addition/addition-name.js';
 import { AdditionPrice } from '../../src/domain/value-objects/addition/addition-price.js';
 import type { OrderRepository } from '../../src/domain/repositories/order-repository.js';
+import type { StoreRepository } from '../../src/domain/repositories/store-repository.js';
 import type { ProductRepository } from '../../src/domain/repositories/product-repository.js';
 import type { AdditionRepository } from '../../src/domain/repositories/addition-repository.js';
 import type { CategoryRepository } from '../../src/domain/repositories/category-repository.js';
@@ -49,6 +51,7 @@ export function buildOrder(items: OrderItem[] = [buildOrderItem()], id?: string)
     items,
     OrderObservation.create(),
     null,
+    null,
     id,
   );
 }
@@ -64,9 +67,21 @@ export function createOrderRepository(overrides: Partial<OrderRepository> = {}):
   };
 }
 
+export function createStoreRepository(overrides: Partial<StoreRepository> = {}): StoreRepository {
+  return {
+    async getStatus() {
+      return StoreState.create('OPEN', new Date('2026-01-01T00:00:00.000Z'));
+    },
+    async setStatus(status) {
+      return StoreState.create(status, new Date('2026-01-01T00:00:00.000Z'));
+    },
+    ...overrides,
+  };
+}
+
 export function createProductRepository(overrides: Partial<ProductRepository> = {}): ProductRepository {
   return {
-    async findProductById(id) {
+    async findById(id) {
       if (id === 'product-1') return buildCatalogProduct(id, '10.00');
       if (id === 'product-2') return buildCatalogProduct(id, '12.50', true, 'Pastel de carne');
       return null;

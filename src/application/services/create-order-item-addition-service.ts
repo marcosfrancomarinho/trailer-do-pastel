@@ -1,3 +1,4 @@
+import type { Addition } from '../../domain/entities/addition.js';
 import { OrderItemAddition } from '../../domain/entities/order-item-addition.js';
 import type { AdditionRepository } from '../../domain/repositories/addition-repository.js';
 import { OrderQuantity } from '../../domain/value-objects/order/order-quantity.js';
@@ -8,29 +9,29 @@ import type { CreateOrderAdditionInput } from '../dtos/orders/create-order-dto.j
 import { ApplicationError } from '../errors/application-error.js';
 
 export class CreateOrderItemAdditionService {
-  public constructor(private additionRepository: AdditionRepository) {}
+  public constructor(private additions: AdditionRepository) {}
 
   public async create(input: CreateOrderAdditionInput, productId: string): Promise<OrderItemAddition> {
-    const additionId = ReferenceId.create(input.additionId, 'additionId');
-    const quantity = OrderQuantity.create(input.quantity);
+    const additionId: ReferenceId = ReferenceId.create(input.additionId, 'additionId');
+    const quantity: OrderQuantity = OrderQuantity.create(input.quantity);
 
-    const addition = await this.additionRepository.findById(additionId.getValue());
+    const addition: Addition | null = await this.additions.findById(additionId.getValue());
 
     if (!addition) {
       throw new ApplicationError('additionId', 'NOT_FOUND', 'O adicional informado não foi encontrado.');
     }
 
-    if (!addition.isAvailable()) {
+    if (addition.isUnavailable()) {
       throw new ApplicationError('additionId', 'UNAVAILABLE', 'O adicional informado está indisponível.');
     }
 
-    const belongsToProduct = await this.additionRepository.isLinkedToProduct(productId, additionId.getValue());
+    const belongsToProduct: boolean = await this.additions.isLinkedToProduct(productId, additionId.getValue());
 
     if (!belongsToProduct) {
       throw new ApplicationError('additionId', 'NOT_ASSOCIATED', 'O adicional informado não pertence ao produto.');
     }
 
-    const unitPrice = OrderUnitPrice.create(DecimalValue.create(addition.getPrice()));
+    const unitPrice: OrderUnitPrice = OrderUnitPrice.create(DecimalValue.create(addition.getPrice()));
 
     return OrderItemAddition.create(additionId, quantity, unitPrice);
   }

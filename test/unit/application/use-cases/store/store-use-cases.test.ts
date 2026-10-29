@@ -3,15 +3,18 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { GetStoreStatus } from '../../../../../src/application/use-cases/store/get-store-status.js';
 import { SetStoreStatus } from '../../../../../src/application/use-cases/store/set-store-status.js';
+import { StoreState } from '../../../../../src/domain/entities/store-state.js';
 import type { StoreRepository } from '../../../../../src/domain/repositories/store-repository.js';
 
 describe('Store use cases', () => {
   for (const status of ['OPEN', 'CLOSED'] as const) {
     it(`returns stored ${status} status without writing`, async (context) => {
-      const result = { status, updatedAt: '2026-10-27T12:00:00Z' };
+      const result = StoreState.create(status, new Date('2026-10-27T12:00:00Z'));
       const getStatus = context.mock.fn(async () => result);
       const setStatus = context.mock.fn(async () => result);
-      assert.strictEqual(await new GetStoreStatus({ getStatus, setStatus }).get(), result);
+      assert.deepEqual(await new GetStoreStatus({ getStatus, setStatus }).get(), {
+        status, updatedAt: '2026-10-27T12:00:00.000Z',
+      });
       assert.equal(getStatus.mock.callCount(), 1);
       assert.equal(setStatus.mock.callCount(), 0);
     });
@@ -19,10 +22,12 @@ describe('Store use cases', () => {
 
   for (const [method, status] of [['open', 'OPEN'], ['close', 'CLOSED']] as const) {
     it(`${method} persists the requested status and returns the repository timestamp`, async (context) => {
-      const result = { status, updatedAt: '2026-10-27T12:00:00Z' };
+      const result = StoreState.create(status, new Date('2026-10-27T12:00:00Z'));
       const setStatus = context.mock.fn(async (_status: 'OPEN' | 'CLOSED') => result);
       const getStatus = context.mock.fn(async () => result);
-      assert.strictEqual(await new SetStoreStatus({ getStatus, setStatus }, new EventObserver())[method](), result);
+      assert.deepEqual(await new SetStoreStatus({ getStatus, setStatus }, new EventObserver())[method](), {
+        status, updatedAt: '2026-10-27T12:00:00.000Z',
+      });
       assert.deepEqual(setStatus.mock.calls.map(call => call.arguments), [[status]]);
       assert.equal(getStatus.mock.callCount(), 0);
     });

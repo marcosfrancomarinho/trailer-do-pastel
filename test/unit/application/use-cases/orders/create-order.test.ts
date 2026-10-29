@@ -8,13 +8,16 @@ import { CreateOrderItemService } from '../../../../../src/application/services/
 import { CreateOrderItemAdditionService } from '../../../../../src/application/services/create-order-item-addition-service.js';
 import { DomainError } from '../../../../../src/domain/errors/domain-error.js';
 import type { Order } from '../../../../../src/domain/entities/order.js';
+import { StoreState } from '../../../../../src/domain/entities/store-state.js';
 import type { OrderRepository } from '../../../../../src/domain/repositories/order-repository.js';
+import type { StoreRepository } from '../../../../../src/domain/repositories/store-repository.js';
 import type { ProductRepository } from '../../../../../src/domain/repositories/product-repository.js';
 import type { AdditionRepository } from '../../../../../src/domain/repositories/addition-repository.js';
 import {
   buildCatalogProduct,
   buildCatalogAddition,
   createOrderRepository,
+  createStoreRepository,
   createProductRepository,
   createAdditionRepository,
 } from '../../../../helpers/order-fixtures.js';
@@ -25,8 +28,10 @@ describe('CreateOrder', () => {
     productRepository: ProductRepository = createProductRepository(),
     additionRepository: AdditionRepository = createAdditionRepository(),
     eventObserver: EventObserver = new EventObserver(),
+    storeRepository: StoreRepository = createStoreRepository(),
   ) => new CreateOrder(
     orderRepository,
+    storeRepository,
     new CreateOrderItemService(productRepository, new CreateOrderItemAdditionService(additionRepository)),
     eventObserver,
   );
@@ -35,6 +40,24 @@ describe('CreateOrder', () => {
     customerPhone: '(11) 99999-9999',
     items: [{ productId: 'product-1', quantity: 2, additions: [] }],
   };
+
+  it('rejects new orders while the store is closed before looking up products or saving', async (context) => {
+    const store = createStoreRepository({
+      getStatus: async () => StoreState.create('CLOSED', new Date('2026-01-01T00:00:00.000Z')),
+    });
+    const products = createProductRepository();
+    const orders = createOrderRepository();
+    const productLookup = context.mock.method(products, 'findById');
+    const save = context.mock.method(orders, 'save');
+
+    await assert.rejects(
+      createUseCase(orders, products, undefined, undefined, store).create(input),
+      (error: unknown) => error instanceof ApplicationError
+        && error.field === 'store' && error.code === 'UNAVAILABLE',
+    );
+    assert.equal(productLookup.mock.callCount(), 0);
+    assert.equal(save.mock.callCount(), 0);
+  });
 
   it('notifies listeners with saved order details after persistence and awaits their completion', async () => {
     const calls: string[] = [];
@@ -98,7 +121,7 @@ describe('CreateOrder', () => {
     });
     const repository = createOrderRepository({ save });
     const productRepository = createProductRepository({
-      findProductById: async (id) => id === 'product-1'
+      findById: async (id) => id === 'product-1'
         ? buildCatalogProduct(id, '9.75', true, 'Pastel especial')
         : buildCatalogProduct(id, '12.50', true, 'Pastel de carne'),
     });
@@ -137,7 +160,7 @@ describe('CreateOrder', () => {
     });
     const productRepository = createProductRepository();
     const additionRepository = createAdditionRepository();
-    const productLookup = context.mock.method(productRepository, 'findProductById');
+    const productLookup = context.mock.method(productRepository, 'findById');
     const additionLookup = context.mock.method(additionRepository, 'findById');
     const useCase = createUseCase(repository, productRepository, additionRepository);
 
@@ -182,10 +205,10 @@ describe('CreateOrder', () => {
       field: string;
       code: string;
     }[] = [
-      { payload: input, productOverrides: { findProductById: async () => null }, field: 'productId', code: 'NOT_FOUND' },
+      { payload: input, productOverrides: { findById: async () => null }, field: 'productId', code: 'NOT_FOUND' },
       {
         payload: input,
-        productOverrides: { findProductById: async (id) => buildCatalogProduct(id, '10', false) },
+        productOverrides: { findById: async (id) => buildCatalogProduct(id, '10', false) },
         field: 'productId', code: 'UNAVAILABLE',
       },
       { payload: withAddition, additionOverrides: { findById: async () => null }, field: 'additionId', code: 'NOT_FOUND' },
@@ -240,7 +263,7 @@ describe('CreateOrder', () => {
   it('keeps decimal calculations exact', async () => {
     const repository = createOrderRepository();
     const productRepository = createProductRepository({
-      findProductById: async (id) => buildCatalogProduct(id, '0.10'),
+      findById: async (id) => buildCatalogProduct(id, '0.10'),
     });
     const additionRepository = createAdditionRepository({
       findById: async (id) => buildCatalogAddition(id, '0.20'),
@@ -279,6 +302,17 @@ describe('CreateOrder', () => {
     assert.equal(save.mock.callCount(), 0);
   });
 
+  it('requires a user ID when creating a table order', async (context) => {
+    const repository = createOrderRepository();
+    const save = context.mock.method(repository, 'save');
+
+    await assert.rejects(
+      createUseCase(repository).create({ ...input, tableId: 'table-1' }),
+      (error: unknown) => error instanceof DomainError && error.field === 'userId' && error.code === 'REQUIRED',
+    );
+    assert.equal(save.mock.callCount(), 0);
+  });
+
   it('saves a trimmed observation and rejects invalid observations before saving', async (context) => {
     const repository = createOrderRepository({
       async save(order) {
@@ -306,7 +340,7 @@ describe('CreateOrder', () => {
   it('propagates lookup failures without saving and preserves save errors', async (context) => {
     const failure = new Error('Database unavailable');
     const repository = createOrderRepository();
-    const productRepository = createProductRepository({ findProductById: async () => { throw failure; } });
+    const productRepository = createProductRepository({ findById: async () => { throw failure; } });
     const save = context.mock.method(repository, 'save');
 
     await assert.rejects(createUseCase(repository, productRepository).create(input), (error: unknown) => error === failure);

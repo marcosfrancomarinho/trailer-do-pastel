@@ -1,4 +1,4 @@
-import express, { type RequestHandler } from 'express';
+import express, { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import cors from 'cors';
 import type { Server as HttpServer } from 'node:http';
 import { CreateUserController } from './controllers/users/create-user-controller.js';
@@ -43,39 +43,39 @@ export class Server {
   private app = express();
 
   public constructor(
-    private createUserController: CreateUserController,
-    private listUsersController: ListUsersController,
-    private deleteUserController: DeleteUserController,
-    private loginUserController: LoginUserController,
-    private createProductController: CreateProductController,
-    private updateProductController: UpdateProductController,
-    private deleteProductController: DeleteProductController,
-    private createAdditionController: CreateAdditionController,
-    private updateAdditionController: UpdateAdditionController,
-    private deleteAdditionController: DeleteAdditionController,
-    private listAdditionsController: ListAdditionsController,
-    private listAdditionsByProductController: ListAdditionsByProductController,
-    private createCategoryController: CreateCategoryController,
-    private updateCategoryController: UpdateCategoryController,
-    private deleteCategoryController: DeleteCategoryController,
-    private listCategoriesController: ListCategoriesController,
-    private createTableController: CreateTableController,
-    private deleteTableController: DeleteTableController,
-    private listTablesController: ListTablesController,
-    private listTableOrdersController: ListTableOrdersController,
-    private listTableSessionsController: ListTableSessionsController,
-    private listClosedTableSessionsController: ListClosedTableSessionsController,
-    private removeTableOrderController: RemoveTableOrderController,
-    private releaseTableController: ReleaseTableController,
-    private storeController: StoreController,
-    private listProductsByCategoryController: ListProductsByCategoryController,
-    private listProductsController: ListProductsController,
-    private createOrderController: CreateOrderController,
-    private updateOrderStatusController: UpdateOrderStatusController,
-    private trackOrderController: TrackOrderController,
-    private listPendingOrdersController: ListPendingOrdersController,
-    private listPreparingOrdersController: ListPreparingOrdersController,
-    private listOrderHistoryController: ListOrderHistoryController,
+    private createUser: CreateUserController,
+    private listUsers: ListUsersController,
+    private deleteUser: DeleteUserController,
+    private loginUser: LoginUserController,
+    private createProduct: CreateProductController,
+    private updateProduct: UpdateProductController,
+    private deleteProduct: DeleteProductController,
+    private createAddition: CreateAdditionController,
+    private updateAddition: UpdateAdditionController,
+    private deleteAddition: DeleteAdditionController,
+    private listAdditions: ListAdditionsController,
+    private listAdditionsByProduct: ListAdditionsByProductController,
+    private createCategory: CreateCategoryController,
+    private updateCategory: UpdateCategoryController,
+    private deleteCategory: DeleteCategoryController,
+    private listCategories: ListCategoriesController,
+    private createTable: CreateTableController,
+    private deleteTable: DeleteTableController,
+    private listTables: ListTablesController,
+    private listTableOrders: ListTableOrdersController,
+    private listTableSessions: ListTableSessionsController,
+    private listClosedTableSessions: ListClosedTableSessionsController,
+    private removeTableOrder: RemoveTableOrderController,
+    private releaseTable: ReleaseTableController,
+    private store: StoreController,
+    private listProductsByCategory: ListProductsByCategoryController,
+    private listProducts: ListProductsController,
+    private createOrder: CreateOrderController,
+    private updateOrderStatus: UpdateOrderStatusController,
+    private trackOrder: TrackOrderController,
+    private listPendingOrders: ListPendingOrdersController,
+    private listPreparingOrders: ListPreparingOrdersController,
+    private listOrderHistory: ListOrderHistoryController,
     private sseGateway: SseGateway,
     private requireAuthentication: RequireAuthentication,
     private requireAdmin: RequireAdmin,
@@ -83,7 +83,7 @@ export class Server {
   ) {
     this.app.use(express.json(), cors());
     this.routes();
-    this.app.use(this.errorHandler.execute.bind(this.errorHandler));
+    this.app.use(this.bindHandler(this.errorHandler));
   }
 
   public run(port: number = Number(process.env.PORT ?? 3000)): HttpServer {
@@ -93,8 +93,8 @@ export class Server {
   }
 
   private routes(): void {
-    const authenticate = this.requireAuthentication.execute.bind(this.requireAuthentication);
-    const authorizeAdmin = this.requireAdmin.execute.bind(this.requireAdmin);
+    const authenticate = this.bindHandler(this.requireAuthentication);
+    const authorizeAdmin = this.bindHandler(this.requireAdmin);
 
     this.registerUserRoutes(authenticate, authorizeAdmin);
     this.registerProductRoutes(authenticate, authorizeAdmin);
@@ -106,146 +106,92 @@ export class Server {
   }
 
   private registerUserRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post('/users', authenticate, authorizeAdmin, this.createUserController.execute.bind(this.createUserController));
-    this.app.get('/users', authenticate, authorizeAdmin, this.listUsersController.execute.bind(this.listUsersController));
-    this.app.delete('/users/:userId', authenticate, authorizeAdmin, this.deleteUserController.execute.bind(this.deleteUserController));
-    this.app.post('/login', this.loginUserController.execute.bind(this.loginUserController));
+    this.app.post('/users', authenticate, authorizeAdmin, this.bindHandler(this.createUser));
+    this.app.get('/users', authenticate, authorizeAdmin, this.bindHandler(this.listUsers));
+    this.app.delete('/users/:userId', authenticate, authorizeAdmin, this.bindHandler(this.deleteUser));
+    this.app.post('/login', this.bindHandler(this.loginUser));
   }
 
   private registerProductRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post('/products', authenticate, authorizeAdmin, this.createProductController.execute.bind(this.createProductController));
-    this.app.patch(
-      '/products/:productId',
-      authenticate, authorizeAdmin, this.updateProductController.execute.bind(this.updateProductController),
-    );
-    this.app.delete(
-      '/products/:productId',
-      authenticate, authorizeAdmin, this.deleteProductController.execute.bind(this.deleteProductController),
-    );
-    this.app.get('/products', this.listProductsController.execute.bind(this.listProductsController));
-    this.app.get(
-      '/products/:productId/additions',
-      this.listAdditionsByProductController.execute.bind(this.listAdditionsByProductController),
-    );
+    this.app.post('/products', authenticate, authorizeAdmin, this.bindHandler(this.createProduct));
+    this.app.patch('/products/:productId', authenticate, authorizeAdmin, this.bindHandler(this.updateProduct));
+    this.app.delete('/products/:productId', authenticate, authorizeAdmin, this.bindHandler(this.deleteProduct));
+    this.app.get('/products', this.bindHandler(this.listProducts));
+    this.app.get('/products/:productId/additions', this.bindHandler(this.listAdditionsByProduct));
   }
 
   private registerAdditionRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post(
-      '/additions',
-      authenticate, authorizeAdmin, this.createAdditionController.execute.bind(this.createAdditionController),
-    );
-    this.app.patch(
-      '/additions/:additionId',
-      authenticate, authorizeAdmin, this.updateAdditionController.execute.bind(this.updateAdditionController),
-    );
-    this.app.delete(
-      '/additions/:additionId',
-      authenticate, authorizeAdmin, this.deleteAdditionController.execute.bind(this.deleteAdditionController),
-    );
-    this.app.get('/additions', this.listAdditionsController.execute.bind(this.listAdditionsController));
+    this.app.post('/additions', authenticate, authorizeAdmin, this.bindHandler(this.createAddition));
+    this.app.patch('/additions/:additionId', authenticate, authorizeAdmin, this.bindHandler(this.updateAddition));
+    this.app.delete('/additions/:additionId', authenticate, authorizeAdmin, this.bindHandler(this.deleteAddition));
+    this.app.get('/additions', this.bindHandler(this.listAdditions));
   }
 
   private registerCategoryRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post(
-      '/categories',
-      authenticate, authorizeAdmin, this.createCategoryController.execute.bind(this.createCategoryController),
-    );
-    this.app.patch(
-      '/categories/:categoryId',
-      authenticate, authorizeAdmin, this.updateCategoryController.execute.bind(this.updateCategoryController),
-    );
-    this.app.delete(
-      '/categories/:categoryId',
-      authenticate, authorizeAdmin, this.deleteCategoryController.execute.bind(this.deleteCategoryController),
-    );
-    this.app.get('/categories', this.listCategoriesController.execute.bind(this.listCategoriesController));
-    this.app.get(
-      '/categories/:categoryId/products',
-      this.listProductsByCategoryController.execute.bind(this.listProductsByCategoryController),
-    );
+    this.app.post('/categories', authenticate, authorizeAdmin, this.bindHandler(this.createCategory));
+    this.app.patch('/categories/:categoryId', authenticate, authorizeAdmin, this.bindHandler(this.updateCategory));
+    this.app.delete('/categories/:categoryId', authenticate, authorizeAdmin, this.bindHandler(this.deleteCategory));
+    this.app.get('/categories', this.bindHandler(this.listCategories));
+    this.app.get('/categories/:categoryId/products', this.bindHandler(this.listProductsByCategory));
+  }
+
+  private registerTableRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
+    this.app.post('/tables', authenticate, this.bindHandler(this.createTable));
+    this.app.delete('/tables/:tableId', authenticate, this.bindHandler(this.deleteTable));
+    this.app.get('/tables', authenticate, this.bindHandler(this.listTables));
+    this.app.get('/tables/sessions/history', authenticate, authorizeAdmin, this.bindHandler(this.listClosedTableSessions));
+    this.app.get('/tables/:tableId/orders', authenticate, this.bindHandler(this.listTableOrders));
+    this.app.get('/tables/:tableId/sessions', authenticate, this.bindHandler(this.listTableSessions));
+    this.app.delete('/tables/:tableId/orders/:orderId', authenticate, this.bindHandler(this.removeTableOrder));
+    this.app.patch('/tables/:tableId/release', authenticate, this.bindHandler(this.releaseTable));
+  }
+
+  private registerStoreRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
+    this.app.get('/store/status', this.store.getStatus.bind(this.store));
+    this.app.post('/store/open', authenticate, authorizeAdmin, this.store.open.bind(this.store));
+    this.app.post('/store/close', authenticate, authorizeAdmin, this.store.close.bind(this.store));
   }
 
   private registerOrderRoutes(authenticate: RequestHandler): void {
-    this.app.get('/store/events', (_request, response) => {
-      this.sseGateway.connect(response, null, true);
-    });
-    this.app.get('/orders/events', authenticate, (_request, response) => {
-      this.sseGateway.connect(response);
-    });
-    // Canal público limitado ao pedido autorizado pelo token de acompanhamento.
-    this.app.get('/orders/tracking/:trackingToken/events', async (request, response, next) => {
-      try {
-        const orderId = await this.trackOrderController.resolveOrderId(request.params.trackingToken as string);
-        this.sseGateway.connect(response, orderId);
-      } catch (error) {
-        next(error);
-      }
-    });
+    this.app.get('/store/events', this.connectStoreEvents.bind(this));
+    this.app.get('/orders/events', authenticate, this.connectOrderEvents.bind(this));
+    this.app.get('/orders/tracking/:trackingToken/events', this.connectTrackedOrderEvents.bind(this));
+    this.app.post('/orders', this.authenticateTableOrder(authenticate), this.bindHandler(this.createOrder));
+    this.app.patch('/orders/:orderId/status', authenticate, this.bindHandler(this.updateOrderStatus));
+    this.app.get('/orders/pending', authenticate, this.bindHandler(this.listPendingOrders));
+    this.app.get('/orders/preparing', authenticate, this.bindHandler(this.listPreparingOrders));
+    this.app.get('/orders/history', authenticate, this.bindHandler(this.listOrderHistory));
+    this.app.get('/orders/tracking/:trackingToken', this.bindHandler(this.trackOrder));
+  }
 
-    const authenticateTableOrder: RequestHandler = (request, response, next) => {
+  private connectStoreEvents(_request: Request, response: Response): void {
+    this.sseGateway.connect(response, null, true);
+  }
+
+  private connectOrderEvents(_request: Request, response: Response): void {
+    this.sseGateway.connect(response);
+  }
+
+  private async connectTrackedOrderEvents(request: Request, response: Response, next: NextFunction): Promise<void> {
+    try {
+      const orderId: string = await this.trackOrder.resolveOrderId(request.params.trackingToken as string);
+      this.sseGateway.connect(response, orderId);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  private authenticateTableOrder(authenticate: RequestHandler): RequestHandler {
+    return (request, response, next) => {
       if (request.body?.tableId == null) {
         next();
         return;
       }
       return authenticate(request, response, next);
     };
-    this.app.post('/orders', authenticateTableOrder, this.createOrderController.execute.bind(this.createOrderController));
-    this.app.patch(
-      '/orders/:orderId/status',
-      authenticate,
-      this.updateOrderStatusController.execute.bind(this.updateOrderStatusController),
-    );
-    this.app.get(
-      '/orders/pending',
-      authenticate,
-      this.listPendingOrdersController.execute.bind(this.listPendingOrdersController),
-    );
-    this.app.get(
-      '/orders/preparing',
-      authenticate,
-      this.listPreparingOrdersController.execute.bind(this.listPreparingOrdersController),
-    );
-    this.app.get(
-      '/orders/history',
-      authenticate,
-      this.listOrderHistoryController.execute.bind(this.listOrderHistoryController),
-    );
-    this.app.get(
-      '/orders/tracking/:trackingToken',
-      this.trackOrderController.execute.bind(this.trackOrderController),
-    );
   }
 
-  private registerTableRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.post('/tables', authenticate, this.createTableController.execute.bind(this.createTableController));
-    this.app.delete('/tables/:tableId', authenticate, this.deleteTableController.execute.bind(this.deleteTableController));
-    this.app.get('/tables', authenticate, this.listTablesController.execute.bind(this.listTablesController));
-    this.app.get('/tables/sessions/history', authenticate, authorizeAdmin, this.listClosedTableSessionsController.execute.bind(this.listClosedTableSessionsController));
-    this.app.get(
-      '/tables/:tableId/orders',
-      authenticate,
-      this.listTableOrdersController.execute.bind(this.listTableOrdersController),
-    );
-    this.app.get(
-      '/tables/:tableId/sessions',
-      authenticate,
-      this.listTableSessionsController.execute.bind(this.listTableSessionsController),
-    );
-    this.app.delete(
-      '/tables/:tableId/orders/:orderId',
-      authenticate,
-      this.removeTableOrderController.execute.bind(this.removeTableOrderController),
-    );
-    this.app.patch(
-      '/tables/:tableId/release',
-      authenticate,
-      this.releaseTableController.execute.bind(this.releaseTableController),
-    );
-  }
-
-  private registerStoreRoutes(authenticate: RequestHandler, authorizeAdmin: RequestHandler): void {
-    this.app.get('/store/status', this.storeController.getStatus.bind(this.storeController));
-    this.app.post('/store/open', authenticate, authorizeAdmin, this.storeController.open.bind(this.storeController));
-    this.app.post('/store/close', authenticate, authorizeAdmin, this.storeController.close.bind(this.storeController));
+  private bindHandler<T extends { execute: (...args: never[]) => unknown }>(target: T): T['execute'] {
+    return target.execute.bind(target);
   }
 }

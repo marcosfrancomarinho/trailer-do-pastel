@@ -1,9 +1,4 @@
-export type StoreStatus = 'OPEN' | 'CLOSED';
-
-export interface StoreState {
-  status: StoreStatus;
-  updatedAt: string;
-}
+import type { StoreState, StoreStatus } from '../entities/store-state.js';
 
 export interface StoreRepository {
   getStatus(): Promise<StoreState>;
