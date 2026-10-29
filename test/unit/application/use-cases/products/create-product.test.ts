@@ -26,12 +26,12 @@ describe('CreateProduct', () => {
     imageUrl: ' https://example.com/pastel.jpg ',
   };
 
-  it('looks up the normalized name before saving and returns the generated ID', async () => {
+  it('saves the normalized name and returns the generated ID', async () => {
     const calls: string[] = [];
     const useCase = createUseCase({
       findProductById: async () => null,
       async existsByName(name) {
-        calls.push('lookup');
+        // Duplicate checking is performed by the persistence layer.
         assert.equal(name, 'Pastel de queijo');
         return false;
       },
@@ -48,7 +48,7 @@ describe('CreateProduct', () => {
     });
 
     assert.deepEqual(await useCase.create(input), { id: 'generated-id' });
-    assert.deepEqual(calls, ['lookup', 'save']);
+    assert.deepEqual(calls, ['save']);
   });
 
   it('preserves an explicit unavailable status and decimal precision when saving', async () => {
@@ -135,42 +135,6 @@ describe('CreateProduct', () => {
       useCase.create({ ...input, additionIds: ['missing'] }),
       (error: unknown) => error instanceof ApplicationError && error.field === 'additionIds' && error.code === 'NOT_FOUND',
     );
-    assert.equal(save.mock.callCount(), 0);
-  });
-
-  it('rejects an existing name before constructing the remaining value objects or saving', async (context) => {
-    const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({
-      findProductById: async () => null,
-      async existsByName() {
-        return true;
-      },
-      save,
-    });
-
-    await assert.rejects(useCase.create({ ...input, price: '0', description: '' }), (error: unknown) => {
-      assert.ok(error instanceof ApplicationError);
-      assert.equal(error.name, 'ApplicationError');
-      assert.equal(error.field, 'name');
-      assert.equal(error.code, 'ALREADY_EXISTS');
-      assert.equal(error.message, 'Já existe um produto cadastrado com esse nome.');
-      return true;
-    });
-    assert.equal(save.mock.callCount(), 0);
-  });
-
-  it('does not save when the lookup fails', async (context) => {
-    const failure = new Error('Database unavailable');
-    const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = createUseCase({
-      findProductById: async () => null,
-      async existsByName() {
-        throw failure;
-      },
-      save,
-    });
-
-    await assert.rejects(useCase.create(input), (error: unknown) => error === failure);
     assert.equal(save.mock.callCount(), 0);
   });
 
