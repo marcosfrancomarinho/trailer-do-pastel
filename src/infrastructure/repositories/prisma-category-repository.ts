@@ -25,18 +25,30 @@ export class PrismaCategoryRepository implements CategoryRepository {
   }
 
   public async save(category: Category): Promise<string> {
+    const name = category.getName();
+    const conflict = () => new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
+
     try {
-      const savedCategory = await this.prisma.category.create({
-        data: { name: category.getName() },
+      const existing = await this.prisma.category.findUnique({
+        where: { name },
+        select: { id: true, deletedAt: true },
+      });
+      if (existing) {
+        if (existing.deletedAt === null) throw conflict();
+        const result = await this.prisma.category.updateMany({
+          where: { id: existing.id, deletedAt: { not: null } },
+          data: { deletedAt: null },
+        });
+        if (result.count !== 1) throw conflict();
+        return existing.id;
+      }
+      const created = await this.prisma.category.create({
+        data: { name },
         select: { id: true },
       });
-
-      return savedCategory.id;
+      return created.id;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe uma categoria cadastrada com esse nome.');
-      }
-
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw conflict();
       throw error;
     }
   }
