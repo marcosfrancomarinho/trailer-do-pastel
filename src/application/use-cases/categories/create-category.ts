@@ -2,7 +2,6 @@ import { Category } from '../../../domain/entities/category.js';
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import { CategoryName } from '../../../domain/value-objects/category/category-name.js';
 import type { CreateCategoryInput, CreateCategoryOutput } from '../../dtos/categories/create-category-dto.js';
-import { ApplicationError } from '../../errors/application-error.js';
 
 export class CreateCategory {
   public constructor(private categoryRepository: CategoryRepository) {}
