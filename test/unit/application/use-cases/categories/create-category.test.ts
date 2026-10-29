@@ -10,7 +10,7 @@ describe('CreateCategory', () => {
     const useCase = new CreateCategory({
       existsById: async () => false,
       async existsByName(name) {
-        calls.push('lookup');
+        // Duplicate checking is performed by the persistence layer.
         assert.equal(name, 'Pastéis');
         return false;
       },
@@ -22,7 +22,7 @@ describe('CreateCategory', () => {
     });
 
     assert.deepEqual(await useCase.create({ name: ' Pastéis ' }), { id: 'category-id' });
-    assert.deepEqual(calls, ['lookup', 'save']);
+    assert.deepEqual(calls, ['save']);
   });
 
   it('rejects an invalid name before consulting the repository', async (context) => {
@@ -38,17 +38,6 @@ describe('CreateCategory', () => {
     }
 
     assert.equal(existsByName.mock.callCount(), 0);
-    assert.equal(save.mock.callCount(), 0);
-  });
-
-  it('does not save a category with an existing name', async (context) => {
-    const save = context.mock.fn(async () => 'unexpected-id');
-    const useCase = new CreateCategory({ existsById: async () => false, existsByName: async () => true, save });
-
-    await assert.rejects(
-      useCase.create({ name: 'Pastéis' }),
-      (error: unknown) => error instanceof ApplicationError && error.field === 'name' && error.code === 'ALREADY_EXISTS',
-    );
     assert.equal(save.mock.callCount(), 0);
   });
 

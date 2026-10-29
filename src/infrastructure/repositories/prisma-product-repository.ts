@@ -45,30 +45,61 @@ export class PrismaProductRepository implements ProductRepository {
   }
 
   public async save(product: Product, additions: Addition[]): Promise<string> {
+    const name = product.getName();
+    const conflict = () => new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
+    const data = {
+      description: product.getDescription(),
+      categoryId: product.getCategoryId(),
+      price: product.getPrice(),
+      imageUrl: product.getImageUrl(),
+      available: product.isAvailable(),
+    };
+
     try {
-      const data: Prisma.ProductUncheckedCreateInput = {
-        name: product.getName(),
-        description: product.getDescription(),
-        categoryId: product.getCategoryId(),
-        price: product.getPrice(),
-        imageUrl: product.getImageUrl(),
-        available: product.isAvailable()
-      };
+      return await this.prisma.$transaction(async (transaction) => {
+        const existing = await transaction.product.findUnique({
+          where: { name },
+          select: { id: true, deletedAt: true },
+        });
+        if (existing) {
+          if (existing.deletedAt === null) throw conflict();
+          const restored = await transaction.product.updateMany({
+            where: { id: existing.id, deletedAt: { not: null } },
+            data: { ...data, deletedAt: null },
+          });
+          if (restored.count !== 1) throw conflict();
 
-      if (additions.length > 0) {
-        const additionLinks = additions.map((addition) => ({ additionId: addition.getId() }));
-        data.additions = { create: additionLinks };
-      }
+          // Replaces old catalog links, never historical order item links.
+          await transaction.productAddition.deleteMany({ where: { productId: existing.id } });
+          if (additions.length > 0) {
+            await transaction.productAddition.createMany({
+              data: additions.map((addition) => ({
+                productId: existing.id,
+                additionId: addition.getId(),
+              })),
+            });
+          }
+          return existing.id;
+        }
 
-      const { id } = await this.prisma.product.create({
-        data,
-        select: { id: true },
+        const created = await transaction.product.create({
+          data: {
+            name,
+            ...data,
+            additions: {
+              create: additions.map((addition) => ({ additionId: addition.getId() })),
+            },
+          },
+          select: { id: true },
+        });
+        return created.id;
       });
-
-      return id;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') throw conflict();
+        if (error.code === 'P2003') {
+          throw new ApplicationError('product', 'NOT_FOUND', 'Categoria ou adicional não encontrado.');
+        }
       }
       throw error;
     }

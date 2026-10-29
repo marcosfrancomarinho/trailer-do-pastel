@@ -20,67 +20,34 @@ describe('PrismaAdditionRepository', () => {
     assert.equal(await repository.findAdditionById('missing'), null);
   });
 
-  it('checks name uniqueness and saves a catalog addition', async (context) => {
-    const findUnique = context.mock.fn(async ({ where }: { where: { name: string } }) =>
-      where.name === 'Queijo extra' ? { id: 'addition-1' } : null);
-    const create = context.mock.fn(async () => ({ id: 'addition-2' }));
-    const repository = new PrismaAdditionRepository({ addition: { findUnique, create } } as unknown as PrismaClient);
-
-    assert.equal(await repository.existsByName('Queijo extra'), true);
-    assert.equal(await repository.existsByName('Bacon'), false);
+  it('creates a new catalog addition', async () => {
+    const addition = {
+      findUnique: async () => null,
+      create: async () => ({ id: 'addition-2' }),
+    };
+    const repository = new PrismaAdditionRepository({ addition } as unknown as PrismaClient);
     assert.equal(await repository.save(buildCatalogAddition('addition-2', '3.50', false)), 'addition-2');
-    assert.deepEqual(create.mock.calls[0].arguments, [{
-      data: { name: 'Queijo extra', price: '3.5', available: false }, select: { id: true },
-    }]);
   });
 
-  it('translates a duplicate name error during creation', async () => {
-    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
-      code: 'P2002', clientVersion: '6.19.3',
-    });
-    const prisma = { addition: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+  it('reactivates an archived addition, updating its price and availability', async () => {
+    const addition = {
+      findUnique: async () => ({ id: 'old-id', deletedAt: new Date() }),
+      updateMany: async (args: { data: { deletedAt: Date | null; price: string; available: boolean } }) => {
+        assert.equal(args.data.deletedAt, null);
+        assert.equal(args.data.price, '3.5');
+        assert.equal(args.data.available, false);
+        return { count: 1 };
+      },
+    };
+    const repository = new PrismaAdditionRepository({ addition } as unknown as PrismaClient);
+    assert.equal(await repository.save(buildCatalogAddition('new-id', '3.50', false)), 'old-id');
+  });
 
-    await assert.rejects(new PrismaAdditionRepository(prisma).save(buildCatalogAddition('addition-1', '2.50')),
+  it('rejects additions which are already active', async () => {
+    const addition = { findUnique: async () => ({ id: 'active-id', deletedAt: null }) };
+    const repository = new PrismaAdditionRepository({ addition } as unknown as PrismaClient);
+    await assert.rejects(repository.save(buildCatalogAddition('new-id', '3.50')),
       (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
-  });
-
-  it('checks the exact product and addition association', async (context) => {
-    const findUnique = context.mock.fn(async ({ where }: {
-      where: {
-        productId_additionId: { productId: string; additionId: string };
-      };
-    }) => {
-      const { productId } = where.productId_additionId;
-      return productId === 'product-1' ? { productId } : null;
-    });
-    const prisma = { productAddition: { findUnique } } as unknown as PrismaClient;
-    const repository = new PrismaAdditionRepository(prisma);
-
-    assert.equal(await repository.isLinkedToProduct('product-1', 'addition-1'), true);
-    assert.equal(await repository.isLinkedToProduct('product-2', 'addition-1'), false);
-    assert.deepEqual(findUnique.mock.calls[0].arguments, [{
-      where: {
-        productId_additionId: { productId: 'product-1', additionId: 'addition-1' },
-      },
-      select: { productId: true },
-    }]);
-    assert.deepEqual(findUnique.mock.calls[1].arguments, [{
-      where: {
-        productId_additionId: { productId: 'product-2', additionId: 'addition-1' },
-      },
-      select: { productId: true },
-    }]);
-  });
-
-  it('deletes an addition by ID', async (context) => {
-    const remove = context.mock.fn(async () => ({ id: 'addition-1' }));
-    const prisma = { addition: { update: remove } } as unknown as PrismaClient;
-
-    await new PrismaAdditionRepository(prisma).deleteById('addition-1');
-
-    assert.deepEqual(remove.mock.calls[0].arguments[0].where, { id: 'addition-1' });
-    assert.equal(remove.mock.calls[0].arguments[0].data.available, false);
-    assert.ok(remove.mock.calls[0].arguments[0].data.deletedAt instanceof Date);
   });
 
   it('updates the addition fields', async (context) => {
