@@ -22,12 +22,6 @@ export class CreateProduct {
 
   public async create(input: CreateProductInput): Promise<CreateProductOutput> {
     const name = ProductName.create(input.name);
-    const productExists = await this.productRepository.existsByName(name.getValue());
-
-    if (productExists) {
-      throw new ApplicationError('name', 'ALREADY_EXISTS', 'Já existe um produto cadastrado com esse nome.');
-    }
-
     const categoryId = ReferenceId.create(input.categoryId, 'categoryId');
     const categoryExists = await this.categoryRepository.existsById(categoryId.getValue());
 
