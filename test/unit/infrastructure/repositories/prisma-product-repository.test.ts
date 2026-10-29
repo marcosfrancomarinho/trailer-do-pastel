@@ -50,16 +50,26 @@ describe('PrismaProductRepository', () => {
     assert.equal(product?.getImageUrl(), 'https://example.com/pastel.jpg');
   });
 
-  it('creates product and selected addition links in one nested write', async (context) => {
-    const create = context.mock.fn(async () => ({ id: 'product-id' }));
-    const prisma = { product: { create } } as unknown as PrismaClient;
+  it('creates products with selected additions inside a transaction', async () => {
+    let received: unknown;
+    const transaction = {
+      product: {
+        findUnique: async () => null,
+        create: async (input: unknown) => {
+          received = input;
+          return { id: 'product-id' };
+        },
+      },
+    };
+    const prisma = {
+      $transaction: async (work: (tx: typeof transaction) => Promise<string>) => work(transaction),
+    } as unknown as PrismaClient;
     const repository = new PrismaProductRepository(prisma);
-
     assert.equal(await repository.save(buildCatalogProduct('unused-id', '12.50'), [
       buildCatalogAddition('addition-1', '2.50'),
       buildCatalogAddition('addition-2', '1.00'),
     ]), 'product-id');
-    assert.deepEqual(create.mock.calls[0].arguments, [{
+    assert.deepEqual(received, {
       data: {
         name: 'Pastel de queijo',
         description: 'Preparado na hora',
@@ -70,27 +80,44 @@ describe('PrismaProductRepository', () => {
         additions: { create: [{ additionId: 'addition-1' }, { additionId: 'addition-2' }] },
       },
       select: { id: true },
-    }]);
-  });
-
-  it('creates a product without addition links when none are selected', async (context) => {
-    const create = context.mock.fn(async () => ({ id: 'product-id' }));
-    const prisma = { product: { create } } as unknown as PrismaClient;
-
-    await new PrismaProductRepository(prisma).save(buildCatalogProduct('unused-id', '12.50'), []);
-
-    const data = create.mock.calls[0].arguments[0].data;
-    assert.equal(Object.hasOwn(data, 'additions'), false);
-  });
-
-  it('reports a duplicate product name during creation', async () => {
-    const duplicate = new Prisma.PrismaClientKnownRequestError('Duplicate', {
-      code: 'P2002', clientVersion: '6.19.3',
     });
-    const prisma = { product: { create: async () => { throw duplicate; } } } as unknown as PrismaClient;
+  });
 
-    await assert.rejects(new PrismaProductRepository(prisma).save(buildCatalogProduct('unused-id', '12.50'), []),
-      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS');
+  it('reactivates an archived product with its original ID and new addition links', async () => {
+    const calls: string[] = [];
+    const tx = {
+      product: {
+        findUnique: async () => ({ id: 'archived-id', deletedAt: new Date() }),
+        updateMany: async (args: { data: { deletedAt: Date | null; price: string } }) => {
+          assert.equal(args.data.deletedAt, null);
+          assert.equal(args.data.price, '12.5');
+          calls.push('restore');
+          return { count: 1 };
+        },
+      },
+      productAddition: {
+        deleteMany: async () => { calls.push('delete-links'); },
+        createMany: async () => { calls.push('new-links'); },
+      },
+    };
+    const prisma = {
+      $transaction: async (work: (transaction: typeof tx) => Promise<string>) => work(tx),
+    } as unknown as PrismaClient;
+    assert.equal(await new PrismaProductRepository(prisma).save(
+      buildCatalogProduct('unused-id', '12.50'), [buildCatalogAddition('addition-1', '2.50')],
+    ), 'archived-id');
+    assert.deepEqual(calls, ['restore', 'delete-links', 'new-links']);
+  });
+
+  it('does not overwrite an active product with the same name', async () => {
+    const tx = { product: { findUnique: async () => ({ id: 'active-id', deletedAt: null }) } };
+    const prisma = {
+      $transaction: async (work: (transaction: typeof tx) => Promise<string>) => work(tx),
+    } as unknown as PrismaClient;
+    await assert.rejects(
+      new PrismaProductRepository(prisma).save(buildCatalogProduct('unused-id', '12.50'), []),
+      (error: unknown) => error instanceof ApplicationError && error.code === 'ALREADY_EXISTS',
+    );
   });
 
   it('updates product fields and replaces addition links in one transaction', async (context) => {
