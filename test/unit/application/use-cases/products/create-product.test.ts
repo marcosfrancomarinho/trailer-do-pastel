@@ -170,7 +170,7 @@ describe('CreateProduct', () => {
     assert.equal(save.mock.callCount(), 0);
   });
 
-  it('rejects an invalid description without saving after checking the name', async (context) => {
+  it('rejects an invalid description without saving', async (context) => {
     const existsByName = context.mock.fn(async () => false);
     const save = context.mock.fn(async () => 'unexpected-id');
     const useCase = createUseCase({ findProductById: async () => null, existsByName, save });
@@ -179,7 +179,7 @@ describe('CreateProduct', () => {
       useCase.create({ ...input, description: '  ' }),
       (error: unknown) => error instanceof DomainError && error.field === 'description' && error.code === 'EMPTY',
     );
-    assert.equal(existsByName.mock.callCount(), 1);
+    assert.equal(existsByName.mock.callCount(), 0);
     assert.equal(save.mock.callCount(), 0);
   });
 
