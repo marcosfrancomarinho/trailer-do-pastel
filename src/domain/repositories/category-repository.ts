@@ -5,7 +5,8 @@ export interface CategoryRepository {
   reactivate(id: string): Promise<string>;
   existsById(id: string): Promise<boolean>;
   existsByName(name: string): Promise<boolean>;
+  findMaxSortOrder(): Promise<number | null>;
   save(category: Category): Promise<string>;
-  update(category: Category, sortOrder?: number): Promise<void>;
+  update(category: Category): Promise<void>;
   deleteById(id: string): Promise<void>;
 }

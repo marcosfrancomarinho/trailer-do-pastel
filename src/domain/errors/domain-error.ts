@@ -12,6 +12,7 @@ export type DomainErrorCode =
   | 'TOO_LARGE'
   | 'DUPLICATE'
   | 'NOT_FINITE'
+  | 'NEGATIVE'
   | 'NON_POSITIVE'
   | 'INVALID_DATE'
   | 'PAST_DATE';

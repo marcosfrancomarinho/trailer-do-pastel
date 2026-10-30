@@ -6,16 +6,11 @@ import { CreateCategory } from '../../../../../../src/application/use-cases/cate
 import { DomainError } from '../../../../../../src/domain/errors/domain-error.js';
 import { CreateCategoryController } from '../../../../../../src/infrastructure/http/controllers/categories/create-category-controller.js';
 import { createResponse } from '../../../../../helpers/http-fixtures.js';
+import { createCategoryRepository } from '../../../../../helpers/order-fixtures.js';
 
 describe('CreateCategoryController', () => {
   it('passes only the name and responds with the created ID', async (context) => {
-    const useCase = new CreateCategory({
-      findByName: async () => null,
-      reactivate: async (id: string) => id,
-      existsById: async () => false,
-      existsByName: async () => false,
-      save: async () => 'category-id',
-    });
+    const useCase = new CreateCategory(createCategoryRepository());
     const create = context.mock.method(useCase, 'create');
     const controller = new CreateCategoryController(useCase);
     const { response, status, json } = createResponse(context);
@@ -37,9 +32,7 @@ describe('CreateCategoryController', () => {
     ];
 
     for (const error of errors) {
-      const useCase = new CreateCategory({ findByName: async () => null,
-      reactivate: async (id: string) => id,
-      existsById: async () => false, existsByName: async () => false, save: async () => 'category-id' });
+      const useCase = new CreateCategory(createCategoryRepository());
       context.mock.method(useCase, 'create', async () => { throw error; });
       const controller = new CreateCategoryController(useCase);
       const { response, status, json } = createResponse(context);
@@ -55,9 +48,7 @@ describe('CreateCategoryController', () => {
   });
 
   it('forwards a missing name as a domain error', async (context) => {
-    const useCase = new CreateCategory({ findByName: async () => null,
-      reactivate: async (id: string) => id,
-      existsById: async () => false, existsByName: async () => false, save: async () => 'category-id' });
+    const useCase = new CreateCategory(createCategoryRepository());
     const controller = new CreateCategoryController(useCase);
     const { response, status } = createResponse(context);
     const next = context.mock.fn();

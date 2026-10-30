@@ -1,5 +1,6 @@
 import type { Category as PrismaCategory } from '@prisma/client';
 import { CategoryName } from '../../domain/value-objects/category/category-name.js';
+import { CategorySortOrder } from '../../domain/value-objects/category/category-sort-order.js';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { InfrastructureError } from '../errors/infrastructure-error.js';
 import { Category } from '../../domain/entities/category.js';
@@ -32,14 +33,18 @@ export class PrismaCategoryRepository implements CategoryRepository {
     if (category === null) return null;
 
     const categoryName: CategoryName = CategoryName.create(category.name);
-    return Category.create(categoryName, category.id, category.deletedAt);
+    return Category.create(categoryName, CategorySortOrder.create(category.sortOrder), category.id, category.deletedAt);
+  }
+
+  public async findMaxSortOrder(): Promise<number | null> {
+    const last: { _max: { sortOrder: number | null } } = await this.prisma.category.aggregate({ _max: { sortOrder: true } });
+    return last._max.sortOrder;
   }
 
   public async save(category: Category): Promise<string> {
     try {
-      const last = await this.prisma.category.aggregate({ _max: { sortOrder: true } });
       const created: { id: string } = await this.prisma.category.create({
-        data: { name: category.getName(), sortOrder: (last._max.sortOrder ?? 0) + 1 },
+        data: { name: category.getName(), sortOrder: category.getRequiredSortOrder() },
         select: { id: true },
       });
       return created.id;
@@ -64,8 +69,9 @@ export class PrismaCategoryRepository implements CategoryRepository {
     return id;
   }
 
-  public async update(category: Category, sortOrder?: number): Promise<void> {
+  public async update(category: Category): Promise<void> {
     try {
+      const sortOrder: number | undefined = category.getSortOrder();
       await this.prisma.category.update({
         where: { id: category.getId() },
         data: { name: category.getName(), ...(sortOrder === undefined ? {} : { sortOrder }) },

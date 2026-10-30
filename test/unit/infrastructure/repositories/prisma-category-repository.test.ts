@@ -4,6 +4,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { InfrastructureError } from '../../../../src/infrastructure/errors/infrastructure-error.js';
 import { Category } from '../../../../src/domain/entities/category.js';
 import { CategoryName } from '../../../../src/domain/value-objects/category/category-name.js';
+import { CategorySortOrder } from '../../../../src/domain/value-objects/category/category-sort-order.js';
 import { PrismaCategoryRepository } from '../../../../src/infrastructure/repositories/prisma-category-repository.js';
 
 describe('PrismaCategoryRepository', () => {
@@ -13,7 +14,7 @@ describe('PrismaCategoryRepository', () => {
         category: {
           findUnique: async ({ where }: { where: { name: string } }) => {
             assert.equal(where.name, 'Bebidas');
-            return { id: 'category-1', name: where.name, deletedAt };
+            return { id: 'category-1', name: where.name, deletedAt, sortOrder: 3 };
           },
         },
       } as unknown as PrismaClient);
@@ -22,6 +23,7 @@ describe('PrismaCategoryRepository', () => {
       assert.ok(category instanceof Category);
       assert.equal(category.getId(), 'category-1');
       assert.equal(category.getName(), 'Bebidas');
+      assert.equal(category.getSortOrder(), 3);
       assert.equal(category.isActive(), deletedAt === null);
     }
 
@@ -36,22 +38,41 @@ describe('PrismaCategoryRepository', () => {
       code: 'P2002', clientVersion: '6.19.3',
     });
     const repository = new PrismaCategoryRepository({
-      category: { aggregate: async () => ({ _max: { sortOrder: 0 } }), create: async () => { throw error; } },
+      category: { create: async () => { throw error; } },
     } as unknown as PrismaClient);
 
-    await assert.rejects(repository.save(Category.create(CategoryName.create('Bebidas'))),
+    await assert.rejects(repository.save(Category.create(CategoryName.create('Bebidas'), CategorySortOrder.create(1))),
       (failure: unknown) => failure instanceof InfrastructureError && failure.code === 'ALREADY_EXISTS');
   });
 
-  it('creates a new category', async () => {
+  it('reads the highest persisted sort order', async () => {
+    for (const max of [null, 3]) {
+      const repository = new PrismaCategoryRepository({
+        category: {
+          aggregate: async (query: unknown) => {
+            assert.deepEqual(query, { _max: { sortOrder: true } });
+            return { _max: { sortOrder: max } };
+          },
+        },
+      } as unknown as PrismaClient);
+
+      assert.equal(await repository.findMaxSortOrder(), max);
+    }
+  });
+
+  it('persists the sort order provided by the entity', async () => {
     const category = {
-      findUnique: async () => null,
-      aggregate: async () => ({ _max: { sortOrder: 1 } }),
-      create: async () => ({ id: 'category-2' }),
+      create: async (query: unknown) => {
+        assert.deepEqual(query, {
+          data: { name: 'Bebidas', sortOrder: 2 },
+          select: { id: true },
+        });
+        return { id: 'category-2' };
+      },
     };
     const prisma = { category } as unknown as PrismaClient;
     const repository = new PrismaCategoryRepository(prisma);
-    assert.equal(await repository.save(Category.create(CategoryName.create('Bebidas'))), 'category-2');
+    assert.equal(await repository.save(Category.create(CategoryName.create('Bebidas'), CategorySortOrder.create(2))), 'category-2');
   });
 
   it('reactivates archived categories without changing IDs', async () => {
@@ -77,7 +98,7 @@ describe('PrismaCategoryRepository', () => {
   it('updates the name of a category', async (context) => {
     const update = context.mock.fn(async () => ({ id: 'category-1' }));
     const prisma = { category: { update } } as unknown as PrismaClient;
-    const category = Category.create(CategoryName.create('Pastéis'), 'category-1');
+    const category = Category.create(CategoryName.create('Pastéis'), undefined, 'category-1');
 
     await new PrismaCategoryRepository(prisma).update(category);
 
@@ -87,8 +108,21 @@ describe('PrismaCategoryRepository', () => {
     }]);
   });
 
+  it('updates the category sort order from the entity', async (context) => {
+    const update = context.mock.fn(async () => ({ id: 'category-1' }));
+    const prisma = { category: { update } } as unknown as PrismaClient;
+    const category = Category.create(CategoryName.create('Pastéis'), CategorySortOrder.create(0), 'category-1');
+
+    await new PrismaCategoryRepository(prisma).update(category);
+
+    assert.deepEqual(update.mock.calls[0].arguments, [{
+      where: { id: 'category-1' },
+      data: { name: 'Pastéis', sortOrder: 0 },
+    }]);
+  });
+
   it('reports duplicate names on update', async () => {
-    const category = Category.create(CategoryName.create('Pastéis'), 'category-1');
+    const category = Category.create(CategoryName.create('Pastéis'), undefined, 'category-1');
     const cases = [
       { prismaCode: 'P2002', field: 'name', applicationCode: 'ALREADY_EXISTS' },
     ];

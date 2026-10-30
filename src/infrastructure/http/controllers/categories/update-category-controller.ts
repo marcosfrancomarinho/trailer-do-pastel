@@ -11,15 +11,16 @@ export class UpdateCategoryController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const { categoryId } = request.params;
+      const categoryId: string = request.params.categoryId;
+      const sortOrder: number | undefined = request.body?.sortOrder;
 
       const input: UpdateCategoryInput = {
         name: request.body?.name,
-        sortOrder: request.body?.sortOrder,
+        ...(sortOrder !== undefined ? { sortOrder } : {}),
         categoryId,
       };
 
-      const output = await this.updateCategory.update(input);
+      const output: UpdateCategoryOutput = await this.updateCategory.update(input);
 
       response.status(200).json(output);
     } catch (error) {

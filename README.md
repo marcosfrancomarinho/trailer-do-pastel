@@ -39,7 +39,7 @@ Comandos principais:
 
 ## Testes
 
-Execute `npm run test:unit`, `npm run test:integration` e `npm run test:e2e` para as três camadas, ou `npm run test:all` para executar todas. Integração e E2E usam PostgreSQL real com schemas temporários isolados. Veja a [configuração e os cenários cobertos](test/README.md).
+Execute `npm test` ou `npm run test:unit` para rodar os testes unitários. `npm run test:coverage` mostra a cobertura. Veja os [comandos de teste](test/README.md).
 
 ## Como usar a API
 

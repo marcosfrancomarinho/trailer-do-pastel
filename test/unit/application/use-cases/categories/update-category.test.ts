@@ -46,6 +46,29 @@ describe('UpdateCategory', () => {
     assert.equal(update.mock.callCount(), 1);
   });
 
+  it('validates and passes the sort order inside the category entity', async (context) => {
+    const update = context.mock.fn(async (category) => {
+      assert.equal(category.getSortOrder(), 0);
+    });
+    const useCase = new UpdateCategory(createCategoryRepository({ update }));
+
+    await useCase.update({ name: 'Pastéis', categoryId: 'category-1', sortOrder: 0 });
+    assert.equal(update.mock.callCount(), 1);
+
+    for (const { sortOrder, code } of [
+      { sortOrder: -1, code: 'NEGATIVE' },
+      { sortOrder: 1.5, code: 'INVALID_INTEGER' },
+      { sortOrder: 2147483648, code: 'TOO_LARGE' },
+    ]) {
+      await assert.rejects(
+        useCase.update({ name: 'Pastéis', categoryId: 'category-1', sortOrder }),
+        (error: unknown) => error instanceof DomainError
+          && error.field === 'sortOrder' && error.code === code,
+      );
+    }
+    assert.equal(update.mock.callCount(), 1);
+  });
+
   it('rejects an invalid ID or name before updating', async (context) => {
     const update = context.mock.fn(async () => {});
     const useCase = new UpdateCategory(createCategoryRepository({ update }));

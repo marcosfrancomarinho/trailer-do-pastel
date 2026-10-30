@@ -2,6 +2,7 @@ import { Category } from '../../../domain/entities/category.js';
 import { ApplicationError } from '../../errors/application-error.js';
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import { CategoryName } from '../../../domain/value-objects/category/category-name.js';
+import { CategorySortOrder } from '../../../domain/value-objects/category/category-sort-order.js';
 import type { CreateCategoryInput, CreateCategoryOutput } from '../../dtos/categories/create-category-dto.js';
 
 export class CreateCategory {
@@ -20,7 +21,9 @@ export class CreateCategory {
       return { id };
     }
 
-    const category: Category = Category.create(name);
+    const maxSortOrder: number | null = await this.categories.findMaxSortOrder();
+    const sortOrder: CategorySortOrder = CategorySortOrder.nextAfter(maxSortOrder);
+    const category: Category = Category.create(name, sortOrder);
     const id: string = await this.categories.save(category);
 
     return { id };

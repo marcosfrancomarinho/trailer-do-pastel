@@ -135,6 +135,9 @@ export function createCategoryRepository(overrides: Partial<CategoryRepository> 
     async existsByName() {
       return false;
     },
+    async findMaxSortOrder() {
+      return null;
+    },
     async save() {
       return 'category-id';
     },

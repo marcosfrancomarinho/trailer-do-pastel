@@ -1,6 +1,7 @@
 import { Category } from '../../../domain/entities/category.js';
 import type { CategoryRepository } from '../../../domain/repositories/category-repository.js';
 import { CategoryName } from '../../../domain/value-objects/category/category-name.js';
+import { CategorySortOrder } from '../../../domain/value-objects/category/category-sort-order.js';
 import { ReferenceId } from '../../../domain/value-objects/shared/reference-id.js';
 import type { UpdateCategoryInput, UpdateCategoryOutput } from '../../dtos/categories/update-category-dto.js';
 import { ApplicationError } from '../../errors/application-error.js';
@@ -16,14 +17,14 @@ export class UpdateCategory {
       throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
     }
 
-    if (input.sortOrder !== undefined && (!Number.isSafeInteger(input.sortOrder) || input.sortOrder < 0)) {
-      throw new ApplicationError('sortOrder', 'INVALID', 'A posição deve ser um número inteiro não negativo.');
-    }
-
     const name: CategoryName = CategoryName.create(input.name);
-    const category: Category = Category.create(name, categoryId.getValue());
+    let sortOrder: CategorySortOrder | undefined;
+    if (input.sortOrder !== undefined) {
+      sortOrder = CategorySortOrder.create(input.sortOrder);
+    }
+    const category: Category = Category.create(name, sortOrder, categoryId.getValue());
 
-    await this.categories.update(category, input.sortOrder);
+    await this.categories.update(category);
 
     return { id: categoryId.getValue() };
   }

@@ -12,7 +12,7 @@ describe('CreateCategory', () => {
     const save = context.mock.fn(async () => 'unexpected-id');
     const reactivate = context.mock.fn(async () => 'unexpected-id');
     const useCase = new CreateCategory(createCategoryRepository({
-      findByName: async () => Category.create(CategoryName.create('Bebidas'), 'active-id'),
+      findByName: async () => Category.create(CategoryName.create('Bebidas'), undefined, 'active-id'),
       save,
       reactivate,
     }));
@@ -27,7 +27,7 @@ describe('CreateCategory', () => {
     const save = context.mock.fn(async () => 'unexpected-id');
     const reactivate = context.mock.fn(async (id: string) => id);
     const useCase = new CreateCategory(createCategoryRepository({
-      findByName: async () => Category.create(CategoryName.create('Bebidas'), 'archived-id', new Date()),
+      findByName: async () => Category.create(CategoryName.create('Bebidas'), undefined, 'archived-id', new Date()),
       save,
       reactivate,
     }));
@@ -45,15 +45,32 @@ describe('CreateCategory', () => {
         assert.equal(name, 'Pastéis');
         return null;
       },
+      async findMaxSortOrder() {
+        calls.push('findMaxSortOrder');
+        return 3;
+      },
       async save(category) {
         calls.push('save');
         assert.equal(category.getName(), 'Pastéis');
+        assert.equal(category.getSortOrder(), 4);
         return 'category-id';
       },
     }));
 
     assert.deepEqual(await useCase.create({ name: ' Pastéis ' }), { id: 'category-id' });
-    assert.deepEqual(calls, ['save']);
+    assert.deepEqual(calls, ['findMaxSortOrder', 'save']);
+  });
+
+  it('starts ordering at one when no category exists', async () => {
+    const useCase = new CreateCategory(createCategoryRepository({
+      findMaxSortOrder: async () => null,
+      async save(category) {
+        assert.equal(category.getSortOrder(), 1);
+        return 'category-1';
+      },
+    }));
+
+    assert.deepEqual(await useCase.create({ name: 'Pastéis' }), { id: 'category-1' });
   });
 
   it('rejects an invalid name before consulting the repository', async (context) => {
