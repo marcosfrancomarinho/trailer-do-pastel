@@ -38,7 +38,7 @@ describe('PrismaProductQueries', () => {
         imageUrl: true,
         available: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ category: { sortOrder: 'asc' } }, { name: 'asc' }],
     }]);
   });
 
