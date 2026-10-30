@@ -37,8 +37,9 @@ export class PrismaCategoryRepository implements CategoryRepository {
 
   public async save(category: Category): Promise<string> {
     try {
+      const last = await this.prisma.category.aggregate({ _max: { sortOrder: true } });
       const created: { id: string } = await this.prisma.category.create({
-        data: { name: category.getName(), ...(sortOrder === undefined ? {} : { sortOrder }) },
+        data: { name: category.getName(), sortOrder: (last._max.sortOrder ?? 0) + 1 },
         select: { id: true },
       });
       return created.id;
@@ -67,7 +68,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
     try {
       await this.prisma.category.update({
         where: { id: category.getId() },
-        data: { name: category.getName() },
+        data: { name: category.getName(), ...(sortOrder === undefined ? {} : { sortOrder }) },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
