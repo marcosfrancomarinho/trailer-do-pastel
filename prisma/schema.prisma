@@ -59,6 +59,7 @@ model User {
 
 model Category {
   id        String   @id @default(uuid())
+  sortOrder Int      @default(0) @map("sort_order")
   name      String   @unique
   createdAt DateTime @default(now()) @map("created_at")
   deletedAt DateTime? @map("deleted_at")
