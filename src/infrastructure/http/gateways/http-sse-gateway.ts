@@ -1,11 +1,22 @@
 import type { Response } from 'express';
 import type { SseGateway } from '../../../application/gateways/sse-gateway.js';
 
-export class HttpSseGateway implements SseGateway {
-  private readonly clients = new Map<Response, { heartbeat: NodeJS.Timeout; orderId: string | null; storeOnly: boolean }>();
+interface SseClient {
+  heartbeat: NodeJS.Timeout;
+  orderId: string | null;
+  storeOnly: boolean;
+}
 
-  public connect(response: Response, orderId: string | null = null, storeOnly = false): void {
-    if (this.clients.has(response) || response.destroyed || response.writableEnded) return;
+export class HttpSseGateway implements SseGateway {
+  private readonly clients: Map<Response, SseClient> = new Map();
+
+  public connect(response: Response, orderId: string | null = null, storeOnly: boolean = false): void {
+    const alreadyConnected: boolean = this.clients.has(response);
+    const connectionClosed: boolean = response.destroyed || response.writableEnded;
+
+    if (alreadyConnected || connectionClosed) {
+      return;
+    }
 
     response.status(200);
     response.set({
@@ -16,7 +27,7 @@ export class HttpSseGateway implements SseGateway {
     });
     response.flushHeaders();
 
-    const heartbeat = setInterval(() => this.write(response, ': heartbeat\n\n'), 25_000);
+    const heartbeat: NodeJS.Timeout = setInterval(() => this.write(response, ': heartbeat\n\n'), 25_000);
     heartbeat.unref();
     this.clients.set(response, { heartbeat, orderId, storeOnly });
 
@@ -30,21 +41,33 @@ export class HttpSseGateway implements SseGateway {
   }
 
   public send(event: unknown): void {
-    const data = JSON.stringify(event);
-    if (data === undefined) return;
+    const data: string | undefined = JSON.stringify(event);
 
-    const isStoreEvent =
-      event &&
-      typeof event === 'object' &&
-      'type' in event &&
-      ['STORE_OPENED', 'STORE_CLOSED'].includes(String((event as { type?: unknown }).type));
-    const eventOrderId =
-      event && typeof event === 'object' && 'orderId' in event ? (event as { orderId?: unknown }).orderId : null;
+    if (data === undefined) {
+      return;
+    }
+
+    let isStoreEvent: boolean = false;
+    let eventOrderId: unknown = null;
+
+    if (event !== null && typeof event === 'object') {
+      const eventType: string = 'type' in event ? String(event.type) : '';
+      isStoreEvent = eventType === 'STORE_OPENED' || eventType === 'STORE_CLOSED';
+      eventOrderId = 'orderId' in event ? event.orderId : null;
+    }
+
+    const message: string = `data: ${data}\n\n`;
+
     for (const [response, client] of this.clients) {
-      if (client.storeOnly && !isStoreEvent) continue;
-      if (client.orderId !== null && client.orderId !== eventOrderId) continue;
-      if (client.orderId !== null && isStoreEvent) continue;
-      this.write(response, `data: ${data}\n\n`);
+      const storeMismatch: boolean = client.storeOnly && isStoreEvent === false;
+      const tracksOrder: boolean = client.orderId !== null;
+      const orderMismatch: boolean = tracksOrder && (client.orderId !== eventOrderId || isStoreEvent);
+
+      if (storeMismatch || orderMismatch) {
+        continue;
+      }
+
+      this.write(response, message);
     }
   }
 
@@ -55,7 +78,11 @@ export class HttpSseGateway implements SseGateway {
     }
 
     try {
-      if (response.write(message)) return;
+      const messageAccepted: boolean = response.write(message);
+
+      if (messageAccepted) {
+        return;
+      }
     } catch {
       // Uma conexão com falha não deve interromper o envio aos demais clientes.
     }
@@ -65,8 +92,12 @@ export class HttpSseGateway implements SseGateway {
   }
 
   private disconnect(response: Response): void {
-    const client = this.clients.get(response);
-    if (client) clearInterval(client.heartbeat);
+    const client: SseClient | undefined = this.clients.get(response);
+
+    if (client) {
+      clearInterval(client.heartbeat);
+    }
+
     this.clients.delete(response);
   }
 }
