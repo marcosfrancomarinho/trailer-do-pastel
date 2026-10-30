@@ -38,7 +38,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
   public async save(category: Category): Promise<string> {
     try {
       const created: { id: string } = await this.prisma.category.create({
-        data: { name: category.getName() },
+        data: { name: category.getName(), ...(sortOrder === undefined ? {} : { sortOrder }) },
         select: { id: true },
       });
       return created.id;
@@ -63,7 +63,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
     return id;
   }
 
-  public async update(category: Category): Promise<void> {
+  public async update(category: Category, sortOrder?: number): Promise<void> {
     try {
       await this.prisma.category.update({
         where: { id: category.getId() },
