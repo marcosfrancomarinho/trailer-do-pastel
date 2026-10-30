@@ -7,7 +7,7 @@ import { createResponse } from '../../../../../helpers/http-fixtures.js';
 
 describe('ListCategoriesController', () => {
   it('returns all categories with status 200', async (context) => {
-    const categories = [{ id: 'category-1', name: 'Bebidas' }, { id: 'category-2', name: 'Pastéis' }];
+    const categories = [{ id: 'category-1', name: 'Bebidas', sortOrder: 1 }, { id: 'category-2', name: 'Pastéis', sortOrder: 2 }];
     const findAll = context.mock.fn(async () => categories);
     const controller = new ListCategoriesController(new ListCategories({ findAll }));
     const { response, status, json } = createResponse(context);
