@@ -17,7 +17,7 @@ export class PrismaProductQueries implements ProductQueries {
         imageUrl: true,
         available: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ category: { sortOrder: 'asc' } }, { name: 'asc' }],
     });
 
     return products.map((product) => ({
