@@ -21,7 +21,7 @@ const buildOptions = {
   platform: 'node',
   format: 'cjs',
   external: [...Object.keys(dependencies), ...Object.keys(devDependencies)],
-  target: ["node22"],
+  target:["esnext"],
   plugins: [kitDevDiPlugin()],
 };
 

@@ -12,15 +12,15 @@ export class UpdateOrderStatus {
   ) {}
 
   public async update(input: UpdateOrderStatusInput): Promise<UpdateOrderStatusOutput> {
-    const orderId: string = ReferenceId.create(input.orderId, 'orderId').getValue();
+    const orderId: ReferenceId = ReferenceId.create(input.orderId, 'orderId');
     const orderStatus: OrderStatus = OrderStatus.create(input.status);
 
-    await this.orders.updateStatus(orderId, orderStatus);
+    await this.orders.updateStatus(orderId.getValue(), orderStatus);
 
     const status: OrderStatusValue = orderStatus.getValue();
 
     await this.events.notify({ orderId, status });
 
-    return { id: orderId, status };
+    return { id: orderId.getValue(), status };
   }
 }
