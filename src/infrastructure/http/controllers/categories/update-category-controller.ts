@@ -13,12 +13,16 @@ export class UpdateCategoryController {
     try {
       const categoryId: string = request.params.categoryId;
       const sortOrder: number | undefined = request.body?.sortOrder;
+      const name: string = request.body?.name;
 
       const input: UpdateCategoryInput = {
-        name: request.body?.name,
-        ...(sortOrder !== undefined ? { sortOrder } : {}),
+        name,
         categoryId,
       };
+
+      if (sortOrder !== undefined) {
+        input.sortOrder = sortOrder;
+      }
 
       const output: UpdateCategoryOutput = await this.updateCategory.update(input);
 

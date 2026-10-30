@@ -6,6 +6,8 @@ export class ListPendingOrders {
   public constructor(private orders: OrderQueries) {}
 
   public async list(input: ListPendingOrdersInput): Promise<ListPendingOrdersOutput> {
-    return this.orders.findPending(OrderDateRange.create(input.date));
+    const dateRange: OrderDateRange = OrderDateRange.create(input.date);
+
+    return this.orders.findPending(dateRange);
   }
 }

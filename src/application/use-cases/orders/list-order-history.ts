@@ -6,6 +6,7 @@ export class ListOrderHistory {
   public constructor(private orders: OrderQueries) {}
 
   public async list(input: ListOrderHistoryInput): Promise<ListOrderHistoryOutput> {
-    return this.orders.findHistory(OrderDateRange.create(input.date));
+    const dateRange: OrderDateRange = OrderDateRange.create(input.date);
+    return this.orders.findHistory(dateRange);
   }
 }

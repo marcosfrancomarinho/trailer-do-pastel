@@ -6,6 +6,8 @@ export class ListPreparingOrders {
   public constructor(private orders: OrderQueries) {}
 
   public async list(input: ListPreparingOrdersInput): Promise<ListPreparingOrdersOutput> {
-    return this.orders.findPreparing(OrderDateRange.create(input.date));
+    const dateRange: OrderDateRange = OrderDateRange.create(input.date);
+
+    return this.orders.findPreparing(dateRange);
   }
 }

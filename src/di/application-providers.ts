@@ -17,6 +17,7 @@ import { ListOrderHistory } from '../application/use-cases/orders/list-order-his
 import { ListPendingOrders } from '../application/use-cases/orders/list-pending-orders.js';
 import { ListPreparingOrders } from '../application/use-cases/orders/list-preparing-orders.js';
 import { TrackOrder } from '../application/use-cases/orders/track-order.js';
+import { ResolveOrderId } from '../application/use-cases/orders/resolve-order-id.js';
 import { UpdateOrderStatus } from '../application/use-cases/orders/update-order-status.js';
 import { CreateProduct } from '../application/use-cases/products/create-product.js';
 import { DeleteProduct } from '../application/use-cases/products/delete-product.js';
@@ -50,6 +51,7 @@ export const applicationProviders = new AppConfig()
   .useClass(CreateOrder)
   .useClass(UpdateOrderStatus)
   .useClass(TrackOrder)
+  .useClass(ResolveOrderId)
   .useClass(ListPendingOrders)
   .useClass(ListPreparingOrders)
   .useClass(ListOrderHistory)

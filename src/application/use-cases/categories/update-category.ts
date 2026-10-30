@@ -19,6 +19,7 @@ export class UpdateCategory {
 
     const name: CategoryName = CategoryName.create(input.name);
     let sortOrder: CategorySortOrder | undefined;
+
     if (input.sortOrder !== undefined) {
       sortOrder = CategorySortOrder.create(input.sortOrder);
     }

@@ -1,12 +1,19 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { TrackOrderInput, TrackOrderOutput } from '../../../../application/dtos/orders/track-order-dto.js';
+import type { ResolveOrderIdInput, ResolveOrderIdOutput } from '../../../../application/dtos/orders/resolve-order-id-dto.js';
 import { TrackOrder } from '../../../../application/use-cases/orders/track-order.js';
+import { ResolveOrderId } from '../../../../application/use-cases/orders/resolve-order-id.js';
 
 export class TrackOrderController {
-  public constructor(private trackOrder: TrackOrder) {}
+  public constructor(
+    private trackOrder: TrackOrder,
+    private orderIdResolver: ResolveOrderId,
+  ) {}
 
-  public resolveOrderId(trackingToken: string): Promise<string> {
-    return this.trackOrder.resolveOrderId(trackingToken);
+  public async resolveOrderId(trackingToken: string): Promise<string> {
+    const input: ResolveOrderIdInput = { trackingToken };
+    const output: ResolveOrderIdOutput = await this.orderIdResolver.resolve(input);
+    return output.id;
   }
 
   public async execute(

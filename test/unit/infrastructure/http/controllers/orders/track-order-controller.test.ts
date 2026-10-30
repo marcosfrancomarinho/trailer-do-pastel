@@ -1,3 +1,5 @@
+import { ResolveOrderId } from '../../../../../../src/application/use-cases/orders/resolve-order-id.js';
+import type { OrderQueries } from '../../../../../../src/application/queries/order-queries.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
@@ -10,7 +12,7 @@ describe('TrackOrderController', () => {
     const result = { status: 'COMPLETED' as const, updatedAt: '2026-10-22T12:00:00.000Z' };
     const useCase = new TrackOrder({ findPending: async () => [], findByTrackingToken: async () => result });
     const track = context.mock.method(useCase, 'track');
-    const controller = new TrackOrderController(useCase);
+    const controller = new TrackOrderController(useCase, new ResolveOrderId({ findOrderIdByTrackingToken: async () => 'order-1' } as OrderQueries));
     const request = { params: { trackingToken: 'token-1' } } as unknown as Request;
     const { response, status, json } = createResponse(context);
     const setHeader = context.mock.fn((_name: string, _value: string) => response);
@@ -32,7 +34,7 @@ describe('TrackOrderController', () => {
       findPending: async () => [],
       findByTrackingToken: async () => { throw failure; },
     });
-    const controller = new TrackOrderController(useCase);
+    const controller = new TrackOrderController(useCase, new ResolveOrderId({ findOrderIdByTrackingToken: async () => 'order-1' } as OrderQueries));
     const { response, status, json } = createResponse(context);
     const next = context.mock.fn();
 
