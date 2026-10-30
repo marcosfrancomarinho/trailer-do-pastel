@@ -36,7 +36,7 @@ describe('PrismaCategoryRepository', () => {
       code: 'P2002', clientVersion: '6.19.3',
     });
     const repository = new PrismaCategoryRepository({
-      category: { create: async () => { throw error; } },
+      category: { aggregate: async () => ({ _max: { sortOrder: 0 } }), create: async () => { throw error; } },
     } as unknown as PrismaClient);
 
     await assert.rejects(repository.save(Category.create(CategoryName.create('Bebidas'))),
@@ -46,6 +46,7 @@ describe('PrismaCategoryRepository', () => {
   it('creates a new category', async () => {
     const category = {
       findUnique: async () => null,
+      aggregate: async () => ({ _max: { sortOrder: 1 } }),
       create: async () => ({ id: 'category-2' }),
     };
     const prisma = { category } as unknown as PrismaClient;
