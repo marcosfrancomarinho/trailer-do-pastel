@@ -16,10 +16,14 @@ export class UpdateCategory {
       throw new ApplicationError('categoryId', 'NOT_FOUND', 'A categoria informada não foi encontrada.');
     }
 
+    if (input.sortOrder !== undefined && (!Number.isSafeInteger(input.sortOrder) || input.sortOrder < 0)) {
+      throw new ApplicationError('sortOrder', 'INVALID', 'A posição deve ser um número inteiro não negativo.');
+    }
+
     const name: CategoryName = CategoryName.create(input.name);
     const category: Category = Category.create(name, categoryId.getValue());
 
-    await this.categories.update(category);
+    await this.categories.update(category, input.sortOrder);
 
     return { id: categoryId.getValue() };
   }
