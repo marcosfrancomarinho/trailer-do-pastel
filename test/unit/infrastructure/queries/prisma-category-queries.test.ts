@@ -5,12 +5,12 @@ import { PrismaCategoryQueries } from '../../../../src/infrastructure/queries/pr
 
 describe('PrismaCategoryQueries', () => {
   for (const result of [[], [{ id: 'category-1', name: 'Pasteis' }]]) {
-    it(`lists ${result.length} categories ordered by name with public fields only`, async (context) => {
+    it(`lists ${result.length} categories ordered by display position`, async (context) => {
       const findMany = context.mock.fn(async (_input: unknown) => result);
       const prisma = { category: { findMany } } as unknown as PrismaClient;
       assert.strictEqual(await new PrismaCategoryQueries(prisma).findAll(), result);
       assert.deepEqual(findMany.mock.calls.map(call => call.arguments), [[{
-        where: { deletedAt: null }, select: { id: true, name: true }, orderBy: { name: 'asc' },
+        where: { deletedAt: null }, select: { id: true, name: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }]]);
     });
   }
